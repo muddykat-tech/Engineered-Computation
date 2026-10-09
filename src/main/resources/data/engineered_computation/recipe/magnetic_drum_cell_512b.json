@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": "engineered_computation:magnetic_drum_cell_256b",
+      "components": {},
+      "strict": true
+    },
+    {
+      "type": "neoforge:components",
+      "items": "engineered_computation:magnetic_drum_cell_256b",
+      "components": {},
+      "strict": true
+    }
+  ],
+  "result": {
+    "id": "engineered_computation:magnetic_drum_cell_512b",
+    "count": 1
+  }
+}

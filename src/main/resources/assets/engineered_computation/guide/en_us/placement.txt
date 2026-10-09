@@ -1,0 +1,7 @@
+Where Items Go
+Where Items Go
+Each kind of memory is good at something, and the network puts items where they fit best.
+
+Disk packs hold many kinds of item, so a new kind of item goes there first. Magnetic tape holds only two kinds, but huge amounts of them: the tape drive moves your biggest stocks (16 stacks or more) onto its reel, a little at a time, and moves them back off once they run low. Tape only takes a new kind of item itself when nothing else has room. (A server can turn this archiving off in its settings.)
+
+Every cell can be marked with a priority in its drive's screen: click the number under it to raise it, or right-click to lower it. Higher priority cells are filled first and emptied last, and the tape drive never takes items from a cell marked higher than its reel.

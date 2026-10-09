@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MGM",
+    "MXM",
+    "MRM"
+  ],
+  "key": {
+    "M": {
+      "tag": "c:ingots/gold"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "X": {
+      "item": "engineered_computation:transistor"
+    },
+    "R": {
+      "tag": "c:dusts/redstone"
+    }
+  },
+  "result": {
+    "id": "engineered_computation:era3_terminal",
+    "count": 1
+  }
+}

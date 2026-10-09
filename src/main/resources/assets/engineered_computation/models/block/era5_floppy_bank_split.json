@@ -1,0 +1,68 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "engineered_computation:split",
+  "render_type": "minecraft:cutout",
+  "inner_model": {
+    "parent": "minecraft:block/block",
+    "loader": "neoforge:obj",
+    "model": "engineered_computation:models/block/multiblocks/era5_floppy_bank_double_sided.obj",
+    "flip_v": true,
+    "automatic_culling": false,
+    "emissive_ambient": false,
+    "render_type": "minecraft:cutout",
+    "textures": {
+      "particle": "engineered_computation:block/era/era5_floppy_bank"
+    },
+    "transform": {
+      "rotation": {
+        "y": 180
+      },
+      "origin": "corner"
+    }
+  },
+  "split_parts": [
+    [
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      1
+    ],
+    [
+      0,
+      1,
+      0
+    ],
+    [
+      0,
+      1,
+      1
+    ],
+    [
+      0,
+      2,
+      0
+    ],
+    [
+      0,
+      2,
+      1
+    ],
+    [
+      0,
+      3,
+      0
+    ],
+    [
+      0,
+      3,
+      1
+    ]
+  ],
+  "textures": {
+    "particle": "engineered_computation:block/era/era5_floppy_bank"
+  }
+}

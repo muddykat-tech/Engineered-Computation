@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": "engineered_computation:floppy_35_cell_4k",
+      "components": {},
+      "strict": true
+    },
+    {
+      "type": "neoforge:components",
+      "items": "engineered_computation:floppy_35_cell_4k",
+      "components": {},
+      "strict": true
+    }
+  ],
+  "result": {
+    "id": "engineered_computation:floppy_35_cell_8k",
+    "count": 1
+  }
+}

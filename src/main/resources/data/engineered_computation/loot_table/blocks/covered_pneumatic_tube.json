@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "engineered_computation:windowed_pneumatic_tube",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "engineered_computation:covered_pneumatic_tube",
+                  "properties": {
+                    "windowed": "true"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "minecraft:item",
+              "name": "engineered_computation:pneumatic_tube"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

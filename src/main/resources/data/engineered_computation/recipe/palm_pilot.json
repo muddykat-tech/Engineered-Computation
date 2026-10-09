@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NGN",
+    "NIN",
+    "NBN"
+  ],
+  "key": {
+    "N": {
+      "tag": "c:nuggets/iron"
+    },
+    "G": {
+      "tag": "c:glass_panes"
+    },
+    "I": {
+      "item": "engineered_computation:integrated_circuit"
+    },
+    "B": {
+      "item": "minecraft:stone_button"
+    }
+  },
+  "result": {
+    "id": "engineered_computation:palm_pilot",
+    "count": 1
+  }
+}

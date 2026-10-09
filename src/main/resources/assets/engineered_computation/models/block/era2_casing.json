@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "engineered_computation:block/casing/era2_casing"
+  }
+}

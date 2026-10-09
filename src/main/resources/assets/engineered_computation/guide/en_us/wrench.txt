@@ -1,0 +1,5 @@
+Assembly Wrench
+
+The Assembly Wrench is used to create the hardware for the digital storage systems.
+
+Hardware is made from various casing types, each era has it's own; when placed in world in a specific structure, you can right click it with the assembly wrench to form it.

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["NKN", "KRK", "NKN"],
+  "key": {
+    "N": {"tag": "c:nuggets/iron"},
+    "K": {"item": "minecraft:dried_kelp"},
+    "R": {"tag": "c:dusts/redstone"}
+  },
+  "result": {"id": "engineered_computation:magnetic_tape_cell_512k", "count": 1}
+}

@@ -1,0 +1,76 @@
+{
+  "textures": {
+    "particle": "#disk",
+    "disk": "engineered_computation:block/floppy_35_disk_1"
+  },
+  "elements": [
+    {
+      "from": [
+        10,
+        2,
+        -1
+      ],
+      "to": [
+        14,
+        3,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#disk",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
+        },
+        "south": {
+          "texture": "#disk",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
+        },
+        "east": {
+          "texture": "#disk",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
+        },
+        "west": {
+          "texture": "#disk",
+          "uv": [
+            0,
+            4,
+            4,
+            5
+          ]
+        },
+        "up": {
+          "texture": "#disk",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#disk",
+          "uv": [
+            0,
+            6,
+            4,
+            10
+          ]
+        }
+      }
+    }
+  ]
+}

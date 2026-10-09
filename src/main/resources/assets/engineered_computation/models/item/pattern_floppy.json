@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "engineered_computation:item/pattern_floppy"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "engineered_computation:mode": 0.5
+      },
+      "model": "engineered_computation:item/pattern_floppy_direct"
+    },
+    {
+      "predicate": {
+        "engineered_computation:mode": 1.0
+      },
+      "model": "engineered_computation:item/pattern_floppy_abstract"
+    }
+  ]
+}

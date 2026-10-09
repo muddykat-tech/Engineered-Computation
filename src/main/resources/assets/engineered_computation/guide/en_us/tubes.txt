@@ -1,0 +1,15 @@
+Pneumatic Tubes
+
+Pneumatic Tubes carry items between stations.
+
+After crafting a Pneumatic Tube, you can also craft between Windowed Pneumatic Tubes and Solid Bronze tubes, or by using shift-right-click on a placed tube with an empty hand to toggle it's window.
+
+Use a dye on a window to tint it; the dye is not used during this process. Holding a dye in your other hand tints windowed tubes as you place them.
+
+Tubes can be hidden inside blocks, like Network Cables: sneak-use a full block on a tube to cover it. The tube will keep working, and will also keep its window and tint settings. A see-through cover such as glass will show the tube inside. Breaking a covered tube breaks only the cover, although the Assembly Wrench can also take the cover off.
+
+A Tube Station goes against an inventory, such as a chest, with its hatch facing it. It sends that inventory's items off when asked, one stack per carrier. Right-click it to give it a name, which its cards will show, and to choose whether it will allow storage of new item types.
+
+Items are routed towards Receiving Station's, you can Right-click them to open the GUI to retrieve items, name the station, or set it to drop the items in front of it, as a dropper would, this includes the ability to insert into a chest or other inventory's in front of it, It will spill items on the ground if nothing is available. You can also use hoppers to pull items out of it too. If no space exists items will wait in the tube until it fits in the tray.
+
+If a tube is broken while an item is on its way, it will spill out into the world at the breakpoint.

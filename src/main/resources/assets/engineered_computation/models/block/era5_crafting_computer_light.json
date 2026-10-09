@@ -1,0 +1,18 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "engineered_computation:models/block/multiblocks/era5_crafting_computer_light_double_sided.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "emissive_ambient": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "engineered_computation:block/era/era5_crafting_computer"
+  },
+  "transform": {
+    "rotation": {
+      "y": 180
+    },
+    "origin": "corner"
+  }
+}

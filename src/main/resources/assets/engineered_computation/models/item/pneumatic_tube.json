@@ -1,0 +1,217 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "engineered_computation:block/tube/coupling",
+    "body": "engineered_computation:block/tube/body",
+    "glass": "engineered_computation:block/tube/glass",
+    "coupling": "engineered_computation:block/tube/coupling",
+    "junction": "engineered_computation:block/tube/junction"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        5,
+        5
+      ],
+      "to": [
+        16,
+        11,
+        11
+      ],
+      "faces": {
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ]
+        },
+        "up": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            6
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            0,
+            8,
+            6,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            0,
+            8,
+            6,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        4.5,
+        4.5
+      ],
+      "to": [
+        1,
+        11.5,
+        11.5
+      ],
+      "faces": {
+        "south": {
+          "texture": "#coupling",
+          "uv": [
+            0,
+            0,
+            1,
+            7
+          ]
+        },
+        "north": {
+          "texture": "#coupling",
+          "uv": [
+            0,
+            0,
+            1,
+            7
+          ]
+        },
+        "up": {
+          "texture": "#coupling",
+          "uv": [
+            0,
+            0,
+            1,
+            7
+          ]
+        },
+        "down": {
+          "texture": "#coupling",
+          "uv": [
+            0,
+            0,
+            1,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#coupling",
+          "uv": [
+            1,
+            2,
+            15,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        15,
+        4.5,
+        4.5
+      ],
+      "to": [
+        16,
+        11.5,
+        11.5
+      ],
+      "faces": {
+        "south": {
+          "texture": "#coupling",
+          "uv": [
+            0,
+            0,
+            1,
+            7
+          ]
+        },
+        "north": {
+          "texture": "#coupling",
+          "uv": [
+            0,
+            0,
+            1,
+            7
+          ]
+        },
+        "up": {
+          "texture": "#coupling",
+          "uv": [
+            0,
+            0,
+            1,
+            7
+          ]
+        },
+        "down": {
+          "texture": "#coupling",
+          "uv": [
+            0,
+            0,
+            1,
+            7
+          ]
+        },
+        "west": {
+          "texture": "#coupling",
+          "uv": [
+            1,
+            2,
+            15,
+            16
+          ]
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        0,
+        45
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    }
+  }
+}

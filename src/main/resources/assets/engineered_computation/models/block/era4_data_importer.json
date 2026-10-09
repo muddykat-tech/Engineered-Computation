@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "engineered_computation:models/block/multiblocks/era4_data_importer.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "emissive_ambient": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "engineered_computation:block/era/data_adapters"
+  }
+}

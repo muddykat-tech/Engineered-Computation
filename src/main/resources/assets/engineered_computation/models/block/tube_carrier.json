@@ -1,0 +1,79 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "engineered_computation:block/tube_carrier",
+    "carrier": "engineered_computation:block/tube_carrier"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        6,
+        4
+      ],
+      "to": [
+        10,
+        10,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#carrier",
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#carrier",
+          "uv": [
+            0,
+            4,
+            4,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#carrier",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#carrier",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ]
+        },
+        "up": {
+          "texture": "#carrier",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ],
+          "rotation": 90
+        },
+        "down": {
+          "texture": "#carrier",
+          "uv": [
+            0,
+            0,
+            8,
+            4
+          ],
+          "rotation": 90
+        }
+      }
+    }
+  ]
+}

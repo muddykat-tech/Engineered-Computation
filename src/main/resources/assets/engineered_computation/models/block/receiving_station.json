@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "engineered_computation:block/receiving_station_front",
+    "side": "engineered_computation:block/receiving_station_side",
+    "top": "engineered_computation:block/receiving_station_top"
+  }
+}

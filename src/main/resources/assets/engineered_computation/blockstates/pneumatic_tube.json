@@ -1,0 +1,200 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "straight": "z",
+        "windowed": "false"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/straight"
+      }
+    },
+    {
+      "when": {
+        "straight": "z",
+        "windowed": "true"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/straight_windowed"
+      }
+    },
+    {
+      "when": {
+        "straight": "x",
+        "windowed": "false"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/straight",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "straight": "x",
+        "windowed": "true"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/straight_windowed",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "straight": "y",
+        "windowed": "false"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/straight",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "straight": "y",
+        "windowed": "true"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/straight_windowed",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "straight": "none"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/junction"
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "north": "true",
+        "windowed": "false"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm"
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "north": "true",
+        "windowed": "true"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm_windowed"
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "east": "true",
+        "windowed": "false"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "east": "true",
+        "windowed": "true"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm_windowed",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "south": "true",
+        "windowed": "false"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "south": "true",
+        "windowed": "true"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm_windowed",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "west": "true",
+        "windowed": "false"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "west": "true",
+        "windowed": "true"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm_windowed",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "up": "true",
+        "windowed": "false"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "up": "true",
+        "windowed": "true"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm_windowed",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "down": "true",
+        "windowed": "false"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "straight": "none",
+        "down": "true",
+        "windowed": "true"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm_windowed",
+        "x": 90
+      }
+    }
+  ]
+}

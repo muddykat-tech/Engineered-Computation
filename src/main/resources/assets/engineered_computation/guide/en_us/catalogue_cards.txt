@@ -1,0 +1,7 @@
+Catalogue Cards
+
+Use a blank Catalogue Card on a Tube Station to punch it with that stations location. The card is then labeled with the station's name, or the inventory it's attached to if it has none.
+
+Use a Card Deck in your hand to open it: it can store these punched cards in slots, for compaction. You can also right-click a card onto a deck, or right-click a deck with an empty hand to take its last card out. Bigger decks hold more cards.
+
+Put the decks in a Tabulator Machine on the same tube network as the stations they reference. Every second, the tabulator retallies each card's station on the network, and updates its label. A card that points to a location out of reach keeps its last known tally.

@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "engineered_computation:block/tube/coupling",
+    "body": "engineered_computation:block/tube/body",
+    "glass": "engineered_computation:block/tube/glass",
+    "coupling": "engineered_computation:block/tube/coupling",
+    "junction": "engineered_computation:block/tube/junction"
+  },
+  "elements": [
+    {
+      "from": [
+        -0.1,
+        5,
+        5
+      ],
+      "to": [
+        -0.1,
+        11,
+        11
+      ],
+      "faces": {
+        "west": {
+          "texture": "#body",
+          "uv": [
+            0,
+            8,
+            6,
+            14
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "facing=north,lit=false": {"model": "engineered_computation:block/era4_data_exporter"},
+    "facing=south,lit=false": {"model": "engineered_computation:block/era4_data_exporter", "y": 180},
+    "facing=west,lit=false": {"model": "engineered_computation:block/era4_data_exporter", "y": 270},
+    "facing=east,lit=false": {"model": "engineered_computation:block/era4_data_exporter", "y": 90},
+    "facing=up,lit=false": {"model": "engineered_computation:block/era4_data_exporter", "x": 270},
+    "facing=down,lit=false": {"model": "engineered_computation:block/era4_data_exporter", "x": 90},
+    "facing=north,lit=true": {"model": "engineered_computation:block/era4_data_exporter_active"},
+    "facing=south,lit=true": {"model": "engineered_computation:block/era4_data_exporter_active", "y": 180},
+    "facing=west,lit=true": {"model": "engineered_computation:block/era4_data_exporter_active", "y": 270},
+    "facing=east,lit=true": {"model": "engineered_computation:block/era4_data_exporter_active", "y": 90},
+    "facing=up,lit=true": {"model": "engineered_computation:block/era4_data_exporter_active", "x": 270},
+    "facing=down,lit=true": {"model": "engineered_computation:block/era4_data_exporter_active", "x": 90}
+  }
+}

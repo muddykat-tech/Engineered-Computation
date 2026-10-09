@@ -1,0 +1,3 @@
+Video Terminal
+
+This terminal has a search bar and a 3x3 crafting grid. The arrows button beside the result links the grid to storage. Switch it off for a normal crafting grid.

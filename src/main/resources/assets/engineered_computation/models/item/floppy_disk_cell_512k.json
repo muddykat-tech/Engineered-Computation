@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "engineered_computation:item/cell/floppy_disk_cell_512k"
+  }
+}

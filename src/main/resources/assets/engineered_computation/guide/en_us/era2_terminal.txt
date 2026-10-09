@@ -1,0 +1,3 @@
+Typewriter Terminal
+
+The Typewriter Terminal shows the storage grid, functionally identical to the teletype.

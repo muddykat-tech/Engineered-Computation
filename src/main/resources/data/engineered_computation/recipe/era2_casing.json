@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MCM",
+    "CXC",
+    "MCM"
+  ],
+  "key": {
+    "M": {
+      "tag": "c:ingots/copper"
+    },
+    "C": {
+      "item": "engineered_computation:era1_casing"
+    },
+    "X": {
+      "item": "engineered_computation:vacuum_tube"
+    }
+  },
+  "result": {
+    "id": "engineered_computation:era2_casing",
+    "count": 8
+  }
+}

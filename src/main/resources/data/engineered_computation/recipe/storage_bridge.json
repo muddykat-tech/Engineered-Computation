@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CTC",
+    "RIR",
+    "CTC"
+  ],
+  "key": {
+    "C": {
+      "tag": "c:ingots/copper"
+    },
+    "T": {
+      "item": "engineered_computation:transistor"
+    },
+    "R": {
+      "tag": "c:dusts/redstone"
+    },
+    "I": {
+      "item": "engineered_computation:integrated_circuit"
+    }
+  },
+  "result": {
+    "id": "engineered_computation:storage_bridge",
+    "count": 1
+  }
+}

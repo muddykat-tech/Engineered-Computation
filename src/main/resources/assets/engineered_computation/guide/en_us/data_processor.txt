@@ -1,0 +1,9 @@
+Advanced Data Processor
+
+The Advanced Data Processor runs abstract patterns: anything another machine makes, like smelting. Build it from three Processor Casings stacked in a column, and use the Assembly Wrench on the bottom one. Its network port is low on its back.
+
+It holds up to nine abstract Pattern Floppies. Its top sends a recipe's inputs into the machine it faces, and its bottom takes the results back in, pulling them from what it faces or taking them from a hopper or pipe. The block between them leaves room to build your machines around it.
+
+Only results coming back through the processor count, and it only takes in what an order is waiting for. Items reaching storage some other way, like a farm's importer, are never mistaken for an order's results.
+
+The network needs a Crafting Computer to run orders - without one, the processor shows 424.

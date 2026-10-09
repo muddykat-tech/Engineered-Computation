@@ -1,0 +1,3 @@
+Other Parts
+
+Some recipes in this guide need parts from other eras. All recipes required to build things are all listed in this guide.

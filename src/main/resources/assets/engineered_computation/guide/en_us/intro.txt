@@ -1,0 +1,9 @@
+Engineered Computation
+Introduction
+Store your items in thematic machines that reference real history.
+
+These are loosely broken in to five eras.
+
+Each era has a guide of its own, which will show you how to build that era's drives and craft everything they need.
+
+This edition covers the {era} in detail.

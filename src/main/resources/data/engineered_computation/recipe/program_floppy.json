@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": "engineered_computation:floppy_disk_cell_16k",
+      "components": {},
+      "strict": true
+    },
+    {
+      "item": "minecraft:paper"
+    },
+    {
+      "tag": "c:dusts/redstone"
+    }
+  ],
+  "result": {
+    "id": "engineered_computation:program_floppy",
+    "count": 1
+  }
+}

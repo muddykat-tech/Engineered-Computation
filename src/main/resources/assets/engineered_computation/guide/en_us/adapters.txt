@@ -1,0 +1,11 @@
+Data Adapters
+
+A Data Importer pulls items from the inventory its front faces, it works on any block that holds items, and will slowly move them into the network. A Data Exporter sends items from the network into that inventory instead.
+
+These devices will only connect to a network cable, attached on it's back.
+
+You can tell them apart by their lamps: green on an importer, amber on an exporter. They glow brighter while it's moving items.
+
+You can right-click to open its config GUI, it has a filter slot, accepts any item and this will filter it, without one it will import everything available; an empty exporter export nothing. A status code shows how it's doing - see Error Codes.
+
+Each era's adapters are more powerful. You can change the speed and stack size for importing or exporting in the gui.

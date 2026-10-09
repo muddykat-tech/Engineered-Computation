@@ -1,0 +1,8 @@
+Analogue Era
+
+Relays, punched cards and pneumatic tubes. Connect your items from their chests, barrels and drawers via tubes and a Tabulator Machine keeps track of what is in them. A Tube Station on each inventory sends things through the tubes when the teletype asks for them.
+
+The Tabulator Machine's sorting box holds Card Decks. Sneak-use a deck on a compartment to put it in, and sneak-use a filled compartment with an empty hand to take it out. Its network port joins the tubes.
+
+Memory: {memory}
+Part: {part}

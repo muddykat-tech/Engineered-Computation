@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": "engineered_computation:card_deck_16",
+      "components": {},
+      "strict": true
+    },
+    {
+      "type": "neoforge:components",
+      "items": "engineered_computation:card_deck_16",
+      "components": {},
+      "strict": true
+    }
+  ],
+  "result": {
+    "id": "engineered_computation:card_deck_32",
+    "count": 1
+  }
+}

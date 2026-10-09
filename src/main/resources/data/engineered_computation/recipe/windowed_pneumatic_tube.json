@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "engineered_computation:pneumatic_tube"
+    }
+  ],
+  "result": {
+    "id": "engineered_computation:windowed_pneumatic_tube",
+    "count": 1
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "engineered_computation:block/floppy_35_disk_in_bay",
+  "textures": {
+    "particle": "engineered_computation:block/floppy_35_disk_4",
+    "disk": "engineered_computation:block/floppy_35_disk_4"
+  }
+}

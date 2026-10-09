@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "engineered_computation:block/storage_bridge"
+    },
+    "facing=east": {
+      "model": "engineered_computation:block/storage_bridge",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "engineered_computation:block/storage_bridge",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "engineered_computation:block/storage_bridge",
+      "y": 270
+    }
+  }
+}

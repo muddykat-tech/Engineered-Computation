@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MCM",
+    "CXC",
+    "MCM"
+  ],
+  "key": {
+    "M": {
+      "tag": "c:gems/diamond"
+    },
+    "C": {
+      "item": "engineered_computation:era4_casing"
+    },
+    "X": {
+      "item": "engineered_computation:microprocessor"
+    }
+  },
+  "result": {
+    "id": "engineered_computation:era5_casing",
+    "count": 8
+  }
+}

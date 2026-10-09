@@ -1,0 +1,31 @@
+{
+  "replace": false,
+  "values": [
+    "engineered_computation:era1_terminal",
+    "engineered_computation:era2_terminal",
+    "engineered_computation:era3_terminal",
+    "engineered_computation:era4_terminal",
+    "engineered_computation:era5_terminal",
+    "engineered_computation:era1_drive",
+    "engineered_computation:era2_drive",
+    "engineered_computation:era2_drum_bank",
+    "engineered_computation:era3_drive",
+    "engineered_computation:era4_drive",
+    "engineered_computation:era4_disk_bank",
+    "engineered_computation:era5_drive",
+    "engineered_computation:era5_floppy_bank",
+    "engineered_computation:era5_crafting_computer",
+    "engineered_computation:era5_data_processor",
+    "engineered_computation:era1_casing",
+    "engineered_computation:era2_casing",
+    "engineered_computation:era3_casing",
+    "engineered_computation:era4_casing",
+    "engineered_computation:era5_casing",
+    "engineered_computation:processor_casing",
+    "engineered_computation:network_cable",
+    "engineered_computation:storage_bridge",
+    "engineered_computation:pneumatic_tube",
+    "engineered_computation:tube_station",
+    "engineered_computation:receiving_station"
+  ]
+}

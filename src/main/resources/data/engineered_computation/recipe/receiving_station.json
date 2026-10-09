@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ITI",
+    "IRI",
+    "ICI"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "T": {
+      "item": "engineered_computation:pneumatic_tube"
+    },
+    "R": {
+      "item": "engineered_computation:relay"
+    },
+    "C": {
+      "tag": "c:chests/wooden"
+    }
+  },
+  "result": {
+    "id": "engineered_computation:receiving_station",
+    "count": 1
+  }
+}

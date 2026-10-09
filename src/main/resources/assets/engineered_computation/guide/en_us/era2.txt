@@ -1,0 +1,8 @@
+Drum Memory Era
+
+Spinning magnetic drums hold data on their surface.
+
+The Drum Computer, inspired by the Bendix G-15, is this era's processor: it holds one drum inside and allows you to attach other Drum storage devices on the network, these were inspired by the FASTRAND II, which can holds two magnetic drum storage items. This era also brings the first Data Importers and Exporters.
+
+Memory: {memory}
+Part: {part}

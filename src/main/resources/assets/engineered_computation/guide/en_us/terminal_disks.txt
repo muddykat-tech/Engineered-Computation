@@ -1,0 +1,5 @@
+Terminal Disks
+
+The Floppy Disk Terminal has two bays of its own, below its keyboard, taking 3½-inch floppies (1k, 2k, 4k and 8k).
+
+Use the bays to open them. What the disks hold joins the terminal's network like a drive's cells. The terminal works them itself, with no workstation needed, but they're the only storage it works. The bays don't take the larger floppy cells, and drives don't take 3½-inch floppies.

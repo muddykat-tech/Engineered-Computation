@@ -1,0 +1,15 @@
+{
+  "textures": {
+    "particle": "engineered_computation:block/indicator_light",
+    "light": "engineered_computation:block/indicator_light"
+  },
+  "elements": [
+    {
+      "from": [14, 3, 0.95],
+      "to": [15, 4, 0.95],
+      "faces": {
+        "north": {"texture": "#light", "uv": [0, 0, 16, 16]}
+      }
+    }
+  ]
+}

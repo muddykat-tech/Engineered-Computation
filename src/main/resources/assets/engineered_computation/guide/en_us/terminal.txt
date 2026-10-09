@@ -1,0 +1,7 @@
+Using a Terminal
+
+While in the GUI, you can use Left-click on an item to take a stack, right-click to take half, and shift-click to send a stack to your inventory.
+
+Click with items held to store them (right-click stores one), or shift-click items in your inventory. The bar under the grid shows how full your cells are.
+
+Terminal can be upgraded and have more features added. The Typewriter shows the grid alone. The Uniscope adds a search bar. The Video Terminal and Floppy Disk Terminal add a crafting grid, and the floppy disk termianl has it's own internal storage area.

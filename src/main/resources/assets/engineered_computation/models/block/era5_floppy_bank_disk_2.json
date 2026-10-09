@@ -1,0 +1,19 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "engineered_computation:models/block/multiblocks/era5_floppy_bank_disk_double_sided.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "emissive_ambient": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "engineered_computation:block/floppy_disk_2",
+    "disk": "engineered_computation:block/floppy_disk_2"
+  },
+  "transform": {
+    "rotation": {
+      "y": 180
+    },
+    "origin": "corner"
+  }
+}

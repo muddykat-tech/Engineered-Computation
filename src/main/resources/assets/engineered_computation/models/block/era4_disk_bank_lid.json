@@ -1,0 +1,18 @@
+{
+  "parent": "minecraft:block/block",
+  "loader": "neoforge:obj",
+  "model": "engineered_computation:models/block/multiblocks/era4_disk_bank_lid_double_sided.obj",
+  "flip_v": true,
+  "automatic_culling": false,
+  "emissive_ambient": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "engineered_computation:block/era/era4_disk_bank"
+  },
+  "transform": {
+    "rotation": {
+      "y": 180
+    },
+    "origin": "corner"
+  }
+}

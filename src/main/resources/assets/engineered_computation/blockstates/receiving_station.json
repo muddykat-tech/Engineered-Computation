@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "engineered_computation:block/receiving_station"
+    },
+    "facing=east": {
+      "model": "engineered_computation:block/receiving_station",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "engineered_computation:block/receiving_station",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "engineered_computation:block/receiving_station",
+      "y": 270
+    }
+  }
+}
