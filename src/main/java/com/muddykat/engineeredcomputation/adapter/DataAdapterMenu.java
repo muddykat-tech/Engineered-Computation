@@ -1,7 +1,7 @@
 package com.muddykat.engineeredcomputation.adapter;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -39,7 +39,7 @@ public class DataAdapterMenu extends AbstractContainerMenu
 	private final Container filter;
 	private final ContainerData data;
 
-	public DataAdapterMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buf)
+	public DataAdapterMenu(int id, Inventory inventory, FriendlyByteBuf buf)
 	{
 		this(id, inventory, buf.readBlockPos(), null, new SimpleContainer(1), new SimpleContainerData(4));
 	}
@@ -217,6 +217,6 @@ public class DataAdapterMenu extends AbstractContainerMenu
 	public boolean stillValid(Player player)
 	{
 		return player.level().getBlockState(pos).getBlock() instanceof DataAdapterBlock
-				&&player.canInteractWithBlock(pos, 4.0);
+				&&player.canReach(pos, 4.0);
 	}
 }

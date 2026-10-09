@@ -1,9 +1,10 @@
 package com.muddykat.engineeredcomputation.pneumatic;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -15,10 +16,12 @@ import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.items.wrapper.InvWrapper;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.wrapper.InvWrapper;
 
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 
@@ -78,6 +81,18 @@ public class ReceivingStationBlockEntity extends BlockEntity
 		return output;
 	}
 
+	@Override
+	public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side)
+	{
+		if(capability==ForgeCapabilities.ITEM_HANDLER)
+		{
+			IItemHandler handler = getOutput();
+			if(handler!=null)
+				return LazyOptional.of(() -> handler).cast();
+		}
+		return super.getCapability(capability, side);
+	}
+
 	public String getName()
 	{
 		return name;
@@ -112,8 +127,9 @@ public class ReceivingStationBlockEntity extends BlockEntity
 			return;
 		ejectCooldown = EJECT_TICKS;
 		Direction front = getBlockState().getValue(ReceivingStationBlock.FACING);
-		IItemHandler target = level.getCapability(Capabilities.ItemHandler.BLOCK, worldPosition.relative(front),
-				front.getOpposite());
+		BlockEntity inFront = level.getBlockEntity(worldPosition.relative(front));
+		IItemHandler target = inFront==null? null
+				: inFront.getCapability(ForgeCapabilities.ITEM_HANDLER, front.getOpposite()).orElse(null);
 		for(int slot = 0; slot<tray.getContainerSize(); slot++)
 		{
 			ItemStack stack = tray.getItem(slot);
@@ -131,7 +147,7 @@ public class ReceivingStationBlockEntity extends BlockEntity
 				Vec3 mouth = Vec3.atCenterOf(worldPosition).add(front.getStepX()*0.7, 0, front.getStepZ()*0.7);
 				DefaultDispenseItemBehavior.spawnItem(level, tray.removeItemNoUpdate(slot), 6, front, mouth);
 				tray.setChanged();
-				level.levelEvent(LevelEvent.PARTICLES_SHOOT_SMOKE, worldPosition, front.get3DDataValue());
+				level.levelEvent(LevelEvent.PARTICLES_SHOOT, worldPosition, front.get3DDataValue());
 			}
 			level.levelEvent(LevelEvent.SOUND_DISPENSER_DISPENSE, worldPosition, 0);
 			return;
@@ -151,27 +167,27 @@ public class ReceivingStationBlockEntity extends BlockEntity
 			ItemStack held = tray.getItem(slot);
 			if(held.isEmpty())
 				room += items.getMaxStackSize();
-			else if(ItemStack.isSameItemSameComponents(held, items))
+			else if(ItemStack.isSameItemSameTags(held, items))
 				room += Math.max(0, held.getMaxStackSize()-held.getCount());
 		}
 		return room>=items.getCount();
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	protected void saveAdditional(CompoundTag tag)
 	{
-		super.saveAdditional(tag, registries);
-		tag.put("tray", tray.createTag(registries));
+		super.saveAdditional(tag);
+		tag.put("tray", tray.createTag());
 		if(!name.isEmpty())
 			tag.putString("name", name);
 		tag.putBoolean("ejecting", ejecting);
 	}
 
 	@Override
-	protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
-		super.loadAdditional(tag, registries);
-		tray.fromTag(tag.getList("tray", Tag.TAG_COMPOUND), registries);
+		super.load(tag);
+		tray.fromTag(tag.getList("tray", Tag.TAG_COMPOUND));
 		name = tag.getString("name");
 		ejecting = tag.getBoolean("ejecting");
 	}

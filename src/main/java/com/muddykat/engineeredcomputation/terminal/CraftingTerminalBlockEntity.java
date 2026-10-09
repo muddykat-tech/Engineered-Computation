@@ -1,7 +1,6 @@
 package com.muddykat.engineeredcomputation.terminal;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -29,17 +28,17 @@ public class CraftingTerminalBlockEntity extends BlockEntity
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	protected void saveAdditional(CompoundTag tag)
 	{
-		super.saveAdditional(tag, registries);
-		tag.put("crafting_grid", craftingGrid.save(registries));
+		super.saveAdditional(tag);
+		tag.put("crafting_grid", craftingGrid.save());
 	}
 
 	@Override
-	protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
-		super.loadAdditional(tag, registries);
+		super.load(tag);
 		if(tag.contains("crafting_grid"))
-			craftingGrid.load(tag.getCompound("crafting_grid"), registries);
+			craftingGrid.load(tag.getCompound("crafting_grid"));
 	}
 }

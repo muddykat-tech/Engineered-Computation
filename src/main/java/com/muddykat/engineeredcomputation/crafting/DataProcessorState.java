@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -21,10 +20,12 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.network.NetworkHooks;
 
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockContext;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockOrientation;
@@ -147,15 +148,21 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	@Nullable
 	public IItemHandler target()
 	{
-		return !located()? null: level.getCapability(Capabilities.ItemHandler.BLOCK, topPos.relative(front),
-				front.getOpposite());
+		return !located()? null: handlerFacing(topPos);
 	}
 
 	@Nullable
 	private IItemHandler source()
 	{
-		return !located()? null: level.getCapability(Capabilities.ItemHandler.BLOCK, masterPos.relative(front),
-				front.getOpposite());
+		return !located()? null: handlerFacing(masterPos);
+	}
+
+	@Nullable
+	private IItemHandler handlerFacing(BlockPos pos)
+	{
+		BlockEntity facing = level.getBlockEntity(pos.relative(front));
+		return facing==null? null: facing.getCapability(ForgeCapabilities.ITEM_HANDLER,
+				front.getOpposite()).orElse(null);
 	}
 
 	public int takeMove(int atLeast)
@@ -340,7 +347,7 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	{
 		locate(ctx);
 		if(player instanceof ServerPlayer serverPlayer)
-			serverPlayer.openMenu(new SimpleMenuProvider(
+			NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
 							(id, inventory, p) -> new DataProcessorMenu(id, inventory, this, ctx.masterPos()),
 							ctx.definition().partBlock().getName()),
 					buf -> buf.writeBlockPos(ctx.masterPos()));
@@ -377,13 +384,13 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	}
 
 	@Override
-	public void save(CompoundTag tag, HolderLookup.Provider registries)
+	public void save(CompoundTag tag)
 	{
-		tag.put("patterns", patterns.serializeNBT(registries));
+		tag.put("patterns", patterns.serializeNBT());
 		ListTag list = new ListTag();
 		arrived.forEach((key, count) -> {
 			CompoundTag entry = new CompoundTag();
-			entry.put("item", key.toStack(1).save(registries));
+			entry.put("item", key.toStack(1).save(new CompoundTag()));
 			entry.putLong("count", count);
 			list.add(entry);
 		});
@@ -391,16 +398,17 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	}
 
 	@Override
-	public void load(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
 		if(tag.contains("patterns"))
-			patterns.deserializeNBT(registries, tag.getCompound("patterns"));
+			patterns.deserializeNBT(tag.getCompound("patterns"));
 		arrived.clear();
 		for(Tag entry : tag.getList("arrived", Tag.TAG_COMPOUND))
 		{
 			CompoundTag compound = (CompoundTag)entry;
-			ItemStack.parse(registries, compound.getCompound("item")).ifPresent(stack ->
-					arrived.merge(ItemKey.of(stack), compound.getLong("count"), Long::sum));
+			ItemStack stack = ItemStack.of(compound.getCompound("item"));
+			if(!stack.isEmpty())
+				arrived.merge(ItemKey.of(stack), compound.getLong("count"), Long::sum);
 		}
 	}
 

@@ -10,11 +10,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
@@ -22,14 +22,15 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.common.util.FakePlayerFactory;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
+import com.muddykat.engineeredcomputation.crafting.Pattern;
 import com.muddykat.engineeredcomputation.gametest.TestCategory;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
 import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
+import com.muddykat.engineeredcomputation.network.NetworkMemberBlock;
 import com.muddykat.engineeredcomputation.network.StorageBridgeBlock;
 import com.muddykat.engineeredcomputation.registration.ECBridges;
 import com.muddykat.engineeredcomputation.registration.ECCables;
@@ -233,8 +234,8 @@ public final class PneumaticGameTests
 		TubeCarriers carriers = new TubeCarriers();
 		List<BlockPos> path = List.of(new BlockPos(1, 2, 3), new BlockPos(2, 2, 3), new BlockPos(3, 2, 3));
 		carriers.launch(level, new ItemStack(Items.DIAMOND_PICKAXE), path);
-		CompoundTag saved = carriers.save(new CompoundTag(), level.registryAccess());
-		List<Carrier> loaded = TubeCarriers.load(saved, level.registryAccess()).getCarriers();
+		CompoundTag saved = carriers.save(new CompoundTag());
+		List<Carrier> loaded = TubeCarriers.load(saved).getCarriers();
 		check(helper, loaded.size()==1, "one carrier should come back");
 		Carrier carrier = loaded.get(0);
 		check(helper, carrier.getPath().equals(path), "route should come back, got "+carrier.getPath());
@@ -257,10 +258,10 @@ public final class PneumaticGameTests
 				.setValue(StorageBridgeBlock.FACING, Direction.NORTH));
 
 		for(BlockPos pos : List.of(tube, station, receiver))
-			check(helper, level.getCapability(ECCapabilities.NETWORK_MEMBER, pos, null)==null,
+			check(helper, NetworkMemberBlock.at(level, pos, null)==null,
 					"tube blocks must never be storage network members: "+pos);
 		for(BlockPos pos : List.of(cable, bridge))
-			check(helper, level.getCapability(ECCapabilities.TUBE_MEMBER, pos, null)==null,
+			check(helper, TubeMemberBlock.at(level, pos, null)==null,
 					"data network blocks must never be tube members: "+pos);
 		check(helper, !level.getBlockState(cable).getValue(NetworkCableBlock.CONNECTIONS.get(Direction.WEST)),
 				"cable shouldn't reach for the tube");
@@ -307,12 +308,12 @@ public final class PneumaticGameTests
 		player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
 		BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
 		player.setShiftKeyDown(false);
-		level.getBlockState(pos).useWithoutItem(level, player, hit);
+		level.getBlockState(pos).use(level, player, InteractionHand.MAIN_HAND, hit);
 		check(helper, !level.getBlockState(pos).getValue(PneumaticTubeBlock.WINDOWED), "a plain click fitted a window");
 		player.setShiftKeyDown(true);
-		level.getBlockState(pos).useWithoutItem(level, player, hit);
+		level.getBlockState(pos).use(level, player, InteractionHand.MAIN_HAND, hit);
 		check(helper, level.getBlockState(pos).getValue(PneumaticTubeBlock.WINDOWED), "shift-right-click should fit a window");
-		level.getBlockState(pos).useWithoutItem(level, player, hit);
+		level.getBlockState(pos).use(level, player, InteractionHand.MAIN_HAND, hit);
 		check(helper, !level.getBlockState(pos).getValue(PneumaticTubeBlock.WINDOWED), "again should take it out");
 		player.setShiftKeyDown(false);
 		helper.succeed();
@@ -343,14 +344,16 @@ public final class PneumaticGameTests
 		Player player = FakePlayerFactory.getMinecraft(level);
 		ItemStack dye = new ItemStack(Items.BLUE_DYE, 3);
 		BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
-		level.getBlockState(pos).useItemOn(dye, level, player, InteractionHand.MAIN_HAND, hit);
+		player.setItemInHand(InteractionHand.MAIN_HAND, dye);
+		level.getBlockState(pos).use(level, player, InteractionHand.MAIN_HAND, hit);
 		check(helper, PneumaticTubeBlock.tintColour(level.getBlockState(pos))==DyeColor.BLUE, "the window should be blue");
 		check(helper, dye.getCount()==3, "the dye shouldn't be used up");
-		level.getBlockState(pos).useItemOn(dye, level, player, InteractionHand.MAIN_HAND, hit);
+		level.getBlockState(pos).use(level, player, InteractionHand.MAIN_HAND, hit);
 		check(helper, PneumaticTubeBlock.tintColour(level.getBlockState(pos))==null, "the same dye again should clear it");
 		BlockPos solid = place(helper, 5, 1, 3, tube());
-		level.getBlockState(solid).useItemOn(dye, level, player, InteractionHand.MAIN_HAND,
+		level.getBlockState(solid).use(level, player, InteractionHand.MAIN_HAND,
 				new BlockHitResult(Vec3.atCenterOf(solid), Direction.UP, solid, false));
+		player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
 		check(helper, level.getBlockState(solid).getValue(PneumaticTubeBlock.TINT)==0, "a solid tube was tinted");
 		helper.succeed();
 	}
@@ -452,9 +455,9 @@ public final class PneumaticGameTests
 
 	private static ItemStack craft(ServerLevel level, ItemStack stack)
 	{
-		CraftingInput input = CraftingInput.of(1, 1, List.of(stack));
+		CraftingContainer input = Pattern.craftingGrid(1, 1, List.of(stack));
 		return level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level)
-				.map(recipe -> recipe.value().assemble(input, level.registryAccess())).orElse(ItemStack.EMPTY);
+				.map(recipe -> recipe.assemble(input, level.registryAccess())).orElse(ItemStack.EMPTY);
 	}
 
 	private static List<Carrier> carriersTo(ServerLevel level, BlockPos destination)

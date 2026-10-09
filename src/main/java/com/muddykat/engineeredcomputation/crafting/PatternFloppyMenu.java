@@ -3,7 +3,7 @@ package com.muddykat.engineeredcomputation.crafting;
 import java.util.List;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
@@ -14,7 +14,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
 public class PatternFloppyMenu extends AbstractContainerMenu
@@ -30,7 +29,7 @@ public class PatternFloppyMenu extends AbstractContainerMenu
 	private final Player player;
 	private final InteractionHand hand;
 
-	public PatternFloppyMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buf)
+	public PatternFloppyMenu(int id, Inventory inventory, FriendlyByteBuf buf)
 	{
 		this(id, inventory, buf.readEnum(InteractionHand.class));
 	}
@@ -122,7 +121,7 @@ public class PatternFloppyMenu extends AbstractContainerMenu
 		};
 		if(edited.mode()==Pattern.Mode.DIRECT)
 			edited = edited.withCraftedOutput(player.level());
-		floppy().set(ECDataComponents.PATTERN.get(), edited);
+		PatternFloppyItem.setPattern(floppy(), edited);
 		broadcastChanges();
 	}
 

@@ -23,10 +23,10 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.items.IItemHandler;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
@@ -34,6 +34,7 @@ import com.muddykat.engineeredcomputation.crafting.CraftingNetwork;
 import com.muddykat.engineeredcomputation.crafting.DataProcessorState;
 import com.muddykat.engineeredcomputation.crafting.Pattern;
 import com.muddykat.engineeredcomputation.crafting.PatternEditPayload;
+import com.muddykat.engineeredcomputation.crafting.PatternFloppyItem;
 import com.muddykat.engineeredcomputation.crafting.PatternFloppyMenu;
 import com.muddykat.engineeredcomputation.crafting.PatternOffer;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
@@ -50,7 +51,6 @@ import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECContent;
 import com.muddykat.engineeredcomputation.registration.ECCrafting;
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.storage.ECDataCells;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
@@ -147,7 +147,8 @@ public final class CraftingComputerGameTests
 		Rig rig = setup.processor(helper, smelting());
 		StorageGameTests.check(helper, setup.order(Items.STONE, 3).isEmpty(), "the abstract order was refused");
 		helper.runAfterDelay(5, () -> {
-			IItemHandler bottom = setup.level.getCapability(Capabilities.ItemHandler.BLOCK, rig.bottom(), Direction.UP);
+			IItemHandler bottom = setup.level.getBlockEntity(rig.bottom())
+				.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP).orElse(null);
 			StorageGameTests.check(helper, bottom!=null&&bottom.insertItem(0, new ItemStack(Items.STONE, 3), false)
 					.isEmpty(), "the processor's bottom didn't take the pushed-in stone");
 			helper.runAfterDelay(3, () -> {
@@ -188,7 +189,8 @@ public final class CraftingComputerGameTests
 		Setup setup = setup(helper);
 		setup.store(Items.COBBLESTONE, 10);
 		Rig rig = setup.processor(helper, smelting());
-		IItemHandler bottom = setup.level.getCapability(Capabilities.ItemHandler.BLOCK, rig.bottom(), Direction.UP);
+		IItemHandler bottom = setup.level.getBlockEntity(rig.bottom())
+				.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP).orElse(null);
 		StorageGameTests.check(helper, bottom!=null&&bottom.insertItem(0, new ItemStack(Items.STONE), false).getCount()==1,
 				"the processor took stone in with no order waiting for it");
 		StorageGameTests.check(helper, setup.order(Items.STONE, 3).isEmpty(), "the abstract order was refused");
@@ -253,7 +255,7 @@ public final class CraftingComputerGameTests
 		Setup setup = setup(helper);
 		setup.store(Items.RAW_COPPER, 4);
 		Pattern pattern = new Pattern(Pattern.Mode.ABSTRACT, List.of(new ItemStack(Items.RAW_COPPER)), List.of())
-				.withTag(true, 0, ItemTags.create(ResourceLocation.parse("c:ingots")));
+				.withTag(true, 0, ItemTags.create(ResourceLocation.parse("forge:ingots")));
 		Rig rig = setup.processor(helper, pattern);
 		List<PatternOffer> offers = CraftingNetwork.offers(setup.level, setup.network());
 		StorageGameTests.check(helper, offers.size()==1&&offers.get(0).pattern().equals(pattern),
@@ -268,7 +270,7 @@ public final class CraftingComputerGameTests
 			rig.put(rig.results(), new ItemStack(Items.COPPER_INGOT, 2));
 			helper.runAfterDelay(5, () -> {
 				StorageGameTests.check(helper, setup.computer.getOrders().isEmpty()&&setup.stored(Items.COPPER_INGOT)==2,
-						"two copper ingots didn't finish an order for two of #c:ingots");
+						"two copper ingots didn't finish an order for two of #forge:ingots");
 				helper.succeed();
 			});
 		});
@@ -281,7 +283,7 @@ public final class CraftingComputerGameTests
 		setup.store(Items.RAW_IRON, 5);
 		setup.store(Items.RAW_GOLD, 5);
 		Pattern pattern = new Pattern(Pattern.Mode.ABSTRACT, List.of(), List.of(new ItemStack(Items.GOLD_INGOT)))
-				.withTag(false, 0, ItemTags.create(ResourceLocation.parse("c:raw_materials")));
+				.withTag(false, 0, ItemTags.create(ResourceLocation.parse("forge:raw_materials")));
 		Rig rig = setup.processor(helper, pattern);
 		PatternOffer offer = CraftingNetwork.offers(setup.level, setup.network()).get(0);
 		StorageGameTests.check(helper, CraftingNetwork.orderOffer(setup.level, setup.network(), setup.storage(),
@@ -339,7 +341,7 @@ public final class CraftingComputerGameTests
 							&&!setup.computer.getPatternSlots().getStackInSlot(slot).isEmpty()&&player.getMainHandItem().isEmpty(),
 					"sneak-using a pattern floppy on bay "+slot+" didn't put it in slot "+slot);
 			BlockHitResult hit = hitAt(helper, front);
-			setup.level.getBlockState(hit.getBlockPos()).useWithoutItem(setup.level, player, hit);
+			setup.level.getBlockState(hit.getBlockPos()).use(setup.level, player, InteractionHand.MAIN_HAND, hit);
 			StorageGameTests.check(helper, player.getMainHandItem().getItem()==ECCrafting.PATTERN_FLOPPY.get()
 							&&setup.computer.getPatternSlots().getStackInSlot(slot).isEmpty(),
 					"sneak-clicking bay "+slot+" with an empty hand didn't take its floppy");
@@ -425,7 +427,7 @@ public final class CraftingComputerGameTests
 			if(state==null)
 				helper.fail("the formed processor has no state");
 			ItemStack floppy = new ItemStack(ECCrafting.PATTERN_FLOPPY.get());
-			floppy.set(ECDataComponents.PATTERN.get(), pattern);
+			PatternFloppyItem.setPattern(floppy, pattern);
 			state.getPatternSlots().setStackInSlot(0, floppy);
 			StorageGameTests.check(helper, network().getDataProcessors().contains(state),
 					"the processor isn't on the drive's network");
@@ -550,7 +552,7 @@ public final class CraftingComputerGameTests
 	private static ItemStack directFloppy(ServerLevel level, ItemStack... grid)
 	{
 		ItemStack floppy = new ItemStack(ECCrafting.PATTERN_FLOPPY.get());
-		floppy.set(ECDataComponents.PATTERN.get(),
+		PatternFloppyItem.setPattern(floppy,
 				new Pattern(Pattern.Mode.DIRECT, List.of(grid), List.of()).withCraftedOutput(level));
 		return floppy;
 	}

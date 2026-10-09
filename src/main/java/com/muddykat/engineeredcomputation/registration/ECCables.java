@@ -6,16 +6,12 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredItem;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.RegistryObject;
 
 import com.muddykat.engineeredcomputation.network.CoveredCableBlock;
 import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
 import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
 
 public final class ECCables
@@ -26,20 +22,20 @@ public final class ECCables
 			.sound(SoundType.COPPER)
 			.noOcclusion();
 
-	private static final DeferredBlock<NetworkCableBlock> BLOCK = ECRegistrationHolder.BLOCKS.register(
+	private static final RegistryObject<NetworkCableBlock> BLOCK = ECRegistrationHolder.BLOCKS.register(
 			"network_cable", () -> new NetworkCableBlock(PROPERTIES));
-	private static final DeferredItem<BlockItem> ITEM = ECRegistrationHolder.ITEMS.register(
+	private static final RegistryObject<BlockItem> ITEM = ECRegistrationHolder.ITEMS.register(
 			"network_cable", () -> new BlockItem(BLOCK.get(), new Item.Properties()));
 
-	private static final DeferredBlock<CoveredCableBlock> COVERED = ECRegistrationHolder.BLOCKS.register(
+	private static final RegistryObject<CoveredCableBlock> COVERED = ECRegistrationHolder.BLOCKS.register(
 			"covered_network_cable", () -> new CoveredCableBlock(false, BlockBehaviour.Properties.of()
 					.mapColor(MapColor.STONE).strength(0.6F).sound(SoundType.COPPER)));
-	private static final DeferredBlock<CoveredCableBlock> CLEAR_COVERED = ECRegistrationHolder.BLOCKS.register(
+	private static final RegistryObject<CoveredCableBlock> CLEAR_COVERED = ECRegistrationHolder.BLOCKS.register(
 			"clear_covered_network_cable", () -> new CoveredCableBlock(true, BlockBehaviour.Properties.of()
 					.mapColor(MapColor.NONE).strength(0.6F).sound(SoundType.COPPER).noOcclusion()
 					.isValidSpawn((state, level, pos, entity) -> false).isRedstoneConductor((state, level, pos) -> false)
 					.isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)));
-	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CoveredCableBlockEntity>> COVERED_ENTITY =
+	public static final RegistryObject<BlockEntityType<CoveredCableBlockEntity>> COVERED_ENTITY =
 			ECRegistrationHolder.BLOCK_ENTITIES.register("covered_network_cable", () -> BlockEntityType.Builder.of(
 					CoveredCableBlockEntity::new, COVERED.get(), CLEAR_COVERED.get()).build(null));
 
@@ -51,32 +47,28 @@ public final class ECCables
 	{
 	}
 
-	public static DeferredBlock<NetworkCableBlock> block()
+	public static RegistryObject<NetworkCableBlock> block()
 	{
 		return BLOCK;
 	}
 
-	public static DeferredItem<BlockItem> item()
+	public static RegistryObject<BlockItem> item()
 	{
 		return ITEM;
 	}
 
-	public static DeferredBlock<CoveredCableBlock> covered()
+	public static RegistryObject<CoveredCableBlock> covered()
 	{
 		return COVERED;
 	}
 
-	public static DeferredBlock<CoveredCableBlock> clearCovered()
+	public static RegistryObject<CoveredCableBlock> clearCovered()
 	{
 		return CLEAR_COVERED;
 	}
 
 	public static void register(IEventBus modEventBus)
 	{
-		modEventBus.addListener(RegisterCapabilitiesEvent.class, event -> event.registerBlock(
-				ECCapabilities.NETWORK_MEMBER,
-				(level, pos, state, blockEntity, context) -> NetworkCableBlock.NETWORK_MEMBER,
-				BLOCK.get(), COVERED.get(), CLEAR_COVERED.get()));
-		NeoForge.EVENT_BUS.addListener(CoveredCableBlock::onRightClickBlock);
+		MinecraftForge.EVENT_BUS.addListener(CoveredCableBlock::onRightClickBlock);
 	}
 }

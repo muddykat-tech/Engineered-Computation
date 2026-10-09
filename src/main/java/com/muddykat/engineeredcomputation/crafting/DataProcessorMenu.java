@@ -3,7 +3,7 @@ package com.muddykat.engineeredcomputation.crafting;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -11,8 +11,8 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.SlotItemHandler;
 
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
@@ -28,7 +28,7 @@ public class DataProcessorMenu extends AbstractContainerMenu
 	private final BlockPos pos;
 	private final ContainerData data;
 
-	public DataProcessorMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buf)
+	public DataProcessorMenu(int id, Inventory inventory, FriendlyByteBuf buf)
 	{
 		this(id, inventory, DataProcessorState.createPatternSlots(() -> {}), buf.readBlockPos(),
 				new SimpleContainerData(1));
@@ -102,6 +102,6 @@ public class DataProcessorMenu extends AbstractContainerMenu
 	@Override
 	public boolean stillValid(Player player)
 	{
-		return player.canInteractWithBlock(pos, EXTRA_REACH)&&player.level().getBlockEntity(pos)!=null;
+		return player.canReach(pos, EXTRA_REACH)&&player.level().getBlockEntity(pos)!=null;
 	}
 }

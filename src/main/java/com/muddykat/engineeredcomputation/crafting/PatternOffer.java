@@ -6,21 +6,26 @@ import java.util.Map;
 import java.util.Optional;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
+
 public record PatternOffer(BlockPos processor, int slot, Pattern pattern)
 {
-	public static final StreamCodec<RegistryFriendlyByteBuf, PatternOffer> STREAM_CODEC = StreamCodec.composite(
-			BlockPos.STREAM_CODEC, PatternOffer::processor,
-			ByteBufCodecs.VAR_INT, PatternOffer::slot,
-			Pattern.STREAM_CODEC, PatternOffer::pattern,
-			PatternOffer::new);
+	public static PatternOffer read(FriendlyByteBuf buf)
+	{
+		return new PatternOffer(buf.readBlockPos(), buf.readVarInt(), Pattern.read(buf));
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		buf.writeBlockPos(processor);
+		buf.writeVarInt(slot);
+		pattern.write(buf);
+	}
 
 	public ItemStack shown(long gameTime)
 	{
@@ -39,10 +44,16 @@ public record PatternOffer(BlockPos processor, int slot, Pattern pattern)
 
 	public record Choice(PatternOffer offer, Map<Integer, Item> picks)
 	{
-		public static final StreamCodec<RegistryFriendlyByteBuf, Choice> STREAM_CODEC = StreamCodec.composite(
-				PatternOffer.STREAM_CODEC, Choice::offer,
-				ByteBufCodecs.map(HashMap::new, ByteBufCodecs.VAR_INT, ByteBufCodecs.registry(Registries.ITEM)),
-				Choice::picks,
-				Choice::new);
+		public static Choice read(FriendlyByteBuf buf)
+		{
+			return new Choice(PatternOffer.read(buf),
+					buf.readMap(HashMap::new, FriendlyByteBuf::readVarInt, in -> in.readById(BuiltInRegistries.ITEM)));
+		}
+
+		public void write(FriendlyByteBuf buf)
+		{
+			offer.write(buf);
+			buf.writeMap(picks, FriendlyByteBuf::writeVarInt, (out, item) -> out.writeId(BuiltInRegistries.ITEM, item));
+		}
 	}
 }

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:glass_pane"
+    },
+    {
+      "tag": "forge:ingots/copper"
+    },
+    {
+      "tag": "forge:dusts/redstone"
+    },
+    {
+      "item": "engineered_computation:relay"
+    }
+  ],
+  "result": {
+    "item": "engineered_computation:vacuum_tube",
+    "count": 2
+  }
+}

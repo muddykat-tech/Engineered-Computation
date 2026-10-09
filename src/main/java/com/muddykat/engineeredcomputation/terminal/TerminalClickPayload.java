@@ -2,38 +2,29 @@ package com.muddykat.engineeredcomputation.terminal;
 
 import java.util.Optional;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 
-import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
 public record TerminalClickPayload(int containerId, Optional<ItemKey> key, TerminalAction action)
-		implements CustomPacketPayload
 {
-	public static final Type<TerminalClickPayload> TYPE = new Type<>(
-			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "terminal_click"));
-
-	public static final StreamCodec<RegistryFriendlyByteBuf, TerminalClickPayload> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.VAR_INT, TerminalClickPayload::containerId,
-			ByteBufCodecs.optional(ItemKey.STREAM_CODEC), TerminalClickPayload::key,
-			NeoForgeStreamCodecs.enumCodec(TerminalAction.class), TerminalClickPayload::action,
-			TerminalClickPayload::new);
-
-	@Override
-	public Type<TerminalClickPayload> type()
+	public void encode(FriendlyByteBuf buf)
 	{
-		return TYPE;
+		buf.writeVarInt(containerId);
+		buf.writeOptional(key, (out, value) -> value.write(out));
+		buf.writeEnum(action);
 	}
 
-	public static void handle(TerminalClickPayload payload, IPayloadContext context)
+	public static TerminalClickPayload decode(FriendlyByteBuf buf)
 	{
-		if(context.player().containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
+		return new TerminalClickPayload(buf.readVarInt(), buf.readOptional(ItemKey::read),
+				buf.readEnum(TerminalAction.class));
+	}
+
+	public static void handle(TerminalClickPayload payload, Player player)
+	{
+		if(player.containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
 			menu.handleClick(payload.key().orElse(null), payload.action());
 	}
 }

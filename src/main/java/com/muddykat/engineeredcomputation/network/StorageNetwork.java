@@ -19,8 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
 import com.muddykat.engineeredcomputation.crafting.DataProcessorState;
@@ -77,11 +78,11 @@ public final class StorageNetwork
 
 	public static void register()
 	{
-		NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, event -> {
+		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ChunkEvent.Load.class, event -> {
 			if(event.getLevel() instanceof Level level)
 				changed(level);
 		});
-		NeoForge.EVENT_BUS.addListener(ChunkEvent.Unload.class, event -> {
+		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ChunkEvent.Unload.class, event -> {
 			if(event.getLevel() instanceof Level level)
 				changed(level);
 		});
@@ -117,7 +118,7 @@ public final class StorageNetwork
 				break;
 			}
 			BlockPos pos = queue.poll();
-			NetworkMember member = level.getCapability(ECCapabilities.NETWORK_MEMBER, pos, null);
+			NetworkMember member = NetworkMemberBlock.at(level, pos, null);
 			if(member==null&&!pos.equals(start))
 				continue;
 			if(member!=null&&member.getStorage()!=null&&hosts.add(member.getStorage()))
@@ -138,9 +139,9 @@ public final class StorageNetwork
 				BlockPos next = pos.relative(direction);
 				if(!level.isLoaded(next))
 					continue;
-				if(member!=null&&level.getCapability(ECCapabilities.NETWORK_MEMBER, pos, direction)==null)
+				if(member!=null&&NetworkMemberBlock.at(level, pos, direction)==null)
 					continue;
-				if(level.getCapability(ECCapabilities.NETWORK_MEMBER, next, direction.getOpposite())==null)
+				if(NetworkMemberBlock.at(level, next, direction.getOpposite())==null)
 					continue;
 				links.computeIfAbsent(pos, p -> new ArrayList<>()).add(next);
 				links.computeIfAbsent(next, p -> new ArrayList<>()).add(pos);

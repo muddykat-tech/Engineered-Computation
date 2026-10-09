@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "forge:nbt",
+      "item": "engineered_computation:card_deck_32",
+      "count": 1
+    },
+    {
+      "type": "forge:nbt",
+      "item": "engineered_computation:card_deck_32",
+      "count": 1
+    }
+  ],
+  "result": {
+    "item": "engineered_computation:card_deck_64",
+    "count": 1
+  }
+}

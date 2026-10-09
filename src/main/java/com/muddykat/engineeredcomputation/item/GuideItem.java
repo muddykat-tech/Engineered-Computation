@@ -2,6 +2,8 @@ package com.muddykat.engineeredcomputation.item;
 
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -39,7 +41,7 @@ public class GuideItem extends Item
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag)
+	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> lines, TooltipFlag flag)
 	{
 		lines.add(Component.translatable("tooltip.engineered_computation.guide.covers", era.displayName())
 				.withStyle(ChatFormatting.GRAY));

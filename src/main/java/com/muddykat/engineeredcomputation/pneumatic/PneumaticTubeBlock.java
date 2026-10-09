@@ -5,8 +5,6 @@ import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.serialization.MapCodec;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
@@ -14,7 +12,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
@@ -23,7 +20,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.PipeBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,12 +32,10 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 
-public class PneumaticTubeBlock extends Block
+public class PneumaticTubeBlock extends Block implements TubeMemberBlock
 {
-	public static final MapCodec<PneumaticTubeBlock> CODEC = simpleCodec(PneumaticTubeBlock::new);
 	public static final Map<Direction, BooleanProperty> CONNECTIONS = PipeBlock.PROPERTY_BY_DIRECTION;
 	public static final EnumProperty<Straight> STRAIGHT = EnumProperty.create("straight", Straight.class);
 	public static final BooleanProperty WINDOWED = BooleanProperty.create("windowed");
@@ -109,9 +103,10 @@ public class PneumaticTubeBlock extends Block
 	}
 
 	@Override
-	protected MapCodec<? extends Block> codec()
+	@Nullable
+	public TubeMember getTubeMember(Level level, BlockPos pos, BlockState state, @Nullable Direction side)
 	{
-		return CODEC;
+		return TubeMember.TUBE;
 	}
 
 	@Override
@@ -132,7 +127,7 @@ public class PneumaticTubeBlock extends Block
 	}
 
 	@Override
-	protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+	public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
 			LevelAccessor level, BlockPos pos, BlockPos neighborPos)
 	{
 		if(level instanceof Level fullLevel)
@@ -170,32 +165,27 @@ public class PneumaticTubeBlock extends Block
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
-			Player player, InteractionHand hand, BlockHitResult hitResult)
-	{
-		if(!(stack.getItem() instanceof DyeItem dye)||!state.getValue(WINDOWED))
-			return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
-		if(!level.isClientSide)
-		{
-			DyeColor colour = tintColour(state)==dye.getDyeColor()? null: dye.getDyeColor();
-			level.setBlockAndUpdate(pos, state.setValue(TINT, tintOf(colour)));
-			level.playSound(null, pos, SoundEvents.DYE_USE, SoundSource.BLOCKS, 1, 1);
-		}
-		return ItemInteractionResult.sidedSuccess(level.isClientSide);
-	}
-
-	@Override
-	public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state)
+	public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state)
 	{
 		return new ItemStack(state.getValue(WINDOWED)? ECPneumatics.WINDOWED_TUBE_ITEM.get()
 				: ECPneumatics.TUBE.get().asItem());
 	}
 
 	@Override
-	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
+	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
 			BlockHitResult hitResult)
 	{
-		if(!player.isSecondaryUseActive())
+		if(player.getItemInHand(hand).getItem() instanceof DyeItem dye&&state.getValue(WINDOWED))
+		{
+			if(!level.isClientSide)
+			{
+				DyeColor colour = tintColour(state)==dye.getDyeColor()? null: dye.getDyeColor();
+				level.setBlockAndUpdate(pos, state.setValue(TINT, tintOf(colour)));
+				level.playSound(null, pos, SoundEvents.DYE_USE, SoundSource.BLOCKS, 1, 1);
+			}
+			return InteractionResult.sidedSuccess(level.isClientSide);
+		}
+		if(hand!=InteractionHand.MAIN_HAND||!player.isSecondaryUseActive())
 			return InteractionResult.PASS;
 		if(!level.isClientSide)
 		{
@@ -208,14 +198,14 @@ public class PneumaticTubeBlock extends Block
 	}
 
 	@Override
-	protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
+	public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
 	{
 		return SHAPES[shapeIndex(state)];
 	}
 
 	private static boolean connectsTo(Level level, BlockPos neighbor, Direction towards)
 	{
-		return level.getCapability(ECCapabilities.TUBE_MEMBER, neighbor, towards.getOpposite())!=null;
+		return TubeMemberBlock.at(level, neighbor, towards.getOpposite())!=null;
 	}
 
 	private static int shapeIndex(BlockState state)
@@ -241,7 +231,7 @@ public class PneumaticTubeBlock extends Block
 	}
 
 	@Override
-	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
+	public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
 	{
 		super.onPlace(state, level, pos, oldState, movedByPiston);
 		if(!oldState.is(state.getBlock()))
@@ -249,7 +239,7 @@ public class PneumaticTubeBlock extends Block
 	}
 
 	@Override
-	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
+	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
 	{
 		if(!state.is(newState.getBlock()))
 			TubeNetwork.changed(level);

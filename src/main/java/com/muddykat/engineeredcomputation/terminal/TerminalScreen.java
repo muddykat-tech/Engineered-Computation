@@ -25,15 +25,16 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.muddykat.engineeredcomputation.catalogue.RequestSlip;
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.crafting.PatternOffer;
+import com.muddykat.engineeredcomputation.network.ECPayloads;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.storage.ByteSize;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
@@ -233,6 +234,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
 	{
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		if(orderPopup!=null)
 		{
@@ -268,12 +270,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 			renderTooltip(graphics, mouseX, mouseY);
 	}
 
-	@Override
-	protected void renderSlot(GuiGraphics graphics, Slot slot)
+	/** Called from renderLabels, which runs right after the slots are drawn (renderSlot itself is private). */
+	private void renderMissingSlots(GuiGraphics graphics)
 	{
-		super.renderSlot(graphics, slot);
-		if(isMissing(slot))
-			graphics.fill(RenderType.guiOverlay(), slot.x, slot.y, slot.x+16, slot.y+16, MISSING);
+		for(Slot slot : menu.slots)
+			if(slot.isActive()&&isMissing(slot))
+				graphics.fill(RenderType.guiOverlay(), slot.x, slot.y, slot.x+16, slot.y+16, MISSING);
 	}
 
 	private boolean isMissing(Slot slot)
@@ -465,8 +467,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		int trackX = x+SCROLLBAR_X;
 		int trackY = y+layout.gridY();
 		ECGui.sunken(graphics, trackX, trackY, SCROLLBAR_WIDTH, gridHeight);
-		graphics.blitSprite(maxScrollRow()>0? ECGui.SCROLLER: ECGui.SCROLLER_DISABLED,
-				trackX+1, trackY+1+thumbOffset(), 12, THUMB_HEIGHT);
+		ECGui.scroller(graphics, trackX+1, trackY+1+thumbOffset(), maxScrollRow()>0);
 		ECGui.gauge(graphics, x+TerminalMenu.GRID_X, y+gaugeY, GRID_WIDTH+SCROLLBAR_WIDTH+4, GAUGE_HEIGHT,
 				menu.getClientStats().byteFraction());
 
@@ -692,6 +693,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 	@Override
 	protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY)
 	{
+		renderMissingSlots(graphics);
 		graphics.drawString(font, title, titleLabelX, titleLabelY, ECGui.LABEL, false);
 		graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, ECGui.LABEL, false);
 		TerminalStats stats = menu.getClientStats();
@@ -815,7 +817,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 				action = hasShiftDown()? TerminalAction.QUICK_MOVE: TerminalAction.TAKE_STACK;
 			else
 				action = TerminalAction.TAKE_HALF;
-			PacketDistributor.sendToServer(new TerminalClickPayload(
+			ECPayloads.sendToServer(new TerminalClickPayload(
 					menu.containerId, Optional.ofNullable(entry).map(Map.Entry::getKey), action));
 			return true;
 		}
@@ -863,7 +865,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY)
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollY)
 	{
 		if(orderPopup!=null)
 			return orderPopup.mouseScrolled(mouseX, mouseY, scrollY);
@@ -882,10 +884,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		}
 		if(scrollY!=0)
 		{
-			scrollRow = Math.clamp(scrollRow-(int)Math.signum(scrollY), 0, maxScrollRow());
+			scrollRow = Mth.clamp(scrollRow-(int)Math.signum(scrollY), 0, maxScrollRow());
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+		return super.mouseScrolled(mouseX, mouseY, scrollY);
 	}
 
 	@Override
@@ -917,6 +919,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 	private void scrollToMouse(double mouseY)
 	{
 		double fraction = (mouseY-topPos-layout.gridY()-1-THUMB_HEIGHT/2.0)/(gridHeight-2-THUMB_HEIGHT);
-		scrollRow = Math.clamp(Math.round(fraction*maxScrollRow()), 0, maxScrollRow());
+		scrollRow = Mth.clamp((int)Math.round(fraction*maxScrollRow()), 0, maxScrollRow());
 	}
 }

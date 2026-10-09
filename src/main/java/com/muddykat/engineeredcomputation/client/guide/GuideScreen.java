@@ -130,6 +130,7 @@ public abstract class GuideScreen extends Screen
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
 	{
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		hoveredStack = ItemStack.EMPTY;
 		for(int i = 0; i<pagesShown()&&page+i<guide.pages().size(); i++)
@@ -241,14 +242,14 @@ public abstract class GuideScreen extends Screen
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY)
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollY)
 	{
 		if(scrollY!=0)
 		{
 			turn(scrollY<0? 1: -1);
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+		return super.mouseScrolled(mouseX, mouseY, scrollY);
 	}
 
 	@Override

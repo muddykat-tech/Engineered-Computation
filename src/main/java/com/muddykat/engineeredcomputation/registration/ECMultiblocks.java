@@ -1,8 +1,8 @@
 package com.muddykat.engineeredcomputation.registration;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -17,28 +17,24 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredHolder;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.RegistryObject;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
 import com.muddykat.engineeredcomputation.crafting.DataProcessorState;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.era.EraDrive;
-import com.muddykat.engineeredcomputation.era.EraMachine;
-import com.muddykat.engineeredcomputation.network.NetworkMember;
-import com.muddykat.engineeredcomputation.storage.StorageRole;
 import com.muddykat.engineeredcomputation.era.EraDriveGeometry;
+import com.muddykat.engineeredcomputation.era.EraMachine;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockDefinition;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockOrientation;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlock;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
+import com.muddykat.engineeredcomputation.network.NetworkMember;
 import com.muddykat.engineeredcomputation.pneumatic.TubeMember;
+import com.muddykat.engineeredcomputation.storage.StorageRole;
 
 public final class ECMultiblocks
 {
@@ -52,13 +48,15 @@ public final class ECMultiblocks
 			.isViewBlocking((state, level, pos) -> false)
 			.pushReaction(PushReaction.BLOCK);
 
-	private static final Map<EraDrive, DeferredBlock<MultiblockPartBlock>> ERA_DRIVE_BLOCKS =
+	private static final Map<EraDrive, RegistryObject<MultiblockPartBlock>> ERA_DRIVE_BLOCKS =
 			new EnumMap<>(EraDrive.class);
 
 	public static final Map<EraDrive, MultiblockDefinition<EraDriveState>> ERA_DRIVES = registerEraDrives();
 
-	private static final DeferredBlock<MultiblockPartBlock> CRAFTING_COMPUTER_BLOCK = ECRegistrationHolder.BLOCKS.register(
-			EraMachine.CRAFTING_COMPUTER.blockName(), () -> new MultiblockPartBlock(PART_PROPERTIES, () -> ECMultiblocks.CRAFTING_COMPUTER));
+	private static final RegistryObject<MultiblockPartBlock> CRAFTING_COMPUTER_BLOCK =
+			ECRegistrationHolder.BLOCKS.register(
+					EraMachine.CRAFTING_COMPUTER.blockName(),
+					() -> new MultiblockPartBlock(PART_PROPERTIES, () -> ECMultiblocks.CRAFTING_COMPUTER));
 
 	public static final MultiblockDefinition<CraftingComputerState> CRAFTING_COMPUTER =
 			MultiblockDefinition.<CraftingComputerState>builder(id("multiblocks/"+EraMachine.CRAFTING_COMPUTER.blockName()))
@@ -69,9 +67,10 @@ public final class ECMultiblocks
 					.ticking()
 					.build();
 
-	private static final DeferredBlock<MultiblockPartBlock> DATA_PROCESSOR_BLOCK = ECRegistrationHolder.BLOCKS.register(
-			EraMachine.DATA_PROCESSOR.blockName(),
-			() -> new MultiblockPartBlock(PART_PROPERTIES, () -> ECMultiblocks.DATA_PROCESSOR));
+	private static final RegistryObject<MultiblockPartBlock> DATA_PROCESSOR_BLOCK =
+			ECRegistrationHolder.BLOCKS.register(
+					EraMachine.DATA_PROCESSOR.blockName(),
+					() -> new MultiblockPartBlock(PART_PROPERTIES, () -> ECMultiblocks.DATA_PROCESSOR));
 
 	public static final MultiblockDefinition<DataProcessorState> DATA_PROCESSOR =
 			MultiblockDefinition.<DataProcessorState>builder(id("multiblocks/"+EraMachine.DATA_PROCESSOR.blockName()))
@@ -82,11 +81,11 @@ public final class ECMultiblocks
 					.ticking()
 					.build();
 
-	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MultiblockPartBlockEntity>> PART_BLOCK_ENTITY =
+	public static final RegistryObject<BlockEntityType<MultiblockPartBlockEntity>> PART_BLOCK_ENTITY =
 			ECRegistrationHolder.BLOCK_ENTITIES.register("multiblock_part", () -> BlockEntityType.Builder.of(
 					MultiblockPartBlockEntity::new,
 					Stream.concat(ERA_DRIVE_BLOCKS.values().stream(), Stream.of(CRAFTING_COMPUTER_BLOCK, DATA_PROCESSOR_BLOCK))
-							.map(DeferredBlock::get).toArray(MultiblockPartBlock[]::new)
+							.map(RegistryObject::get).toArray(MultiblockPartBlock[]::new)
 			).build(null));
 
 	private static Map<EraDrive, MultiblockDefinition<EraDriveState>> registerEraDrives()
@@ -94,7 +93,7 @@ public final class ECMultiblocks
 		Map<EraDrive, MultiblockDefinition<EraDriveState>> drives = new EnumMap<>(EraDrive.class);
 		for(EraDrive drive : EraDrive.values())
 		{
-			DeferredBlock<MultiblockPartBlock> block = ECRegistrationHolder.BLOCKS.register(
+			RegistryObject<MultiblockPartBlock> block = ECRegistrationHolder.BLOCKS.register(
 					drive.blockName(), () -> new MultiblockPartBlock(PART_PROPERTIES, () -> ERA_DRIVES.get(drive)));
 			ERA_DRIVE_BLOCKS.put(drive, block);
 
@@ -156,52 +155,55 @@ public final class ECMultiblocks
 
 	public static void register(IEventBus modEventBus)
 	{
-		modEventBus.addListener(RegisterCapabilitiesEvent.class, event -> {
-			event.registerBlockEntity(
-					Capabilities.ItemHandler.BLOCK, PART_BLOCK_ENTITY.get(), MultiblockPartBlockEntity::getItemHandler);
-			event.registerBlockEntity(ECCapabilities.NETWORK_MEMBER, PART_BLOCK_ENTITY.get(), (part, side) -> {
-				MultiblockPartBlockEntity master = part.getMaster();
-				if(master==null)
-					return null;
-				NetworkMember member;
-				EraDriveGeometry geometry;
-				if(master.getState() instanceof EraDriveState drive&&drive.getEra()==ComputerEra.PUNCHCARD)
-					return null;
-				if(master.getState() instanceof EraDriveState drive)
-				{
-					member = drive;
-					geometry = drive.getDrive().geometry();
-				}
-				else if(master.getState() instanceof CraftingComputerState computer)
-				{
-					member = computer;
-					geometry = EraMachine.CRAFTING_COMPUTER.geometry();
-				}
-				else if(master.getState() instanceof DataProcessorState processor)
-				{
-					member = processor;
-					geometry = EraMachine.DATA_PROCESSOR.geometry();
-				}
-				else
-					return null;
-				if(side==null||isSameStructure(part, side))
-					return member;
-				Direction facing = part.getBlockState().getValue(MultiblockPartBlock.FACING);
-				return geometry.connectsOn(part.getPosInMultiblock(), MultiblockOrientation.toTemplateSide(side, facing))
-						? member: null;
-			});
-			event.registerBlockEntity(ECCapabilities.TUBE_MEMBER, PART_BLOCK_ENTITY.get(), (part, side) -> {
-				MultiblockPartBlockEntity master = part.getMaster();
-				if(master==null||!(master.getState() instanceof EraDriveState drive)
-						||drive.getEra()!=ComputerEra.PUNCHCARD)
-					return null;
-				if(side==null||isSameStructure(part, side))
-					return TubeMember.END;
-				Direction facing = part.getBlockState().getValue(MultiblockPartBlock.FACING);
-				return drive.getDrive().geometry().connectsOn(part.getPosInMultiblock(),
-						MultiblockOrientation.toTemplateSide(side, facing))? TubeMember.END: null;
-			});
-		});
+	}
+
+	/** The network member a part of a formed structure is through {@code side}, for {@link MultiblockPartBlock}. */
+	@Nullable
+	public static NetworkMember networkMember(MultiblockPartBlockEntity part, @Nullable Direction side)
+	{
+		MultiblockPartBlockEntity master = part.getMaster();
+		if(master==null)
+			return null;
+		NetworkMember member;
+		EraDriveGeometry geometry;
+		if(master.getState() instanceof EraDriveState drive&&drive.getEra()==ComputerEra.PUNCHCARD)
+			return null;
+		if(master.getState() instanceof EraDriveState drive)
+		{
+			member = drive;
+			geometry = drive.getDrive().geometry();
+		}
+		else if(master.getState() instanceof CraftingComputerState computer)
+		{
+			member = computer;
+			geometry = EraMachine.CRAFTING_COMPUTER.geometry();
+		}
+		else if(master.getState() instanceof DataProcessorState processor)
+		{
+			member = processor;
+			geometry = EraMachine.DATA_PROCESSOR.geometry();
+		}
+		else
+			return null;
+		if(side==null||isSameStructure(part, side))
+			return member;
+		Direction facing = part.getBlockState().getValue(MultiblockPartBlock.FACING);
+		return geometry.connectsOn(part.getPosInMultiblock(), MultiblockOrientation.toTemplateSide(side, facing))
+				? member: null;
+	}
+
+	/** How tubes meet a part of a formed structure through {@code side}: era 1 storage takes carriers at its ports. */
+	@Nullable
+	public static TubeMember tubeMember(MultiblockPartBlockEntity part, @Nullable Direction side)
+	{
+		MultiblockPartBlockEntity master = part.getMaster();
+		if(master==null||!(master.getState() instanceof EraDriveState drive)||drive.getEra()!=ComputerEra.PUNCHCARD)
+			return null;
+		if(side==null||isSameStructure(part, side))
+			return TubeMember.END;
+		Direction facing = part.getBlockState().getValue(MultiblockPartBlock.FACING);
+		return drive.getDrive().geometry().connectsOn(part.getPosInMultiblock(),
+				MultiblockOrientation.toTemplateSide(side, facing))? TubeMember.END: null;
 	}
 
 	private static boolean isSameStructure(MultiblockPartBlockEntity part, Direction side)

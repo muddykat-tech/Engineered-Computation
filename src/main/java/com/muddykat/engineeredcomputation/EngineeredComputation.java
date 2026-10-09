@@ -3,17 +3,21 @@ package com.muddykat.engineeredcomputation;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
-
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.network.ECPayloads;
@@ -22,13 +26,13 @@ import com.muddykat.engineeredcomputation.registration.ECAdapters;
 import com.muddykat.engineeredcomputation.registration.ECBridges;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
-import com.muddykat.engineeredcomputation.registration.ECCrafting;
 import com.muddykat.engineeredcomputation.registration.ECContent;
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
+import com.muddykat.engineeredcomputation.registration.ECCrafting;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
+import com.muddykat.engineeredcomputation.registration.ECSounds;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
 import com.muddykat.engineeredcomputation.storage.ECDataCells;
 
@@ -36,11 +40,11 @@ import com.muddykat.engineeredcomputation.storage.ECDataCells;
 public class EngineeredComputation {
     public static final String MODID = "engineered_computation";
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> ENGINEERED_COMPUTATION_TAB = CREATIVE_MODE_TABS.register(
+    public static final RegistryObject<CreativeModeTab> ENGINEERED_COMPUTATION_TAB = CREATIVE_MODE_TABS.register(
             "engineered_computation_tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.engineered_computation"))
             .withTabsBefore(CreativeModeTabs.COMBAT)
@@ -71,8 +75,9 @@ public class EngineeredComputation {
                 }
             }).build());
 
-    public EngineeredComputation(IEventBus modEventBus, ModContainer modContainer) {
-        modContainer.registerConfig(ModConfig.Type.SERVER, ECConfig.SPEC);
+    public EngineeredComputation(FMLJavaModLoadingContext context) {
+        IEventBus modEventBus = context.getModEventBus();
+        context.registerConfig(ModConfig.Type.SERVER, ECConfig.SPEC);
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
@@ -89,7 +94,6 @@ public class EngineeredComputation {
         ECPneumatics.init();
         ECCatalogue.init();
         ECRegistrationHolder.register(modEventBus);
-        ECDataComponents.register(modEventBus);
         ECMenuTypes.register(modEventBus);
         ECMultiblocks.register(modEventBus);
         ECTerminals.register(modEventBus);
@@ -98,7 +102,10 @@ public class EngineeredComputation {
         ECAdapters.register(modEventBus);
         ECCrafting.register(modEventBus);
         ECPneumatics.register(modEventBus);
+        ECSounds.register(modEventBus);
         ECPayloads.register(modEventBus);
         StorageNetwork.register();
+        if (FMLEnvironment.dist == Dist.CLIENT)
+            EngineeredComputationClient.init(modEventBus, context);
     }
 }

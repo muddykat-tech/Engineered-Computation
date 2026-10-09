@@ -2,8 +2,6 @@ package com.muddykat.engineeredcomputation.network;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.serialization.MapCodec;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -13,10 +11,8 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 
-public class StorageBridgeBlock extends HorizontalDirectionalBlock
+public class StorageBridgeBlock extends HorizontalDirectionalBlock implements NetworkMemberBlock
 {
-	public static final MapCodec<StorageBridgeBlock> CODEC = simpleCodec(StorageBridgeBlock::new);
-
 	public static final NetworkMember NETWORK_MEMBER = new NetworkMember()
 	{
 		@Override
@@ -32,15 +28,16 @@ public class StorageBridgeBlock extends HorizontalDirectionalBlock
 		registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
 	}
 
+	@Override
+	@Nullable
+	public NetworkMember getNetworkMember(Level level, BlockPos pos, BlockState state, @Nullable Direction side)
+	{
+		return connectsOn(state, side)? NETWORK_MEMBER: null;
+	}
+
 	public static boolean connectsOn(BlockState state, @Nullable Direction side)
 	{
 		return side==null||side.getAxis()==state.getValue(FACING).getClockWise().getAxis();
-	}
-
-	@Override
-	protected MapCodec<? extends HorizontalDirectionalBlock> codec()
-	{
-		return CODEC;
 	}
 
 	@Override
@@ -57,7 +54,7 @@ public class StorageBridgeBlock extends HorizontalDirectionalBlock
 	}
 
 	@Override
-	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
+	public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
 	{
 		super.onPlace(state, level, pos, oldState, movedByPiston);
 		if(!oldState.is(state.getBlock()))
@@ -65,7 +62,7 @@ public class StorageBridgeBlock extends HorizontalDirectionalBlock
 	}
 
 	@Override
-	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
+	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
 	{
 		if(!state.is(newState.getBlock()))
 			StorageNetwork.changed(level);

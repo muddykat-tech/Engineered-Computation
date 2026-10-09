@@ -2,11 +2,15 @@ package com.muddykat.engineeredcomputation.catalogue;
 
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -22,10 +26,10 @@ import net.minecraft.world.level.Level;
 
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 
 public class CardDeckItem extends Item
 {
+	private static final String DECK = "card_deck";
 	private static final int BAR_COLOUR = 0x6A8FCF;
 	private static final int LISTED = 6;
 
@@ -44,16 +48,18 @@ public class CardDeckItem extends Item
 
 	public static CardDeck deck(ItemStack stack)
 	{
-		return stack.getItem() instanceof CardDeckItem? stack.getOrDefault(ECDataComponents.CARD_DECK.get(), CardDeck.EMPTY)
-				: CardDeck.EMPTY;
+		CompoundTag tag = stack.getTag();
+		return !(stack.getItem() instanceof CardDeckItem)||tag==null||!tag.contains(DECK)? CardDeck.EMPTY
+				: CardDeck.CODEC.parse(NbtOps.INSTANCE, tag.get(DECK)).result().orElse(CardDeck.EMPTY);
 	}
 
 	public static void setDeck(ItemStack stack, CardDeck deck)
 	{
 		if(deck.isEmpty())
-			stack.remove(ECDataComponents.CARD_DECK.get());
+			stack.removeTagKey(DECK);
 		else
-			stack.set(ECDataComponents.CARD_DECK.get(), deck);
+			CardDeck.CODEC.encodeStart(NbtOps.INSTANCE, deck).result()
+					.ifPresent(encoded -> stack.getOrCreateTag().put(DECK, encoded));
 	}
 
 	private boolean file(ItemStack deckStack, ItemStack cardStack)
@@ -158,7 +164,7 @@ public class CardDeckItem extends Item
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag)
+	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> lines, TooltipFlag flag)
 	{
 		CardDeck deck = deck(stack);
 		lines.add(Component.translatable("tooltip.engineered_computation.card_deck.cards", deck.size(), capacity)

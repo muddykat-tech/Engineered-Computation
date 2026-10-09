@@ -4,7 +4,6 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
@@ -13,14 +12,20 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import net.neoforged.neoforge.client.model.data.ModelProperty;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraft.world.phys.AABB;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelProperty;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
 
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 
 public class MultiblockPartBlockEntity extends BlockEntity implements MultiblockStateHost
 {
+	/** How far a formed structure\'s renderer draws past its master block. */
+	private static final int RENDER_REACH = 5;
 	public static final ModelProperty<BlockPos> MODEL_OFFSET = new ModelProperty<>();
 
 	private static final String POS_TAG = "pos_in_multiblock";
@@ -45,8 +50,6 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 		this.posInMultiblock = posInMultiblock.immutable();
 		this.state = isMaster()? definition.createState(this): null;
 		setChanged();
-		if(level!=null)
-			level.invalidateCapabilities(worldPosition);
 	}
 
 	public MultiblockDefinition<?> getDefinition()
@@ -138,6 +141,24 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 		return master.state.getItemHandler(posInMultiblock, side);
 	}
 
+	@Override
+	public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side)
+	{
+		if(capability==ForgeCapabilities.ITEM_HANDLER)
+		{
+			IItemHandler handler = getItemHandler(side);
+			if(handler!=null)
+				return LazyOptional.of(() -> handler).cast();
+		}
+		return super.getCapability(capability, side);
+	}
+
+	@Override
+	public AABB getRenderBoundingBox()
+	{
+		return isMaster()? new AABB(worldPosition).inflate(RENDER_REACH): new AABB(worldPosition);
+	}
+
 	void tickServer()
 	{
 		if(state!=null)
@@ -145,22 +166,22 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	protected void saveAdditional(CompoundTag tag)
 	{
-		super.saveAdditional(tag, registries);
+		super.saveAdditional(tag);
 		tag.putLong(POS_TAG, posInMultiblock.asLong());
 		if(state!=null)
 		{
 			CompoundTag stateTag = new CompoundTag();
-			state.save(stateTag, registries);
+			state.save(stateTag);
 			tag.put(STATE_TAG, stateTag);
 		}
 	}
 
 	@Override
-	protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
-		super.loadAdditional(tag, registries);
+		super.load(tag);
 		posInMultiblock = BlockPos.of(tag.getLong(POS_TAG));
 		if(tag.contains(SYNC_TAG))
 			clientSyncData = tag.getCompound(SYNC_TAG);
@@ -168,12 +189,12 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 		{
 			if(state==null)
 				state = definition.createState(this);
-			state.load(tag.getCompound(STATE_TAG), registries);
+			state.load(tag.getCompound(STATE_TAG));
 		}
 	}
 
 	@Override
-	public CompoundTag getUpdateTag(HolderLookup.Provider registries)
+	public CompoundTag getUpdateTag()
 	{
 		CompoundTag tag = new CompoundTag();
 		tag.putLong(POS_TAG, posInMultiblock.asLong());
@@ -193,16 +214,16 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 	}
 
 	@Override
-	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider registries)
+	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt)
 	{
-		super.onDataPacket(net, pkt, registries);
+		super.onDataPacket(net, pkt);
 		onClientPositionKnown();
 	}
 
 	@Override
-	public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries)
+	public void handleUpdateTag(CompoundTag tag)
 	{
-		super.handleUpdateTag(tag, registries);
+		super.handleUpdateTag(tag);
 		onClientPositionKnown();
 	}
 

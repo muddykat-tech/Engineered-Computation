@@ -9,26 +9,22 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.catalogue.CardDeck;
 import com.muddykat.engineeredcomputation.catalogue.CardDeckItem;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCard;
-import com.muddykat.engineeredcomputation.era.ComputerEra;
+import com.muddykat.engineeredcomputation.crafting.Pattern;
 import com.muddykat.engineeredcomputation.gametest.TestCategory;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.storage.CellContents;
-import com.muddykat.engineeredcomputation.storage.CellInventory;
-import com.muddykat.engineeredcomputation.storage.ECDataCells;
-import com.muddykat.engineeredcomputation.storage.ItemKey;
 
 @TestCategory({"storage", "recipes"})
 @GameTestHolder(EngineeredComputation.MODID)
@@ -41,10 +37,10 @@ public final class CellRecipeGameTests
 
 	private static ItemStack craft(ServerLevel level, int width, int height, List<ItemStack> stacks)
 	{
-		CraftingInput input = CraftingInput.of(width, height, stacks);
-		Optional<RecipeHolder<CraftingRecipe>> recipe =
+		CraftingContainer input = Pattern.craftingGrid(width, height, stacks);
+		Optional<CraftingRecipe> recipe =
 				level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
-		return recipe.isPresent()? recipe.get().value().assemble(input, level.registryAccess()): ItemStack.EMPTY;
+		return recipe.isPresent()? recipe.get().assemble(input, level.registryAccess()): ItemStack.EMPTY;
 	}
 
 	@GameTest(template = StorageGameTests.TEMPLATE)

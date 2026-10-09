@@ -21,9 +21,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
+import com.muddykat.engineeredcomputation.network.ECPayloads;
 
 public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMenu>
 {
@@ -76,12 +76,13 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 
 	private void send(ProgramEditPayload.Action action, String text)
 	{
-		PacketDistributor.sendToServer(new ProgramEditPayload(menu.containerId, selected, action, text));
+		ECPayloads.sendToServer(new ProgramEditPayload(menu.containerId, selected, action, text));
 	}
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
 	{
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		renderSuggestions(graphics, mouseX, mouseY);
 		int entry = entryAt(mouseX, mouseY);

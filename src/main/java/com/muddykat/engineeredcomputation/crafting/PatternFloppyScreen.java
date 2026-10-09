@@ -24,9 +24,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
+import com.muddykat.engineeredcomputation.network.ECPayloads;
 
 public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMenu>
 {
@@ -82,7 +82,7 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 
 	private void send(PatternEditPayload.Action action, int slot, int amount)
 	{
-		PacketDistributor.sendToServer(new PatternEditPayload(menu.containerId, action, slot, amount));
+		ECPayloads.sendToServer(new PatternEditPayload(menu.containerId, action, slot, amount));
 	}
 
 	private void select(int slot)
@@ -105,7 +105,7 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 	private void applyTag()
 	{
 		if(selected>=0&&!tag.getValue().isBlank())
-			PacketDistributor.sendToServer(new PatternEditPayload(menu.containerId, PatternEditPayload.Action.SET_TAG,
+			ECPayloads.sendToServer(new PatternEditPayload(menu.containerId, PatternEditPayload.Action.SET_TAG,
 					selected, 0, tag.getValue()));
 		tag.setFocused(false);
 	}
@@ -116,6 +116,7 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 		tag.visible = !isDirect();
 		if(isDirect())
 			selected = -1;
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		renderSuggestions(graphics, mouseX, mouseY);
 		int slot = slotAt(mouseX, mouseY);
@@ -400,7 +401,7 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY)
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollY)
 	{
 		int slot = slotAt(mouseX, mouseY);
 		if(slot>=0&&!isDirect()&&scrollY!=0)
@@ -408,7 +409,7 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 			send(PatternEditPayload.Action.ADJUST, slot, (int)Math.signum(scrollY)*(hasShiftDown()? 10: 1));
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+		return super.mouseScrolled(mouseX, mouseY, scrollY);
 	}
 
 	private boolean click(PatternEditPayload.Action action, int slot, int amount)

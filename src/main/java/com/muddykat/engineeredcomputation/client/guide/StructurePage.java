@@ -134,10 +134,10 @@ final class StructurePage implements GuidePage
 	private static void quad(VertexConsumer consumer, PoseStack.Pose pose, float x0, float y0, float x1, float y1,
 			float z, int red, int green, int blue, int alpha)
 	{
-		consumer.addVertex(pose, x0, y0, z).setColor(red, green, blue, alpha);
-		consumer.addVertex(pose, x1, y0, z).setColor(red, green, blue, alpha);
-		consumer.addVertex(pose, x1, y1, z).setColor(red, green, blue, alpha);
-		consumer.addVertex(pose, x0, y1, z).setColor(red, green, blue, alpha);
+		consumer.vertex(pose.pose(), x0, y0, z).color(red, green, blue, alpha).endVertex();
+		consumer.vertex(pose.pose(), x1, y0, z).color(red, green, blue, alpha).endVertex();
+		consumer.vertex(pose.pose(), x1, y1, z).color(red, green, blue, alpha).endVertex();
+		consumer.vertex(pose.pose(), x0, y1, z).color(red, green, blue, alpha).endVertex();
 	}
 
 	@Override

@@ -2,7 +2,7 @@ package com.muddykat.engineeredcomputation.network;
 
 import java.util.Map;
 
-import com.mojang.serialization.MapCodec;
+import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -21,9 +21,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
 
-public class NetworkCableBlock extends Block
+public class NetworkCableBlock extends Block implements NetworkMemberBlock
 {
-	public static final MapCodec<NetworkCableBlock> CODEC = simpleCodec(NetworkCableBlock::new);
 	public static final Map<Direction, BooleanProperty> CONNECTIONS = PipeBlock.PROPERTY_BY_DIRECTION;
 
 	public static final NetworkMember NETWORK_MEMBER = new NetworkMember()
@@ -56,9 +55,10 @@ public class NetworkCableBlock extends Block
 	}
 
 	@Override
-	protected MapCodec<? extends Block> codec()
+	@Nullable
+	public NetworkMember getNetworkMember(Level level, BlockPos pos, BlockState state, @Nullable Direction side)
 	{
-		return CODEC;
+		return NETWORK_MEMBER;
 	}
 
 	@Override
@@ -78,7 +78,7 @@ public class NetworkCableBlock extends Block
 	}
 
 	@Override
-	protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+	public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
 			LevelAccessor level, BlockPos pos, BlockPos neighborPos)
 	{
 		if(level instanceof Level fullLevel)
@@ -87,7 +87,7 @@ public class NetworkCableBlock extends Block
 	}
 
 	@Override
-	protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
+	public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
 	{
 		return SHAPES[shapeIndex(state)];
 	}
@@ -97,7 +97,7 @@ public class NetworkCableBlock extends Block
 		BlockState state = level.getBlockState(neighbor);
 		if(state.getBlock() instanceof DataAdapterBlock)
 			return state.getValue(DataAdapterBlock.FACING)==towards;
-		return level.getCapability(ECCapabilities.NETWORK_MEMBER, neighbor, towards.getOpposite())!=null;
+		return NetworkMemberBlock.at(level, neighbor, towards.getOpposite())!=null;
 	}
 
 	private static int shapeIndex(BlockState state)
@@ -123,7 +123,7 @@ public class NetworkCableBlock extends Block
 	}
 
 	@Override
-	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
+	public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
 	{
 		super.onPlace(state, level, pos, oldState, movedByPiston);
 		if(!oldState.is(state.getBlock()))
@@ -131,7 +131,7 @@ public class NetworkCableBlock extends Block
 	}
 
 	@Override
-	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
+	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
 	{
 		if(!state.is(newState.getBlock()))
 			StorageNetwork.changed(level);

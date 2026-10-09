@@ -2,15 +2,12 @@ package com.muddykat.engineeredcomputation.terminal;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.serialization.MapCodec;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -23,8 +20,6 @@ import com.muddykat.engineeredcomputation.storage.EraDataCell;
 
 public class FloppyTerminalBlock extends CraftingTerminalBlock
 {
-	public static final MapCodec<FloppyTerminalBlock> CODEC = simpleCodec(FloppyTerminalBlock::new);
-
 	private static final double BAYS_TOP = 5/16.0;
 	private static final double BAYS_FRONT = 1.5/16.0;
 	private static final double BAYS_SPLIT = 8/16.0;
@@ -32,12 +27,6 @@ public class FloppyTerminalBlock extends CraftingTerminalBlock
 	public FloppyTerminalBlock(Properties properties)
 	{
 		super(ComputerEra.FLOPPY, properties);
-	}
-
-	@Override
-	protected MapCodec<? extends HorizontalDirectionalBlock> codec()
-	{
-		return CODEC;
 	}
 
 	@Nullable
@@ -48,9 +37,11 @@ public class FloppyTerminalBlock extends CraftingTerminalBlock
 	}
 
 	@Override
-	protected InteractionResult useWithoutItem(
-			BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult)
+	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
+			BlockHitResult hitResult)
 	{
+		if(hand!=InteractionHand.MAIN_HAND)
+			return InteractionResult.PASS;
 		int bay = bayAt(state, pos, hitResult.getLocation());
 		if(bay>=0&&player.isSecondaryUseActive()&&level.getBlockEntity(pos) instanceof TerminalDiskBlockEntity bays
 				&&!bays.getDisks().getStackInSlot(bay).isEmpty())
@@ -65,7 +56,7 @@ public class FloppyTerminalBlock extends CraftingTerminalBlock
 				EraDriveMenu.openTerminalDisks(serverPlayer, pos, getName(), bays.getDisks());
 			return InteractionResult.sidedSuccess(level.isClientSide);
 		}
-		return super.useWithoutItem(state, level, pos, player, hitResult);
+		return super.use(state, level, pos, player, hand, hitResult);
 	}
 
 	public static InteractionResult insertIntoBay(Level level, BlockPos pos, Player player, InteractionHand hand,
@@ -100,7 +91,7 @@ public class FloppyTerminalBlock extends CraftingTerminalBlock
 	}
 
 	@Override
-	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
+	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
 	{
 		if(!state.is(newState.getBlock())&&level.getBlockEntity(pos) instanceof TerminalDiskBlockEntity bays)
 			bays.dropDisks(level, pos);

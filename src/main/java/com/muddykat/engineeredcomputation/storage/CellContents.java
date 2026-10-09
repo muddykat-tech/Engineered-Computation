@@ -5,10 +5,8 @@ import java.util.Map;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.network.FriendlyByteBuf;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 
 public record CellContents(List<Entry> entries)
 {
@@ -16,12 +14,20 @@ public record CellContents(List<Entry> entries)
 
 	public static final Codec<CellContents> CODEC =
 			Entry.CODEC.listOf().xmap(CellContents::new, CellContents::entries);
-	public static final StreamCodec<RegistryFriendlyByteBuf, CellContents> STREAM_CODEC =
-			Entry.STREAM_CODEC.apply(ByteBufCodecs.list()).map(CellContents::new, CellContents::entries);
 
 	public CellContents
 	{
 		entries = List.copyOf(entries);
+	}
+
+	public static CellContents read(FriendlyByteBuf buf)
+	{
+		return new CellContents(buf.readList(Entry::read));
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		buf.writeCollection(entries, (out, entry) -> entry.write(out));
 	}
 
 	public static CellContents of(Map<ItemKey, Long> amounts)
@@ -52,9 +58,15 @@ public record CellContents(List<Entry> entries)
 				Codec.LONG.fieldOf("count").forGetter(Entry::count)
 		).apply(instance, Entry::new));
 
-		public static final StreamCodec<RegistryFriendlyByteBuf, Entry> STREAM_CODEC = StreamCodec.composite(
-				ItemKey.STREAM_CODEC, Entry::key,
-				ByteBufCodecs.VAR_LONG, Entry::count,
-				Entry::new);
+		public static Entry read(FriendlyByteBuf buf)
+		{
+			return new Entry(ItemKey.read(buf), buf.readVarLong());
+		}
+
+		public void write(FriendlyByteBuf buf)
+		{
+			key.write(buf);
+			buf.writeVarLong(count);
+		}
 	}
 }

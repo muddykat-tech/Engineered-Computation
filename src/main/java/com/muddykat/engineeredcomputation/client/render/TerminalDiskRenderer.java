@@ -6,7 +6,6 @@ import java.util.stream.Stream;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Sheets;
@@ -14,11 +13,10 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BlockModelRotation;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.neoforged.neoforge.registries.DeferredItem;
+import net.minecraftforge.registries.RegistryObject;
 
 import com.muddykat.engineeredcomputation.storage.CellStatus;
 import com.muddykat.engineeredcomputation.storage.ECDataCells;
@@ -39,9 +37,9 @@ public class TerminalDiskRenderer implements BlockEntityRenderer<TerminalDiskBlo
 	{
 	}
 
-	public static List<ModelResourceLocation> models()
+	public static List<ResourceLocation> models()
 	{
-		return Stream.concat(DISKS.stream(), Stream.of(LIGHT)).map(ModelResourceLocation::standalone).toList();
+		return Stream.concat(DISKS.stream(), Stream.of(LIGHT)).toList();
 	}
 
 	@Override
@@ -66,18 +64,18 @@ public class TerminalDiskRenderer implements BlockEntityRenderer<TerminalDiskBlo
 		for(int slot = 0; slot<TerminalDiskBlockEntity.SLOTS; slot++)
 		{
 			pose.pushPose();
-			pose.mulPose(BlockModelRotation.by(0, rotation).getRotation().blockCenterToCorner().getMatrix());
+			pose.mulPoseMatrix(BlockModelRotation.by(0, rotation).getRotation().blockCenterToCorner().getMatrix());
 			pose.translate(BAY_STEP*slot, 0, 0);
 			CellStatus status = CellStatus.of(bays.getDisks().getStackInSlot(slot));
 			int colour = FloppyBays.lightColour(status);
 			for(BakedQuad quad : light)
 				buffer.putBulkData(pose.last(), quad, (colour>>16&0xFF)/255F, (colour>>8&0xFF)/255F,
-						(colour&0xFF)/255F, 1, FloppyBays.lightLevel(status, packedLight), packedOverlay);
+						(colour&0xFF)/255F, 1, FloppyBays.lightLevel(status, packedLight), packedOverlay, false);
 			if(out[slot]!=FloppyBays.HIDDEN)
 			{
 				pose.translate(0, 0, SLIDE*out[slot]);
 				for(BakedQuad quad : quads(DISKS.get(tiers[slot])))
-					buffer.putBulkData(pose.last(), quad, 1, 1, 1, 1, packedLight, packedOverlay);
+					buffer.putBulkData(pose.last(), quad, 1, 1, 1, 1, packedLight, packedOverlay, false);
 			}
 			pose.popPose();
 		}
@@ -85,7 +83,7 @@ public class TerminalDiskRenderer implements BlockEntityRenderer<TerminalDiskBlo
 
 	private static int tierOf(ItemStack stack)
 	{
-		List<DeferredItem<EraDataCell>> disks = ECDataCells.terminalDisks();
+		List<RegistryObject<EraDataCell>> disks = ECDataCells.terminalDisks();
 		for(int tier = 0; tier<disks.size(); tier++)
 			if(stack.is(disks.get(tier).get()))
 				return tier;
@@ -95,6 +93,6 @@ public class TerminalDiskRenderer implements BlockEntityRenderer<TerminalDiskBlo
 	private static List<BakedQuad> quads(ResourceLocation model)
 	{
 		return DriveRenderer.allQuads(Minecraft.getInstance().getModelManager().getModel(
-				ModelResourceLocation.standalone(model)));
+				model));
 	}
 }

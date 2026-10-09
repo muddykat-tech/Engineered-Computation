@@ -1,11 +1,9 @@
 package com.muddykat.engineeredcomputation.crafting;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.minecraft.network.FriendlyByteBuf;
 
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
@@ -14,23 +12,38 @@ public record OrderView(OrderTarget target, long amount, StatusCode status, floa
 {
 	public static final int MAX_NODES = 64;
 
-	public static final StreamCodec<RegistryFriendlyByteBuf, OrderView> STREAM_CODEC = StreamCodec.composite(
-			OrderTarget.STREAM_CODEC, OrderView::target,
-			ByteBufCodecs.VAR_LONG, OrderView::amount,
-			NeoForgeStreamCodecs.enumCodec(StatusCode.class), OrderView::status,
-			ByteBufCodecs.FLOAT, OrderView::progress,
-			Node.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_NODES)), OrderView::tree,
-			OrderView::new);
+	public static OrderView read(FriendlyByteBuf buf)
+	{
+		return new OrderView(OrderTarget.read(buf), buf.readVarLong(), buf.readEnum(StatusCode.class), buf.readFloat(),
+				buf.readCollection(FriendlyByteBuf.limitValue(ArrayList::new, MAX_NODES), Node::read));
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		target.write(buf);
+		buf.writeVarLong(amount);
+		buf.writeEnum(status);
+		buf.writeFloat(progress);
+		buf.writeCollection(tree, (out, node) -> node.write(out));
+	}
 
 	public record Node(int depth, ItemKey item, long amount, boolean crafted, boolean machine, float progress)
 	{
-		public static final StreamCodec<RegistryFriendlyByteBuf, Node> STREAM_CODEC = StreamCodec.composite(
-				ByteBufCodecs.VAR_INT, Node::depth,
-				ItemKey.STREAM_CODEC, Node::item,
-				ByteBufCodecs.VAR_LONG, Node::amount,
-				ByteBufCodecs.BOOL, Node::crafted,
-				ByteBufCodecs.BOOL, Node::machine,
-				ByteBufCodecs.FLOAT, Node::progress,
-				Node::new);
+		public static Node read(FriendlyByteBuf buf)
+		{
+			return new Node(buf.readVarInt(), ItemKey.read(buf), buf.readVarLong(), buf.readBoolean(),
+					buf.readBoolean(),
+					buf.readFloat());
+		}
+
+		public void write(FriendlyByteBuf buf)
+		{
+			buf.writeVarInt(depth);
+			item.write(buf);
+			buf.writeVarLong(amount);
+			buf.writeBoolean(crafted);
+			buf.writeBoolean(machine);
+			buf.writeFloat(progress);
+		}
 	}
 }

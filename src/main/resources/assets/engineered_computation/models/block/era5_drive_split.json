@@ -4,7 +4,7 @@
   "render_type": "minecraft:cutout",
   "inner_model": {
     "parent": "minecraft:block/block",
-    "loader": "neoforge:obj",
+    "loader": "forge:obj",
     "model": "engineered_computation:models/block/multiblocks/era5_floppy_workstation_double_sided.obj",
     "flip_v": true,
     "automatic_culling": false,

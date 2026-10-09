@@ -8,7 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -22,10 +23,11 @@ import net.minecraft.world.level.Level;
 
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlockEntity;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 
 public class CatalogueCardItem extends Item
 {
+	private static final String CARD = "catalogue_card";
+
 	public CatalogueCardItem(Properties properties)
 	{
 		super(properties);
@@ -34,15 +36,23 @@ public class CatalogueCardItem extends Item
 	@Nullable
 	public static CatalogueCard card(ItemStack stack)
 	{
-		return stack.getItem() instanceof CatalogueCardItem? stack.get(ECDataComponents.CATALOGUE_CARD.get()): null;
+		CompoundTag tag = stack.getTag();
+		return !(stack.getItem() instanceof CatalogueCardItem)||tag==null||!tag.contains(CARD)? null
+				: CatalogueCard.CODEC.parse(NbtOps.INSTANCE, tag.get(CARD)).result().orElse(null);
 	}
 
 	public static ItemStack punched(CatalogueCard card)
 	{
 		ItemStack stack = new ItemStack(ECCatalogue.CARD.get());
-		stack.set(ECDataComponents.CATALOGUE_CARD.get(), card);
-		stack.set(DataComponents.MAX_STACK_SIZE, 1);
+		CatalogueCard.CODEC.encodeStart(NbtOps.INSTANCE, card).result()
+				.ifPresent(encoded -> stack.getOrCreateTag().put(CARD, encoded));
 		return stack;
+	}
+
+	@Override
+	public int getMaxStackSize(ItemStack stack)
+	{
+		return card(stack)!=null? 1: super.getMaxStackSize(stack);
 	}
 
 	@Override
@@ -58,7 +68,8 @@ public class CatalogueCardItem extends Item
 		ItemStack punched = punched(new CatalogueCard(GlobalPos.of(level.dimension(), pos.immutable()), station.label(),
 				station.tally(), level.getGameTime()));
 		Player player = context.getPlayer();
-		held.consume(1, player);
+		if(player==null||!player.getAbilities().instabuild)
+			held.shrink(1);
 		if(player==null)
 			return InteractionResult.CONSUME;
 		if(!player.getInventory().add(punched))
@@ -68,7 +79,7 @@ public class CatalogueCardItem extends Item
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag)
+	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> lines, TooltipFlag flag)
 	{
 		CatalogueCard card = card(stack);
 		if(card==null)

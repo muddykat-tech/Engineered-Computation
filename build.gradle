@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.144'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.147'
     id 'idea'
 }
 
@@ -28,7 +28,7 @@ sourceSets.main.resources {
 }
 
 // Game tests (src/gametest) and their structure templates. Loaded into every dev run as part of the mod - see
-// neoForge.mods below - but never packaged into the mod jar.
+// legacyForge.mods below - but never packaged into the mod jar.
 sourceSets {
     gametest {
         compileClasspath += sourceSets.main.output
@@ -44,15 +44,16 @@ repositories {
 }
 
 base {
-    archivesName = mod_id
+    // The Minecraft version in the name keeps this build apart from the 1.21.1 one (main branch).
+    archivesName = "${mod_id}-${minecraft_version}"
 }
 
-// Mojang ships Java 21 to end users in 1.21.1, so mods should target Java 21.
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+// Mojang ships Java 17 to end users in 1.20.1, so mods should target Java 17.
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-neoForge {
-    // Specify the version of NeoForge to use.
-    version = project.neo_version
+legacyForge {
+    // Specify the version of Forge to use.
+    version = "${project.minecraft_version}-${project.forge_version}"
 
     parchment {
         mappingsVersion = project.parchment_mappings_version
@@ -68,20 +69,20 @@ neoForge {
         client {
             client()
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
         }
 
         server {
             server()
             programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
         }
         // This run config launches GameTestServer and runs all registered gametests, then exits.
         // By default, the server will crash when no gametests are provided.
         // The gametest system is also enabled by default for other run configs under the /test command.
         gameTestServer {
             type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
             // Only some categories of tests: ./gradlew runGameTestServer -Ptests=crafting,network (see the gametest
             // source set's TestCategories). Without -Ptests, every test runs.
             systemProperty 'ec.tests', (project.findProperty('tests') ?: '').toString()
@@ -125,7 +126,7 @@ neoForge {
     }
 }
 
-neoForge.addModdingDependenciesTo(sourceSets.gametest)
+legacyForge.addModdingDependenciesTo(sourceSets.gametest)
 
 // Sets up a dependency configuration called 'localRuntime'.
 // This configuration should be used instead of 'runtimeOnly' to declare
@@ -165,7 +166,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
+            forge_version          : forge_version,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
@@ -181,7 +182,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
 // this works with both building through Gradle and the IDE.
 sourceSets.main.resources.srcDir generateModMetadata
 // To avoid having to run "generateModMetadata" manually, make it run on every project reload
-neoForge.ideSyncTask generateModMetadata
+legacyForge.ideSyncTask generateModMetadata
 
 // Example configuration to allow publishing using the maven-publish plugin
 publishing {
@@ -199,6 +200,7 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+    options.compilerArgs += ['-Xmaxerrs', '10000']
 }
 
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.

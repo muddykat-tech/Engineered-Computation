@@ -2,46 +2,38 @@ package com.muddykat.engineeredcomputation.crafting;
 
 import java.util.Optional;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 
-import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
 
 public record OrderRequestPayload(int containerId, ItemKey target, long amount, boolean place,
 		Optional<PatternOffer.Choice> offer)
-		implements CustomPacketPayload
 {
-	public static final Type<OrderRequestPayload> TYPE = new Type<>(
-			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "order_request"));
+	public void encode(FriendlyByteBuf buf)
+	{
+		buf.writeVarInt(containerId);
+		target.write(buf);
+		buf.writeVarLong(amount);
+		buf.writeBoolean(place);
+		buf.writeOptional(offer, (out, value) -> value.write(out));
+	}
 
-	public static final StreamCodec<RegistryFriendlyByteBuf, OrderRequestPayload> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.VAR_INT, OrderRequestPayload::containerId,
-			ItemKey.STREAM_CODEC, OrderRequestPayload::target,
-			ByteBufCodecs.VAR_LONG, OrderRequestPayload::amount,
-			ByteBufCodecs.BOOL, OrderRequestPayload::place,
-			ByteBufCodecs.optional(PatternOffer.Choice.STREAM_CODEC), OrderRequestPayload::offer,
-			OrderRequestPayload::new);
+	public static OrderRequestPayload decode(FriendlyByteBuf buf)
+	{
+		return new OrderRequestPayload(buf.readVarInt(), ItemKey.read(buf), buf.readVarLong(), buf.readBoolean(),
+				buf.readOptional(PatternOffer.Choice::read));
+	}
 
 	public OrderRequestPayload(int containerId, ItemKey target, long amount, boolean place)
 	{
 		this(containerId, target, amount, place, Optional.empty());
 	}
 
-	@Override
-	public Type<OrderRequestPayload> type()
+	public static void handle(OrderRequestPayload payload, Player player)
 	{
-		return TYPE;
-	}
-
-	public static void handle(OrderRequestPayload payload, IPayloadContext context)
-	{
-		if(context.player().containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
+		if(player.containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
 			menu.handleOrderRequest(payload.target(), payload.amount(), payload.place(), payload.offer());
 	}
 }

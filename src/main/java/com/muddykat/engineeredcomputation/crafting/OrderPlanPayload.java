@@ -1,56 +1,57 @@
 package com.muddykat.engineeredcomputation.crafting;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 
-import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
 
 public record OrderPlanPayload(int containerId, ItemKey target, long amount, List<Line> lines, StatusCode status,
-		boolean placed) implements CustomPacketPayload
+		boolean placed)
 {
 	public static final int MAX_LINES = 64;
 
-	public static final Type<OrderPlanPayload> TYPE = new Type<>(
-			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "order_plan"));
+	public void encode(FriendlyByteBuf buf)
+	{
+		buf.writeVarInt(containerId);
+		target.write(buf);
+		buf.writeVarLong(amount);
+		buf.writeCollection(lines, (out, line) -> line.write(out));
+		buf.writeEnum(status);
+		buf.writeBoolean(placed);
+	}
 
-	public static final StreamCodec<RegistryFriendlyByteBuf, OrderPlanPayload> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.VAR_INT, OrderPlanPayload::containerId,
-			ItemKey.STREAM_CODEC, OrderPlanPayload::target,
-			ByteBufCodecs.VAR_LONG, OrderPlanPayload::amount,
-			Line.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LINES)), OrderPlanPayload::lines,
-			NeoForgeStreamCodecs.enumCodec(StatusCode.class), OrderPlanPayload::status,
-			ByteBufCodecs.BOOL, OrderPlanPayload::placed,
-			OrderPlanPayload::new);
+	public static OrderPlanPayload decode(FriendlyByteBuf buf)
+	{
+		return new OrderPlanPayload(buf.readVarInt(), ItemKey.read(buf), buf.readVarLong(),
+				buf.readCollection(FriendlyByteBuf.limitValue(ArrayList::new, MAX_LINES), Line::read),
+						buf.readEnum(StatusCode.class),
+				buf.readBoolean());
+	}
 
 	public record Line(ItemKey item, long fromStorage, long crafted, long missing)
 	{
-		public static final StreamCodec<RegistryFriendlyByteBuf, Line> STREAM_CODEC = StreamCodec.composite(
-				ItemKey.STREAM_CODEC, Line::item,
-				ByteBufCodecs.VAR_LONG, Line::fromStorage,
-				ByteBufCodecs.VAR_LONG, Line::crafted,
-				ByteBufCodecs.VAR_LONG, Line::missing,
-				Line::new);
+		public void write(FriendlyByteBuf buf)
+		{
+			item.write(buf);
+			buf.writeVarLong(fromStorage);
+			buf.writeVarLong(crafted);
+			buf.writeVarLong(missing);
+		}
+
+		public static Line read(FriendlyByteBuf buf)
+		{
+			return new Line(ItemKey.read(buf), buf.readVarLong(), buf.readVarLong(), buf.readVarLong());
+		}
 	}
 
-	@Override
-	public Type<OrderPlanPayload> type()
+	public static void handle(OrderPlanPayload payload, Player player)
 	{
-		return TYPE;
-	}
-
-	public static void handle(OrderPlanPayload payload, IPayloadContext context)
-	{
-		if(context.player().containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
+		if(player.containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
 			menu.applyPlan(payload);
 	}
 }

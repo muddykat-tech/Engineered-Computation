@@ -1,37 +1,29 @@
 package com.muddykat.engineeredcomputation.crafting;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 
-import com.muddykat.engineeredcomputation.EngineeredComputation;
-
-public record CraftingComputerPayload(int containerId, List<OrderView> orders) implements CustomPacketPayload
+public record CraftingComputerPayload(int containerId, List<OrderView> orders)
 {
-	public static final Type<CraftingComputerPayload> TYPE = new Type<>(
-			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "crafting_computer"));
-
-	public static final StreamCodec<RegistryFriendlyByteBuf, CraftingComputerPayload> STREAM_CODEC =
-			StreamCodec.composite(
-					ByteBufCodecs.VAR_INT, CraftingComputerPayload::containerId,
-					OrderView.STREAM_CODEC.apply(ByteBufCodecs.list(CraftingComputerState.MAX_ORDERS)),
-					CraftingComputerPayload::orders,
-					CraftingComputerPayload::new);
-
-	@Override
-	public Type<CraftingComputerPayload> type()
+	public void encode(FriendlyByteBuf buf)
 	{
-		return TYPE;
+		buf.writeVarInt(containerId);
+		buf.writeCollection(orders, (out, order) -> order.write(out));
 	}
 
-	public static void handle(CraftingComputerPayload payload, IPayloadContext context)
+	public static CraftingComputerPayload decode(FriendlyByteBuf buf)
 	{
-		if(context.player().containerMenu instanceof CraftingComputerMenu menu&&menu.containerId==payload.containerId())
+		return new CraftingComputerPayload(buf.readVarInt(),
+				buf.readCollection(FriendlyByteBuf.limitValue(ArrayList::new, CraftingComputerState.MAX_ORDERS),
+						OrderView::read));
+	}
+
+	public static void handle(CraftingComputerPayload payload, Player player)
+	{
+		if(player.containerMenu instanceof CraftingComputerMenu menu&&menu.containerId==payload.containerId())
 			menu.applyOrders(payload.orders());
 	}
 }

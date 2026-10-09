@@ -16,7 +16,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.Level;
 
@@ -36,7 +35,7 @@ final class RecipePage implements GuidePage
 	}
 
 	@Nullable
-	static RecipeHolder<?> lookUp(ResourceLocation id)
+	static Recipe<?> lookUp(ResourceLocation id)
 	{
 		Level level = Minecraft.getInstance().level;
 		return level==null? null: level.getRecipeManager().byKey(id).orElse(null);
@@ -44,23 +43,22 @@ final class RecipePage implements GuidePage
 
 	static ItemStack result(ResourceLocation id)
 	{
-		RecipeHolder<?> holder = lookUp(id);
+		Recipe<?> recipe = lookUp(id);
 		Level level = Minecraft.getInstance().level;
-		return holder==null||level==null? ItemStack.EMPTY: holder.value().getResultItem(level.registryAccess());
+		return recipe==null||level==null? ItemStack.EMPTY: recipe.getResultItem(level.registryAccess());
 	}
 
 	@Override
 	public void render(GuideScreen screen, GuiGraphics graphics, int x, int y, int mouseX, int mouseY, float partialTick)
 	{
-		RecipeHolder<?> holder = lookUp(recipe);
+		Recipe<?> value = lookUp(recipe);
 		Level level = Minecraft.getInstance().level;
-		if(holder==null||level==null)
+		if(value==null||level==null)
 		{
 			graphics.drawString(screen.font(), Component.translatable("guide.engineered_computation.recipe_missing"),
 					x, y, screen.textColour(), false);
 			return;
 		}
-		Recipe<?> value = holder.value();
 		ItemStack result = value.getResultItem(level.registryAccess());
 
 		List<FormattedCharSequence> title = screen.font().split(result.getHoverName().copy()

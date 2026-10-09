@@ -5,10 +5,6 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -33,7 +29,7 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 
 import com.muddykat.engineeredcomputation.network.CoveredCableBlock;
 import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
@@ -41,11 +37,6 @@ import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 
 public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 {
-	public static final MapCodec<CoveredTubeBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-			Codec.BOOL.fieldOf("clear").forGetter(CoveredTubeBlock::isClear),
-			propertiesCodec()
-	).apply(instance, CoveredTubeBlock::new));
-
 	private final boolean clear;
 
 	public CoveredTubeBlock(boolean clear, Properties properties)
@@ -59,12 +50,6 @@ public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 		return clear;
 	}
 
-	@Override
-	protected MapCodec<? extends Block> codec()
-	{
-		return CODEC;
-	}
-
 	@Nullable
 	@Override
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
@@ -73,25 +58,25 @@ public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 	}
 
 	@Override
-	protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
+	public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
 	{
 		return Shapes.block();
 	}
 
 	@Override
-	protected boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos)
+	public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos)
 	{
 		return clear;
 	}
 
 	@Override
-	protected float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos)
+	public float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos)
 	{
 		return clear? 1: super.getShadeBrightness(state, level, pos);
 	}
 
 	@Override
-	protected VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
+	public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
 	{
 		return clear? Shapes.empty(): super.getVisualShape(state, level, pos, context);
 	}
@@ -104,7 +89,7 @@ public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 	}
 
 	@Override
-	public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state)
+	public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state)
 	{
 		BlockState cover = coverAt(level, pos);
 		return cover.isAir()? super.getCloneItemStack(level, pos, state): new ItemStack(cover.getBlock());
@@ -124,7 +109,7 @@ public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 	}
 
 	@Override
-	protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params)
+	public List<ItemStack> getDrops(BlockState state, LootParams.Builder params)
 	{
 		List<ItemStack> drops = new ArrayList<>(super.getDrops(state, params));
 		if(params.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof CoveredCableBlockEntity covered
@@ -193,7 +178,8 @@ public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 			SoundType sound = cover.getSoundType(level, pos, player);
 			level.playSound(null, pos, sound.getPlaceSound(), SoundSource.BLOCKS, (sound.getVolume()+1)/2,
 					sound.getPitch()*0.8F);
-			stack.consume(1, player);
+			if(!player.getAbilities().instabuild)
+				stack.shrink(1);
 		}
 		event.setCanceled(true);
 		event.setCancellationResult(InteractionResult.sidedSuccess(level.isClientSide));

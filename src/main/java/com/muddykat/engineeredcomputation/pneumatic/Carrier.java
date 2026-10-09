@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
@@ -92,10 +91,10 @@ public final class Carrier
 		return (int)Math.min(lastIndex(), Math.max(0, now-launched)/TICKS_PER_BLOCK);
 	}
 
-	CompoundTag save(HolderLookup.Provider registries)
+	CompoundTag save()
 	{
 		CompoundTag tag = new CompoundTag();
-		tag.put("items", items.saveOptional(registries));
+		tag.put("items", items.save(new CompoundTag()));
 		tag.putLongArray("path", path);
 		tag.putLong("launched", launched);
 		tag.putInt("passed", passed);
@@ -103,9 +102,9 @@ public final class Carrier
 		return tag;
 	}
 
-	static Carrier load(CompoundTag tag, HolderLookup.Provider registries)
+	static Carrier load(CompoundTag tag)
 	{
-		return new Carrier(tag.getLong("id"), ItemStack.parseOptional(registries, tag.getCompound("items")),
+		return new Carrier(tag.getLong("id"), ItemStack.of(tag.getCompound("items")),
 				tag.getLongArray("path"),
 				tag.getLong("launched"), tag.getInt("passed"));
 	}

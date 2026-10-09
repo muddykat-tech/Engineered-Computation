@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,9 +25,9 @@ import net.minecraft.world.inventory.DispenserMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.wrapper.InvWrapper;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.wrapper.InvWrapper;
 
 import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.EngineeredComputation;
@@ -101,10 +101,10 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 		return new ItemStackHandler(drive.slots())
 		{
 			@Override
-			public void deserializeNBT(HolderLookup.Provider registries, CompoundTag tag)
+			public void deserializeNBT(CompoundTag tag)
 			{
 				ItemStackHandler saved = new ItemStackHandler();
-				saved.deserializeNBT(registries, tag);
+				saved.deserializeNBT(tag);
 				for(int i = 0; i<getSlots(); i++)
 					stacks.set(i, i<saved.getSlots()? saved.getStackInSlot(i): ItemStack.EMPTY);
 				for(int i = getSlots(); i<saved.getSlots(); i++)
@@ -347,23 +347,33 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 	}
 
 	@Override
-	public void save(CompoundTag tag, HolderLookup.Provider registries)
+	public void save(CompoundTag tag)
 	{
-		tag.put("cells", cellSlots.serializeNBT(registries));
+		tag.put("cells", cellSlots.serializeNBT());
 		if(storageBay!=null)
-			tag.put("storage_bay", ContainerHelper.saveAllItems(new CompoundTag(), storageBay.getItems(), registries));
+		{
+			NonNullList<ItemStack> items = NonNullList.withSize(storageBay.getContainerSize(), ItemStack.EMPTY);
+			for(int slot = 0; slot<items.size(); slot++)
+				items.set(slot, storageBay.getItem(slot));
+			tag.put("storage_bay", ContainerHelper.saveAllItems(new CompoundTag(), items));
+		}
 		if(craftingGrid!=null)
-			tag.put("crafting_grid", craftingGrid.save(registries));
+			tag.put("crafting_grid", craftingGrid.save());
 	}
 
 	@Override
-	public void load(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
 		if(tag.contains("cells"))
-			cellSlots.deserializeNBT(registries, tag.getCompound("cells"));
+			cellSlots.deserializeNBT(tag.getCompound("cells"));
 		if(storageBay!=null&&tag.contains("storage_bay"))
-			ContainerHelper.loadAllItems(tag.getCompound("storage_bay"), storageBay.getItems(), registries);
+		{
+			NonNullList<ItemStack> items = NonNullList.withSize(storageBay.getContainerSize(), ItemStack.EMPTY);
+			ContainerHelper.loadAllItems(tag.getCompound("storage_bay"), items);
+			for(int slot = 0; slot<items.size(); slot++)
+				storageBay.setItem(slot, items.get(slot));
+		}
 		if(craftingGrid!=null&&tag.contains("crafting_grid"))
-			craftingGrid.load(tag.getCompound("crafting_grid"), registries);
+			craftingGrid.load(tag.getCompound("crafting_grid"));
 	}
 }

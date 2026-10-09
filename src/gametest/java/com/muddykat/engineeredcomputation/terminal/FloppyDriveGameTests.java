@@ -21,10 +21,10 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.items.IItemHandler;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
@@ -145,7 +145,7 @@ public final class FloppyDriveGameTests
 		AbstractContainerMenu menu = StorageGameTests.click(helper, player, bayFront(EraDrive.FLOPPY_WORKSTATION, 0),
 				facing);
 		StorageGameTests.check(helper, menu==null, "sneak-clicking a filled bay opened a screen");
-		StorageGameTests.check(helper, ItemStack.isSameItemSameComponents(player.getMainHandItem(), disk)
+		StorageGameTests.check(helper, ItemStack.isSameItemSameTags(player.getMainHandItem(), disk)
 						&&drive.getCellSlots().getStackInSlot(0).isEmpty(),
 				"sneak-clicking a filled bay with an empty hand didn't take its floppy");
 
@@ -219,10 +219,11 @@ public final class FloppyDriveGameTests
 						&&bays.getDisks().getStackInSlot(0).isEmpty()&&!bays.getDisks().getStackInSlot(1).isEmpty(),
 				"sneak-using a disk on the terminal's right bay didn't put it in slot 1");
 
-		level.getBlockState(pos).useWithoutItem(level, player, new BlockHitResult(hit, facing, pos, false));
+		level.getBlockState(pos).use(level, player, InteractionHand.MAIN_HAND, new BlockHitResult(hit, facing, pos,
+				false));
 		StorageGameTests.check(helper, EraDataCell.isTerminalDisk(player.getMainHandItem())
 						&&level.getBlockEntity(pos) instanceof TerminalDiskBlockEntity bays
-						&&bays.getDisks().getStackInSlot(1).isEmpty()&&player.opened==null,
+						&&bays.getDisks().getStackInSlot(1).isEmpty()&&player.openedMenu()==null,
 				"sneak-clicking the terminal's filled bay with an empty hand didn't take its disk");
 
 		helper.succeed();
@@ -255,8 +256,8 @@ public final class FloppyDriveGameTests
 		EraDriveState drive = StorageGameTests.formDrive(helper, ComputerEra.FLOPPY, facing);
 
 		BlockPos origin = helper.absolutePos(StorageGameTests.ORIGIN);
-		IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK,
-				StorageGameTests.world(origin, new BlockPos(1, 0, 1), facing), null);
+		IItemHandler handler = level.getBlockEntity(StorageGameTests.world(origin, new BlockPos(1, 0, 1), facing))
+				.getCapability(ForgeCapabilities.ITEM_HANDLER, null).orElse(null);
 
 		StorageGameTests.check(helper, handler!=null&&handler.getSlots()==9,
 				"storage bay capability not found or wrong slot count");
@@ -290,9 +291,9 @@ public final class FloppyDriveGameTests
 		drive.getStorageBay().setItem(4, new ItemStack(Items.DIAMOND_SWORD, 1));
 
 		CompoundTag tag = new CompoundTag();
-		drive.save(tag, level.registryAccess());
+		drive.save(tag);
 		EraDriveState reloaded = new EraDriveState(EraDrive.FLOPPY_WORKSTATION, MultiblockGameTests.NO_HOST);
-		reloaded.load(tag, level.registryAccess());
+		reloaded.load(tag);
 
 		StorageGameTests.check(helper, reloaded.getStorageBay().getItem(0).is(Items.COBBLESTONE)
 				&&				reloaded.getStorageBay().getItem(0).getCount()==64,

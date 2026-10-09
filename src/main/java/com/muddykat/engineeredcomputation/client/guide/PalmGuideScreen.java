@@ -112,9 +112,9 @@ final class PalmGuideScreen extends GuideScreen
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void renderBackground(GuiGraphics graphics)
 	{
-		super.renderBackground(graphics, mouseX, mouseY, partialTick);
+		super.renderBackground(graphics);
 		graphics.blit(TEXTURE, left(), top(), 0, 0, WIDTH, HEIGHT);
 	}
 

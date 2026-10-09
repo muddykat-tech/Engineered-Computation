@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "engineered_computation:era2_casing"
+    },
+    {
+      "item": "engineered_computation:vacuum_tube"
+    },
+    {
+      "item": "minecraft:dropper"
+    },
+    {
+      "item": "engineered_computation:network_cable"
+    }
+  ],
+  "result": {
+    "item": "engineered_computation:era2_data_exporter",
+    "count": 1
+  }
+}

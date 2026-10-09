@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.mojang.serialization.JsonOps;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -15,8 +14,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.crafting.CraftingPlan;
@@ -76,7 +75,7 @@ public final class PatternTagGameTests
 	public static void picksResolveInputTags(GameTestHelper helper)
 	{
 		Pattern p = abstractOf(List.of(new ItemStack(Items.COBBLESTONE, 2)), List.of(new ItemStack(Items.GOLD_INGOT)))
-				.withTag(false, 0, tag("c:raw_materials"));
+				.withTag(false, 0, tag("forge:raw_materials"));
 		Optional<Pattern> resolved = p.resolve(Map.of(0, Items.RAW_GOLD));
 		StorageGameTests.check(helper, resolved.isPresent(), "Resolved pattern should be present");
 		StorageGameTests.check(helper, resolved.get().input(0).is(Items.RAW_GOLD), "Input should be RAW_GOLD");
@@ -112,7 +111,7 @@ public final class PatternTagGameTests
 				.withTag(true, 0, tag("minecraft:logs"));
 		StorageGameTests.check(helper, big.warnsAt(0), "Big input tag should warn");
 
-		Pattern small = abstractOf(List.of(), List.of()).withTag(false, 0, tag("c:raw_materials/iron"));
+		Pattern small = abstractOf(List.of(), List.of()).withTag(false, 0, tag("forge:raw_materials/iron"));
 		StorageGameTests.check(helper, !small.warnsAt(0), "Small input tag should not warn");
 		helper.succeed();
 	}
@@ -121,9 +120,9 @@ public final class PatternTagGameTests
 	public static void tagsAreSaved(GameTestHelper helper)
 	{
 		Pattern p = anyOreToAnyIngot();
-		var ops = helper.getLevel().registryAccess().createSerializationContext(JsonOps.INSTANCE);
-		var json = Pattern.CODEC.encodeStart(ops, p).getOrThrow();
-		Pattern parsed = Pattern.CODEC.parse(ops, json).getOrThrow();
+		var ops = JsonOps.INSTANCE;
+		var json = Pattern.CODEC.encodeStart(ops, p).getOrThrow(false, error -> {});
+		Pattern parsed = Pattern.CODEC.parse(ops, json).getOrThrow(false, error -> {});
 		StorageGameTests.check(helper, parsed.equals(p), "Parsed pattern should equal original");
 		helper.succeed();
 	}
@@ -153,8 +152,8 @@ public final class PatternTagGameTests
 				"Should use 3 raw iron");
 		StorageGameTests.check(helper, picked.steps().size()==1, "Should have one step");
 		StorageGameTests.check(helper, picked.steps().get(0).runs()==3, "Step should run 3 times");
-		StorageGameTests.check(helper, picked.targetTag().equals(Optional.of(tag("c:ingots"))),
-				"Target tag should be c:ingots");
+		StorageGameTests.check(helper, picked.targetTag().equals(Optional.of(tag("forge:ingots"))),
+				"Target tag should be forge:ingots");
 
 		CraftingPlan unpicked = CraftingPlanner.planOffer(offer, 3, Map.of(key(Items.RAW_IRON), 5L), List.of());
 		StorageGameTests.check(helper, !unpicked.isPossible(), "Unpicked plan should not be possible");
@@ -178,7 +177,7 @@ public final class PatternTagGameTests
 
 	private static Pattern anyOreToAnyIngot()
 	{
-		return abstractOf(List.of(), List.of()).withTag(false, 0, tag("c:raw_materials"))
-				.withTag(true, 0, tag("c:ingots"));
+		return abstractOf(List.of(), List.of()).withTag(false, 0, tag("forge:raw_materials"))
+				.withTag(true, 0, tag("forge:ingots"));
 	}
 }

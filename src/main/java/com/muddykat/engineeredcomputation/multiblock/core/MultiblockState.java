@@ -4,18 +4,17 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 public interface MultiblockState
 {
-	void save(CompoundTag tag, HolderLookup.Provider registries);
+	void save(CompoundTag tag);
 
-	void load(CompoundTag tag, HolderLookup.Provider registries);
+	void load(CompoundTag tag);
 
 	default void writeSyncData(CompoundTag tag)
 	{

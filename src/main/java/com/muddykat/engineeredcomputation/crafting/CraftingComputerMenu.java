@@ -1,11 +1,11 @@
 package com.muddykat.engineeredcomputation.crafting;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -14,10 +14,10 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.SlotItemHandler;
 
+import com.muddykat.engineeredcomputation.network.ECPayloads;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
 public class CraftingComputerMenu extends AbstractContainerMenu
@@ -44,7 +44,7 @@ public class CraftingComputerMenu extends AbstractContainerMenu
 	private static final int INTERVAL = 5;
 	private List<OrderView> clientOrders = List.of();
 
-	public CraftingComputerMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buf)
+	public CraftingComputerMenu(int id, Inventory inventory, FriendlyByteBuf buf)
 	{
 		this(id, inventory, null, CraftingComputerState.createPatternSlots(() -> {}), buf.readBlockPos(),
 				new SimpleContainerData(1));
@@ -117,7 +117,7 @@ public class CraftingComputerMenu extends AbstractContainerMenu
 		if(orders.equals(sentOrders))
 			return;
 		sentOrders = orders;
-		PacketDistributor.sendToPlayer(serverPlayer, new CraftingComputerPayload(containerId, orders));
+		ECPayloads.sendToPlayer(serverPlayer, new CraftingComputerPayload(containerId, orders));
 	}
 
 	@Override
@@ -139,7 +139,7 @@ public class CraftingComputerMenu extends AbstractContainerMenu
 	@Override
 	public boolean stillValid(Player player)
 	{
-		return player.canInteractWithBlock(pos, EXTRA_REACH)
+		return player.canReach(pos, EXTRA_REACH)
 				&&(computer==null||player.level().getBlockEntity(pos)!=null);
 	}
 }

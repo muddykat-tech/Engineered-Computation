@@ -5,12 +5,11 @@ import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -30,20 +29,22 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.network.NetworkHooks;
 
-import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
+import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
+import com.muddykat.engineeredcomputation.network.NetworkMember;
+import com.muddykat.engineeredcomputation.network.NetworkMemberBlock;
+import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECAdapters;
 
-public class DataAdapterBlock extends DirectionalBlock implements EntityBlock
+public class DataAdapterBlock extends DirectionalBlock implements EntityBlock, NetworkMemberBlock
 {
-	public static final MapCodec<DataAdapterBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-			ComputerEra.CODEC.fieldOf("era").forGetter(DataAdapterBlock::getEra),
-			AdapterKind.CODEC.fieldOf("kind").forGetter(DataAdapterBlock::getKind),
-			propertiesCodec()
-	).apply(instance, DataAdapterBlock::new));
-
 	public static final BooleanProperty ACTIVE = BlockStateProperties.LIT;
+
+	private static final NetworkMember NETWORK_MEMBER = new NetworkMember()
+	{
+	};
 
 	private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
@@ -75,9 +76,14 @@ public class DataAdapterBlock extends DirectionalBlock implements EntityBlock
 	}
 
 	@Override
-	protected MapCodec<? extends DirectionalBlock> codec()
+	@Nullable
+	public NetworkMember getNetworkMember(Level level, BlockPos pos, BlockState state, @Nullable Direction side)
 	{
-		return CODEC;
+		Direction back = state.getValue(FACING).getOpposite();
+		if(side==null)
+			return NETWORK_MEMBER;
+		return side==back&&level.getBlockState(pos.relative(back)).getBlock() instanceof NetworkCableBlock
+				? NETWORK_MEMBER: null;
 	}
 
 	@Override
@@ -94,7 +100,7 @@ public class DataAdapterBlock extends DirectionalBlock implements EntityBlock
 	}
 
 	@Override
-	protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
+	public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
 	{
 		return SHAPES.get(state.getValue(FACING));
 	}
@@ -121,11 +127,13 @@ public class DataAdapterBlock extends DirectionalBlock implements EntityBlock
 	}
 
 	@Override
-	protected InteractionResult useWithoutItem(
-			BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult)
+	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
+			BlockHitResult hitResult)
 	{
+		if(hand!=InteractionHand.MAIN_HAND)
+			return InteractionResult.PASS;
 		if(!level.isClientSide&&level.getBlockEntity(pos) instanceof DataAdapterBlockEntity adapter)
-			player.openMenu(adapter, buf -> buf.writeBlockPos(pos));
+			NetworkHooks.openScreen((ServerPlayer)player, adapter, buf -> buf.writeBlockPos(pos));
 		return InteractionResult.sidedSuccess(level.isClientSide);
 	}
 
@@ -146,7 +154,7 @@ public class DataAdapterBlock extends DirectionalBlock implements EntityBlock
 	}
 
 	@Override
-	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
+	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
 	{
 		if(!state.is(newState.getBlock()))
 			StorageNetwork.changed(level);
@@ -157,7 +165,7 @@ public class DataAdapterBlock extends DirectionalBlock implements EntityBlock
 	}
 
 	@Override
-	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
+	public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
 	{
 		super.onPlace(state, level, pos, oldState, movedByPiston);
 		if(!oldState.is(state.getBlock()))

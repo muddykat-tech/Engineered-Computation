@@ -3,7 +3,7 @@ package com.muddykat.engineeredcomputation.catalogue;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
@@ -14,6 +14,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.network.NetworkHooks;
 
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
@@ -29,7 +30,7 @@ public class CardDeckMenu extends AbstractContainerMenu
 	private final SimpleContainer cards;
 	private final int deckSlot;
 
-	public CardDeckMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buf)
+	public CardDeckMenu(int id, Inventory inventory, FriendlyByteBuf buf)
 	{
 		this(id, inventory, buf.readEnum(InteractionHand.class), buf.readVarInt(), List.of());
 	}
@@ -98,7 +99,8 @@ public class CardDeckMenu extends AbstractContainerMenu
 		ItemStack deck = player.getItemInHand(hand);
 		if(!(deck.getItem() instanceof CardDeckItem item))
 			return;
-		player.openMenu(new SimpleMenuProvider((id, inventory, p) -> new CardDeckMenu(id, inventory, hand,
+		NetworkHooks.openScreen(player, new SimpleMenuProvider((id, inventory, p) -> new CardDeckMenu(id,
+				inventory, hand,
 				item.getCapacity(), CardDeckItem.deck(deck).cards()), deck.getHoverName()), buf -> {
 			buf.writeEnum(hand);
 			buf.writeVarInt(item.getCapacity());

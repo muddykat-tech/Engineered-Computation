@@ -10,11 +10,11 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.crafting.CancelOrderPayload;
 import com.muddykat.engineeredcomputation.crafting.OrderSummary;
+import com.muddykat.engineeredcomputation.network.ECPayloads;
 
 final class JobsPanel
 {
@@ -119,7 +119,7 @@ final class JobsPanel
 			if(isOver(mouseX, mouseY, x+width-CANCEL_SIZE-2, rowY+3, CANCEL_SIZE, CANCEL_SIZE))
 			{
 				OrderSummary order = orders.get(scroll+i);
-				PacketDistributor.sendToServer(new CancelOrderPayload(menu.containerId, order.computer(), order.id()));
+				ECPayloads.sendToServer(new CancelOrderPayload(menu.containerId, order.computer(), order.id()));
 				Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1));
 				return true;
 			}

@@ -4,20 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mojang.serialization.Codec;
-
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import com.mojang.serialization.DataResult;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.ItemStack;
+
 
 public record Program(List<ProgramEntry> entries)
 {
 	public static final int SIZE = 9;
 	public static final Program EMPTY = new Program(List.of());
 
-	public static final Codec<Program> CODEC = ProgramEntry.CODEC.listOf(0, SIZE).xmap(Program::new, Program::entries);
-	public static final StreamCodec<RegistryFriendlyByteBuf, Program> STREAM_CODEC =
-			ProgramEntry.STREAM_CODEC.apply(ByteBufCodecs.list(SIZE)).map(Program::new, Program::entries);
+	public static final Codec<Program> CODEC = ExtraCodecs.validate(ProgramEntry.CODEC.listOf(),
+			entries -> entries.size()<=SIZE? DataResult.success(entries)
+					: DataResult.error(() -> "A program has at most "+SIZE+" entries, not "+entries.size()))
+			.xmap(Program::new, Program::entries);
 
 	public Program
 	{
@@ -25,6 +26,16 @@ public record Program(List<ProgramEntry> entries)
 		while(padded.size()<SIZE)
 			padded.add(ProgramEntry.EMPTY);
 		entries = List.copyOf(padded);
+	}
+
+	public static Program read(FriendlyByteBuf buf)
+	{
+		return new Program(buf.readCollection(FriendlyByteBuf.limitValue(ArrayList::new, SIZE), ProgramEntry::read));
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		buf.writeCollection(entries, (out, entry) -> entry.write(out));
 	}
 
 	public ProgramEntry get(int index)

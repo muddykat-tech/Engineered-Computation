@@ -6,13 +6,11 @@ import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-import com.muddykat.engineeredcomputation.catalogue.CatalogueDesk;
 import com.muddykat.engineeredcomputation.catalogue.RequestSlip;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
 
@@ -45,21 +43,21 @@ public class TeletypeBlockEntity extends BlockEntity
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	protected void saveAdditional(CompoundTag tag)
 	{
-		super.saveAdditional(tag, registries);
-		RequestSlip.CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), slip.lines()).result()
+		super.saveAdditional(tag);
+		RequestSlip.CODEC.encodeStart(NbtOps.INSTANCE, slip.lines()).result()
 				.ifPresent(lines -> tag.put("slip", lines));
 		if(outlet!=null)
 			tag.putLong("outlet", outlet.asLong());
 	}
 
 	@Override
-	protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
-		super.loadAdditional(tag, registries);
+		super.load(tag);
 		Optional.ofNullable(tag.get("slip")).flatMap(lines -> RequestSlip.CODEC.parse(
-				registries.createSerializationContext(NbtOps.INSTANCE), lines).result())
+				NbtOps.INSTANCE, lines).result())
 				.ifPresentOrElse(slip::set, () -> slip.set(List.of()));
 		outlet = tag.contains("outlet")? BlockPos.of(tag.getLong("outlet")): null;
 	}

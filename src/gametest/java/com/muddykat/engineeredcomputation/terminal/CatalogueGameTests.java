@@ -23,8 +23,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.catalogue.CardDeck;
@@ -37,10 +37,11 @@ import com.muddykat.engineeredcomputation.catalogue.RequestSlip;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.gametest.TestCategory;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
 import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
+import com.muddykat.engineeredcomputation.network.NetworkMemberBlock;
 import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationBlock;
 import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.TubeMemberBlock;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlock;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlockEntity;
 import com.muddykat.engineeredcomputation.registration.ECCables;
@@ -191,7 +192,7 @@ public final class CatalogueGameTests
 		item.overrideOtherStackedOnMe(deck, ItemStack.EMPTY, slot, ClickAction.SECONDARY, player, carried);
 		StorageGameTests.check(helper, CatalogueCardItem.card(cursor[0])!=null
 				&&CardDeckItem.deck(deck).size()==item.getCapacity()-1, "an empty hand should take the last card out");
-		StorageGameTests.check(helper, !ItemStack.isSameItemSameComponents(new ItemStack(ECCatalogue.CARD.get()), cursor[0]),
+		StorageGameTests.check(helper, !ItemStack.isSameItemSameTags(new ItemStack(ECCatalogue.CARD.get()), cursor[0]),
 				"a card taken out should still be punched");
 		helper.succeed();
 	}
@@ -383,7 +384,7 @@ public final class CatalogueGameTests
 		StorageGameTests.MenuRecordingPlayer player = new StorageGameTests.MenuRecordingPlayer(level);
 		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ECCatalogue.decks().get(0).get()));
 		CardDeckMenu.open(player, InteractionHand.MAIN_HAND);
-		CardDeckMenu menu = (CardDeckMenu)player.opened.createMenu(1, player.getInventory(), player);
+		CardDeckMenu menu = (CardDeckMenu)player.openedMenu();
 		CatalogueCard card = new CatalogueCard(GlobalPos.of(level.dimension(), BlockPos.ZERO), Component.literal("Chest"),
 				CellContents.EMPTY, CatalogueCard.NEVER);
 		StorageGameTests.check(helper, !menu.getSlot(0).mayPlace(new ItemStack(ECCatalogue.CARD.get())),
@@ -431,13 +432,13 @@ public final class CatalogueGameTests
 		ServerLevel level = helper.getLevel();
 		Setup setup = setup(helper, 0);
 		BlockPos part = helper.absolutePos(StorageGameTests.ORIGIN);
-		StorageGameTests.check(helper, level.getCapability(ECCapabilities.NETWORK_MEMBER, setup.teletype(), null)==null,
+		StorageGameTests.check(helper, NetworkMemberBlock.at(level, setup.teletype(), null)==null,
 				"the teletype must never be a storage network member");
-		StorageGameTests.check(helper, level.getCapability(ECCapabilities.TUBE_MEMBER, setup.teletype(), null)==null,
+		StorageGameTests.check(helper, TubeMemberBlock.at(level, setup.teletype(), null)==null,
 				"the teletype isn't on the tubes: it stands against a Receiving Station");
-		StorageGameTests.check(helper, level.getCapability(ECCapabilities.NETWORK_MEMBER, part, null)==null,
+		StorageGameTests.check(helper, NetworkMemberBlock.at(level, part, null)==null,
 				"the Tabulator Machine must never be a storage network member");
-		StorageGameTests.check(helper, level.getCapability(ECCapabilities.TUBE_MEMBER, part, null)!=null,
+		StorageGameTests.check(helper, TubeMemberBlock.at(level, part, null)!=null,
 				"the Tabulator Machine should be on the tubes");
 		BlockPos cable = setup.teletype().above();
 		level.setBlockAndUpdate(cable, ECCables.block().get().defaultBlockState());

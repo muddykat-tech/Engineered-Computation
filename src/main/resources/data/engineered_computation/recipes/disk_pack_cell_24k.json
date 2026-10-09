@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "forge:nbt",
+      "item": "engineered_computation:disk_pack_cell_16k",
+      "count": 1
+    },
+    {
+      "type": "forge:nbt",
+      "item": "engineered_computation:disk_pack_cell_8k",
+      "count": 1
+    }
+  ],
+  "result": {
+    "item": "engineered_computation:disk_pack_cell_24k",
+    "count": 1
+  }
+}

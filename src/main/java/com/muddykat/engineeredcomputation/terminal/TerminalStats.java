@@ -3,9 +3,7 @@ package com.muddykat.engineeredcomputation.terminal;
 import java.util.EnumSet;
 import java.util.Set;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.storage.CellInventory;
@@ -20,14 +18,21 @@ public record TerminalStats(long usedBytes, long totalBytes, long usedTypes, lon
 
 	public static final TerminalStats EMPTY = new TerminalStats(0, 0, 0, 0, 0, 0);
 
-	public static final StreamCodec<RegistryFriendlyByteBuf, TerminalStats> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.VAR_LONG, TerminalStats::usedBytes,
-			ByteBufCodecs.VAR_LONG, TerminalStats::totalBytes,
-			ByteBufCodecs.VAR_LONG, TerminalStats::usedTypes,
-			ByteBufCodecs.VAR_LONG, TerminalStats::totalTypes,
-			ByteBufCodecs.VAR_INT, TerminalStats::cells,
-			ByteBufCodecs.VAR_INT, TerminalStats::lockBits,
-			TerminalStats::new);
+	public static TerminalStats read(FriendlyByteBuf buf)
+	{
+		return new TerminalStats(buf.readVarLong(), buf.readVarLong(), buf.readVarLong(), buf.readVarLong(),
+				buf.readVarInt(), buf.readVarInt());
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		buf.writeVarLong(usedBytes);
+		buf.writeVarLong(totalBytes);
+		buf.writeVarLong(usedTypes);
+		buf.writeVarLong(totalTypes);
+		buf.writeVarInt(cells);
+		buf.writeVarInt(lockBits);
+	}
 
 	public static TerminalStats of(NetworkStorage storage, Set<ComputerEra> conflictingEras, boolean tooLarge)
 	{

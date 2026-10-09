@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MCM",
+    "CXC",
+    "MCM"
+  ],
+  "key": {
+    "M": {
+      "tag": "forge:gems/quartz"
+    },
+    "C": {
+      "item": "engineered_computation:era3_casing"
+    },
+    "X": {
+      "item": "engineered_computation:integrated_circuit"
+    }
+  },
+  "result": {
+    "item": "engineered_computation:era4_casing",
+    "count": 8
+  }
+}

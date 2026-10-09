@@ -2,36 +2,27 @@ package com.muddykat.engineeredcomputation.terminal;
 
 import java.util.List;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 
-import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
-public record TerminalUnreachablePayload(int containerId, List<ItemKey> unreachable) implements CustomPacketPayload
+public record TerminalUnreachablePayload(int containerId, List<ItemKey> unreachable)
 {
-	public static final Type<TerminalUnreachablePayload> TYPE = new Type<>(
-			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "terminal_unreachable"));
-
-	public static final StreamCodec<RegistryFriendlyByteBuf, TerminalUnreachablePayload> STREAM_CODEC =
-			StreamCodec.composite(
-					ByteBufCodecs.VAR_INT, TerminalUnreachablePayload::containerId,
-					ItemKey.STREAM_CODEC.apply(ByteBufCodecs.list()), TerminalUnreachablePayload::unreachable,
-					TerminalUnreachablePayload::new);
-
-	@Override
-	public Type<TerminalUnreachablePayload> type()
+	public void encode(FriendlyByteBuf buf)
 	{
-		return TYPE;
+		buf.writeVarInt(containerId);
+		buf.writeCollection(unreachable, (out, key) -> key.write(out));
 	}
 
-	public static void handle(TerminalUnreachablePayload payload, IPayloadContext context)
+	public static TerminalUnreachablePayload decode(FriendlyByteBuf buf)
 	{
-		if(context.player().containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
+		return new TerminalUnreachablePayload(buf.readVarInt(), buf.readList(ItemKey::read));
+	}
+
+	public static void handle(TerminalUnreachablePayload payload, Player player)
+	{
+		if(player.containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
 			menu.applyUnreachable(payload);
 	}
 }

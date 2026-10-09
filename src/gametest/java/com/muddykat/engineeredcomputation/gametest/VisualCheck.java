@@ -47,13 +47,10 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.gui.ConfigurationScreen;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.adapter.AdapterKind;
@@ -61,16 +58,19 @@ import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlockEntity;
 import com.muddykat.engineeredcomputation.adapter.Program;
 import com.muddykat.engineeredcomputation.adapter.ProgramEntry;
+import com.muddykat.engineeredcomputation.adapter.ProgramFloppyItem;
 import com.muddykat.engineeredcomputation.catalogue.CardDeck;
 import com.muddykat.engineeredcomputation.catalogue.CardDeckItem;
 import com.muddykat.engineeredcomputation.catalogue.CardDeckMenu;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCard;
+import com.muddykat.engineeredcomputation.client.ECConfigScreen;
 import com.muddykat.engineeredcomputation.client.guide.GuideScreen;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerMenu;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
 import com.muddykat.engineeredcomputation.crafting.CraftingNetwork;
 import com.muddykat.engineeredcomputation.crafting.DataProcessorState;
 import com.muddykat.engineeredcomputation.crafting.Pattern;
+import com.muddykat.engineeredcomputation.crafting.PatternFloppyItem;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.era.EraDrive;
 import com.muddykat.engineeredcomputation.era.EraDriveGeometry;
@@ -94,7 +94,6 @@ import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECContent;
 import com.muddykat.engineeredcomputation.registration.ECCrafting;
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
@@ -136,9 +135,9 @@ public final class VisualCheck
 	}
 
 	@SubscribeEvent
-	static void onClientTick(ClientTickEvent.Post event)
+	static void onClientTick(TickEvent.ClientTickEvent event)
 	{
-		if(!ENABLED)
+		if(!ENABLED||event.phase!=TickEvent.Phase.END)
 			return;
 		Minecraft mc = Minecraft.getInstance();
 		if(!worldRequested)
@@ -192,8 +191,7 @@ public final class VisualCheck
 				WorldDataConfiguration.DEFAULT);
 		mc.createWorldOpenFlows().createFreshLevel(WORLD, settings, new WorldOptions(1L, false, false),
 				registries -> registries.registryOrThrow(Registries.WORLD_PRESET)
-						.getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
-				new TitleScreen());
+						.getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions());
 	}
 
 	private static void queueSteps(Minecraft mc)
@@ -613,12 +611,12 @@ public final class VisualCheck
 			level.setBlockAndUpdate(bottom.south(), Blocks.CHEST.defaultBlockState());
 			level.setBlockAndUpdate(bottom.above(2).south(), Blocks.CHEST.defaultBlockState());
 			ItemStack smelting = new ItemStack(ECCrafting.PATTERN_FLOPPY.get());
-			smelting.set(ECDataComponents.PATTERN.get(), new Pattern(Pattern.Mode.ABSTRACT,
+			PatternFloppyItem.setPattern(smelting, new Pattern(Pattern.Mode.ABSTRACT,
 					List.of(new ItemStack(Items.COBBLESTONE, 8)), List.of(new ItemStack(Items.STONE, 8))));
 			Pattern logsToPlanks = new Pattern(Pattern.Mode.ABSTRACT, List.of(), List.of())
 					.withTag(false, 0, ItemTags.LOGS).withTag(true, 0, ItemTags.PLANKS);
 			ItemStack sawmill = new ItemStack(ECCrafting.PATTERN_FLOPPY.get());
-			sawmill.set(ECDataComponents.PATTERN.get(), logsToPlanks.withOutput(0,
+			PatternFloppyItem.setPattern(sawmill, logsToPlanks.withOutput(0,
 					logsToPlanks.output(0).copyWithCount(4)));
 			DataProcessorState processor = DataProcessorState.at(level, bottom);
 			processor.getPatternSlots().setStackInSlot(0, smelting);
@@ -746,7 +744,7 @@ public final class VisualCheck
 	private static ItemStack directFloppy(ServerLevel level, ItemStack... grid)
 	{
 		ItemStack floppy = new ItemStack(ECCrafting.PATTERN_FLOPPY.get());
-		floppy.set(ECDataComponents.PATTERN.get(),
+		PatternFloppyItem.setPattern(floppy,
 				new Pattern(Pattern.Mode.DIRECT, List.of(grid), List.of()).withCraftedOutput(level));
 		return floppy;
 	}
@@ -831,9 +829,9 @@ public final class VisualCheck
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
 		onServer(mc, (level, player) -> {
 			ItemStack floppy = new ItemStack(ECAdapters.PROGRAM_FLOPPY.get());
-			floppy.set(ECDataComponents.PROGRAM.get(), Program.EMPTY
+			ProgramFloppyItem.setProgram(floppy, Program.EMPTY
 					.with(0, ProgramEntry.of(new ItemStack(Items.REDSTONE)))
-					.with(1, ProgramEntry.of(TagKey.create(Registries.ITEM, ResourceLocation.parse("c:ingots"))))
+					.with(1, ProgramEntry.of(TagKey.create(Registries.ITEM, ResourceLocation.parse("forge:ingots"))))
 					.with(2, ProgramEntry.of(TagKey.create(Registries.ITEM, ResourceLocation.parse("minecraft:logs")))));
 			player.setItemInHand(InteractionHand.MAIN_HAND, floppy);
 			floppy.use(level, player, InteractionHand.MAIN_HAND);
@@ -1315,8 +1313,8 @@ public final class VisualCheck
 	private static void use(ServerLevel level, ServerPlayer player, BlockPos pos)
 	{
 		player.teleportTo(level, pos.getX()+0.5, base.getY(), pos.getZ()+2.5, 180, 30);
-		level.getBlockState(pos).useWithoutItem(level, player,
-				new BlockHitResult(Vec3.atCenterOf(pos), Direction.SOUTH, pos, false));
+		level.getBlockState(pos).use(level, player, InteractionHand.MAIN_HAND, new BlockHitResult(Vec3.atCenterOf(pos),
+				Direction.SOUTH, pos, false));
 	}
 
 	private static void onServer(Minecraft mc, SceneAction action, int waitAfter)
@@ -1342,8 +1340,7 @@ public final class VisualCheck
 
 	private static void queueConfig(Minecraft mc)
 	{
-		ModContainer mod = ModList.get().getModContainerById(EngineeredComputation.MODID).orElseThrow();
-		STEPS.add(new Step(10, () -> mc.setScreen(new ConfigurationScreen(mod, null))));
+		STEPS.add(new Step(10, () -> mc.setScreen(new ECConfigScreen(null))));
 		screenshot(mc, "ec_config", 2);
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
 	}

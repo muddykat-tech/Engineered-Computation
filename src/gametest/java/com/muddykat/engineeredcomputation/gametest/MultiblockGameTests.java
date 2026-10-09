@@ -17,9 +17,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.items.IItemHandler;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
@@ -129,7 +129,8 @@ public final class MultiblockGameTests
 		BlockPos victim = breakMaster? geometry.master(): templatePositions.stream()
 				.filter(p -> !p.equals(geometry.master())).findFirst().orElseThrow();
 		BlockPos cellPart = templatePositions.stream().filter(p -> !geometry.hasStorageAt(p)).findFirst().orElseThrow();
-		IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, world(origin, cellPart, facing), null);
+		IItemHandler handler = level.getBlockEntity(world(origin, cellPart, facing))
+				.getCapability(ForgeCapabilities.ITEM_HANDLER, null).orElse(null);
 		check(helper, handler!=null, "no item handler on a part");
 		ItemStack cell = firstBayItem(era);
 		ItemStack foreignCell = firstBayItem(otherEra(era));
@@ -137,9 +138,9 @@ public final class MultiblockGameTests
 		check(helper, handler.insertItem(0, cell.copy(), false).isEmpty(), "own era's cell rejected");
 		check(helper, handler.getSlots()==drive.slots(), "drive has "+handler.getSlots()+" slots, not "+drive.slots());
 
-		CompoundTag saved = master.saveWithoutMetadata(level.registryAccess());
+		CompoundTag saved = master.saveWithoutMetadata();
 		EraDriveState reloaded = new EraDriveState(drive, NO_HOST);
-		reloaded.load(saved.getCompound("state"), level.registryAccess());
+		reloaded.load(saved.getCompound("state"));
 		check(helper, ItemStack.isSameItem(reloaded.getCellSlots().getStackInSlot(0), cell), "cell lost on reload");
 
 		BlockPos victimWorld = world(origin, victim, facing);

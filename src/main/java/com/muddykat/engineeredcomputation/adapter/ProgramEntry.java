@@ -4,17 +4,14 @@ import java.util.Optional;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+
 
 public record ProgramEntry(Optional<Holder<Item>> item, Optional<TagKey<Item>> tag)
 {
@@ -25,11 +22,18 @@ public record ProgramEntry(Optional<Holder<Item>> item, Optional<TagKey<Item>> t
 			TagKey.codec(Registries.ITEM).optionalFieldOf("tag").forGetter(ProgramEntry::tag)
 	).apply(instance, ProgramEntry::new));
 
-	public static final StreamCodec<RegistryFriendlyByteBuf, ProgramEntry> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.optional(ByteBufCodecs.holderRegistry(Registries.ITEM)), ProgramEntry::item,
-			ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC.map(id -> TagKey.create(Registries.ITEM, id),
-					TagKey::location)), ProgramEntry::tag,
-			ProgramEntry::new);
+	public static ProgramEntry read(FriendlyByteBuf buf)
+	{
+		return new ProgramEntry(
+				buf.readOptional(in -> BuiltInRegistries.ITEM.wrapAsHolder(in.readById(BuiltInRegistries.ITEM))),
+				buf.readOptional(in -> TagKey.create(Registries.ITEM, in.readResourceLocation())));
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		buf.writeOptional(item, (out, holder) -> out.writeId(BuiltInRegistries.ITEM, holder.value()));
+		buf.writeOptional(tag, (out, value) -> out.writeResourceLocation(value.location()));
+	}
 
 	public static ProgramEntry of(ItemStack stack)
 	{

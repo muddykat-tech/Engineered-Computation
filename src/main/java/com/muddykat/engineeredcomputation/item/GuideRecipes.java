@@ -11,14 +11,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 
@@ -118,11 +117,11 @@ public final class GuideRecipes
 	}
 
 	public static List<ResourceLocation> prerequisites(Collection<ResourceLocation> shown, RecipeManager recipes,
-			HolderLookup.Provider registries)
+			RegistryAccess registries)
 	{
 		Set<Item> made = new HashSet<>();
 		for(ResourceLocation id : shown)
-			recipes.byKey(id).ifPresent(holder -> made.add(holder.value().getResultItem(registries).getItem()));
+			recipes.byKey(id).ifPresent(recipe -> made.add(recipe.getResultItem(registries).getItem()));
 		Map<Item, ResourceLocation> needed = new LinkedHashMap<>();
 		Deque<ResourceLocation> queue = new ArrayDeque<>(shown);
 		while(!queue.isEmpty())
@@ -153,8 +152,8 @@ public final class GuideRecipes
 	private static List<Item> modParts(ResourceLocation id, RecipeManager recipes)
 	{
 		List<Item> parts = new ArrayList<>();
-		recipes.byKey(id).ifPresent(holder -> {
-			for(Ingredient ingredient : holder.value().getIngredients())
+		recipes.byKey(id).ifPresent(recipe -> {
+			for(Ingredient ingredient : recipe.getIngredients())
 			{
 				Item part = modPart(ingredient);
 				if(part!=null)
@@ -175,19 +174,18 @@ public final class GuideRecipes
 		return options[0].getItem();
 	}
 
-	private static Optional<ResourceLocation> recipeFor(Item item, RecipeManager recipes, HolderLookup.Provider registries)
+	private static Optional<ResourceLocation> recipeFor(Item item, RecipeManager recipes, RegistryAccess registries)
 	{
 		ResourceLocation named = BuiltInRegistries.ITEM.getKey(item);
 		Optional<ResourceLocation> any = Optional.empty();
-		for(RecipeHolder<?> holder : recipes.getAllRecipesFor(RecipeType.CRAFTING))
+		for(CraftingRecipe recipe : recipes.getAllRecipesFor(RecipeType.CRAFTING))
 		{
-			Recipe<?> recipe = holder.value();
 			if(recipe.getResultItem(registries).is(item))
 			{
-				if(holder.id().equals(named))
-					return Optional.of(holder.id());
+				if(recipe.getId().equals(named))
+					return Optional.of(recipe.getId());
 				if(any.isEmpty())
-					any = Optional.of(holder.id());
+					any = Optional.of(recipe.getId());
 			}
 		}
 		return any;

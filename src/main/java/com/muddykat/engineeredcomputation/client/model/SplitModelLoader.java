@@ -12,7 +12,7 @@ import com.google.gson.JsonParseException;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.client.model.geometry.IGeometryLoader;
+import net.minecraftforge.client.model.geometry.IGeometryLoader;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 

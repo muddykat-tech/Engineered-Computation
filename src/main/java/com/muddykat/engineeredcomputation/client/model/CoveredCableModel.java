@@ -13,10 +13,9 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.ChunkRenderTypeSet;
-import net.neoforged.neoforge.client.model.BakedModelWrapper;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import net.neoforged.neoforge.common.util.TriState;
+import net.minecraftforge.client.ChunkRenderTypeSet;
+import net.minecraftforge.client.model.BakedModelWrapper;
+import net.minecraftforge.client.model.data.ModelData;
 
 import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
 
@@ -61,15 +60,6 @@ public class CoveredCableModel extends BakedModelWrapper<BakedModel>
 			return super.getRenderTypes(state, rand, data);
 		ChunkRenderTypeSet covers = coverModel.getRenderTypes(cover, rand, ModelData.EMPTY);
 		return showsCable? ChunkRenderTypeSet.union(covers, super.getRenderTypes(state, rand, data)): covers;
-	}
-
-	@Override
-	public TriState useAmbientOcclusion(BlockState state, ModelData data, RenderType renderType)
-	{
-		BlockState cover = data.get(CoveredCableBlockEntity.COVER);
-		BakedModel coverModel = coverModel(cover);
-		return coverModel==null? super.useAmbientOcclusion(state, data, renderType)
-				: coverModel.useAmbientOcclusion(cover, ModelData.EMPTY, renderType);
 	}
 
 	@Override

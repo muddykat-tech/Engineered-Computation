@@ -6,9 +6,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
@@ -55,9 +54,9 @@ public final class GuideRecipeGameTests
 	private static Recipe<?> guideRecipe(GameTestHelper helper, ComputerEra era)
 	{
 		ResourceLocation id = ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, era.guideName());
-		RecipeHolder<?> holder = helper.getLevel().getRecipeManager().byKey(id).orElse(null);
-		if(holder==null)
+		Recipe<?> recipe = helper.getLevel().getRecipeManager().byKey(id).orElse(null);
+		if(recipe==null)
 			helper.fail(era.guideName()+" has no recipe");
-		return holder.value();
+		return recipe;
 	}
 }

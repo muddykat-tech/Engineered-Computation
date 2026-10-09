@@ -12,24 +12,21 @@ import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
 
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
@@ -41,6 +38,22 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 	public static final int TAG_WARNING_SIZE = 8;
 	public static final Pattern EMPTY = new Pattern(Mode.DIRECT, List.of(), List.of());
 
+	/** Crafting grids need a menu to tell about changes; the ones patterns match recipes in have none. */
+	private static final AbstractContainerMenu NO_MENU = new AbstractContainerMenu(null, -1)
+	{
+		@Override
+		public ItemStack quickMoveStack(Player player, int index)
+		{
+			return ItemStack.EMPTY;
+		}
+
+		@Override
+		public boolean stillValid(Player player)
+		{
+			return false;
+		}
+	};
+
 	private record TagSlot(boolean output, int index, TagKey<Item> tag)
 	{
 		static final Codec<TagSlot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -48,26 +61,26 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 				Codec.INT.fieldOf("index").forGetter(TagSlot::index),
 				TagKey.codec(Registries.ITEM).fieldOf("tag").forGetter(TagSlot::tag)
 		).apply(instance, TagSlot::new));
-		static final StreamCodec<RegistryFriendlyByteBuf, TagSlot> STREAM_CODEC = StreamCodec.composite(
-				ByteBufCodecs.BOOL, TagSlot::output,
-				ByteBufCodecs.VAR_INT, TagSlot::index,
-				ResourceLocation.STREAM_CODEC.map(id -> TagKey.create(Registries.ITEM, id), TagKey::location),
-				TagSlot::tag,
-				TagSlot::new);
+		static TagSlot read(FriendlyByteBuf buf)
+		{
+			return new TagSlot(buf.readBoolean(), buf.readVarInt(),
+					TagKey.create(Registries.ITEM, buf.readResourceLocation()));
+		}
+
+		void write(FriendlyByteBuf buf)
+		{
+			buf.writeBoolean(output);
+			buf.writeVarInt(index);
+			buf.writeResourceLocation(tag.location());
+		}
 	}
 
 	public static final Codec<Pattern> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			Mode.CODEC.fieldOf("mode").forGetter(Pattern::mode),
-			ItemStack.OPTIONAL_CODEC.listOf().fieldOf("inputs").forGetter(Pattern::inputs),
-			ItemStack.OPTIONAL_CODEC.listOf().fieldOf("outputs").forGetter(Pattern::outputs),
+			ItemStack.CODEC.listOf().fieldOf("inputs").forGetter(Pattern::inputs),
+			ItemStack.CODEC.listOf().fieldOf("outputs").forGetter(Pattern::outputs),
 			TagSlot.CODEC.listOf().optionalFieldOf("tags", List.of()).forGetter(Pattern::tagSlots)
 	).apply(instance, Pattern::of));
-	public static final StreamCodec<RegistryFriendlyByteBuf, Pattern> STREAM_CODEC = StreamCodec.composite(
-			NeoForgeStreamCodecs.enumCodec(Mode.class), Pattern::mode,
-			ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list(INPUTS)), Pattern::inputs,
-			ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list(OUTPUTS)), Pattern::outputs,
-			TagSlot.STREAM_CODEC.apply(ByteBufCodecs.list(INPUTS+OUTPUTS)), Pattern::tagSlots,
-			Pattern::of);
 
 	public enum Mode implements StringRepresentable
 	{
@@ -101,6 +114,22 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 	public Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs)
 	{
 		this(mode, inputs, outputs, Map.of(), Map.of());
+	}
+
+	public static Pattern read(FriendlyByteBuf buf)
+	{
+		return of(buf.readEnum(Mode.class),
+				buf.readCollection(FriendlyByteBuf.limitValue(ArrayList::new, INPUTS), FriendlyByteBuf::readItem),
+				buf.readCollection(FriendlyByteBuf.limitValue(ArrayList::new, OUTPUTS), FriendlyByteBuf::readItem),
+				buf.readCollection(FriendlyByteBuf.limitValue(ArrayList::new, INPUTS+OUTPUTS), TagSlot::read));
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		buf.writeEnum(mode);
+		buf.writeCollection(inputs, FriendlyByteBuf::writeItem);
+		buf.writeCollection(outputs, FriendlyByteBuf::writeItem);
+		buf.writeCollection(tagSlots(), (out, slot) -> slot.write(out));
 	}
 
 	private static Pattern of(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs, List<TagSlot> tags)
@@ -193,7 +222,7 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 
 	private static boolean keepsTag(ItemStack current, ItemStack next)
 	{
-		return !next.isEmpty()&&ItemStack.isSameItemSameComponents(current, next);
+		return !next.isEmpty()&&ItemStack.isSameItemSameTags(current, next);
 	}
 
 	private Pattern withSlot(boolean output, int index, ItemStack stack, @Nullable TagKey<Item> tag)
@@ -249,22 +278,31 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 	public Pattern withCraftedOutput(Level level)
 	{
 		ItemStack result = recipe(level)
-				.map(recipe -> recipe.value().assemble(craftingInput(), level.registryAccess()))
+				.map(recipe -> recipe.assemble(craftingInput(), level.registryAccess()))
 				.orElse(ItemStack.EMPTY);
 		return new Pattern(mode, inputs, List.of(result));
 	}
 
-	public Optional<RecipeHolder<CraftingRecipe>> recipe(Level level)
+	public Optional<CraftingRecipe> recipe(Level level)
 	{
 		return level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftingInput(), level);
 	}
 
-	public CraftingInput craftingInput()
+	public CraftingContainer craftingInput()
 	{
 		List<ItemStack> grid = new ArrayList<>(INPUTS);
 		for(ItemStack stack : inputs)
 			grid.add(stack.isEmpty()? ItemStack.EMPTY: stack.copyWithCount(1));
-		return CraftingInput.of(3, 3, grid);
+		return craftingGrid(3, 3, grid);
+	}
+
+	/** A crafting grid outside any menu, to match recipes against. */
+	public static CraftingContainer craftingGrid(int width, int height, List<ItemStack> items)
+	{
+		CraftingContainer grid = new TransientCraftingContainer(NO_MENU, width, height);
+		for(int slot = 0; slot<Math.min(items.size(), width*height); slot++)
+			grid.setItem(slot, items.get(slot));
+		return grid;
 	}
 
 	public boolean isValid()
@@ -313,15 +351,33 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 	@Override
 	public boolean equals(Object other)
 	{
-		return other instanceof Pattern pattern&&mode==pattern.mode&&ItemStack.listMatches(inputs, pattern.inputs)
-				&&ItemStack.listMatches(outputs, pattern.outputs)&&inputTags.equals(pattern.inputTags)
+		return other instanceof Pattern pattern&&mode==pattern.mode&&listMatches(inputs, pattern.inputs)
+				&&listMatches(outputs, pattern.outputs)&&inputTags.equals(pattern.inputTags)
 				&&outputTags.equals(pattern.outputTags);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return 31*(31*(31*mode.hashCode()+ItemStack.hashStackList(inputs))+ItemStack.hashStackList(outputs))
+		return 31*(31*(31*mode.hashCode()+hashStackList(inputs))+hashStackList(outputs))
 				+inputTags.hashCode()+outputTags.hashCode();
+	}
+
+	private static boolean listMatches(List<ItemStack> first, List<ItemStack> second)
+	{
+		if(first.size()!=second.size())
+			return false;
+		for(int i = 0; i<first.size(); i++)
+			if(!ItemStack.matches(first.get(i), second.get(i)))
+				return false;
+		return true;
+	}
+
+	private static int hashStackList(List<ItemStack> stacks)
+	{
+		int hash = 0;
+		for(ItemStack stack : stacks)
+			hash = hash*31+31*(31+stack.getItem().hashCode())+(stack.getTag()==null? 0: stack.getTag().hashCode());
+		return hash;
 	}
 }

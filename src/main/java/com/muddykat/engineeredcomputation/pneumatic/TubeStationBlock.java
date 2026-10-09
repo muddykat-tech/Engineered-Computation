@@ -2,16 +2,12 @@ package com.muddykat.engineeredcomputation.pneumatic;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.serialization.MapCodec;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -27,10 +23,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCardItem;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 
-public class TubeStationBlock extends DirectionalBlock implements EntityBlock
+public class TubeStationBlock extends DirectionalBlock implements EntityBlock, TubeMemberBlock
 {
-	public static final MapCodec<TubeStationBlock> CODEC = simpleCodec(TubeStationBlock::new);
-
 	public TubeStationBlock(Properties properties)
 	{
 		super(properties);
@@ -43,9 +37,10 @@ public class TubeStationBlock extends DirectionalBlock implements EntityBlock
 	}
 
 	@Override
-	protected MapCodec<? extends DirectionalBlock> codec()
+	@Nullable
+	public TubeMember getTubeMember(Level level, BlockPos pos, BlockState state, @Nullable Direction side)
 	{
-		return CODEC;
+		return connectsOn(state, side)? TubeMember.END: null;
 	}
 
 	@Override
@@ -62,17 +57,11 @@ public class TubeStationBlock extends DirectionalBlock implements EntityBlock
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
-			InteractionHand hand, BlockHitResult hitResult)
-	{
-		return stack.getItem() instanceof CatalogueCardItem? ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
-				: super.useItemOn(stack, state, level, pos, player, hand, hitResult);
-	}
-
-	@Override
-	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
+	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
 			BlockHitResult hitResult)
 	{
+		if(player.getItemInHand(hand).getItem() instanceof CatalogueCardItem||hand!=InteractionHand.MAIN_HAND)
+			return InteractionResult.PASS;
 		if(player instanceof ServerPlayer serverPlayer&&level.getBlockEntity(pos) instanceof TubeStationBlockEntity station)
 			TubeStationMenu.open(serverPlayer, station);
 		return InteractionResult.sidedSuccess(level.isClientSide);
@@ -95,7 +84,7 @@ public class TubeStationBlock extends DirectionalBlock implements EntityBlock
 	}
 
 	@Override
-	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
+	public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
 	{
 		super.onPlace(state, level, pos, oldState, movedByPiston);
 		if(!oldState.is(state.getBlock()))
@@ -103,7 +92,7 @@ public class TubeStationBlock extends DirectionalBlock implements EntityBlock
 	}
 
 	@Override
-	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
+	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
 	{
 		if(!state.is(newState.getBlock()))
 			TubeNetwork.changed(level);

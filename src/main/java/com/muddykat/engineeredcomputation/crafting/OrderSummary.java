@@ -1,24 +1,28 @@
 package com.muddykat.engineeredcomputation.crafting;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.minecraft.network.FriendlyByteBuf;
 
 import com.muddykat.engineeredcomputation.network.StatusCode;
 
 public record OrderSummary(BlockPos computer, int id, OrderTarget target, long amount, float progress,
 		StatusCode status)
 {
-	public static final StreamCodec<RegistryFriendlyByteBuf, OrderSummary> STREAM_CODEC = StreamCodec.composite(
-			BlockPos.STREAM_CODEC, OrderSummary::computer,
-			ByteBufCodecs.VAR_INT, OrderSummary::id,
-			OrderTarget.STREAM_CODEC, OrderSummary::target,
-			ByteBufCodecs.VAR_LONG, OrderSummary::amount,
-			ByteBufCodecs.FLOAT, OrderSummary::progress,
-			NeoForgeStreamCodecs.enumCodec(StatusCode.class), OrderSummary::status,
-			OrderSummary::new);
+	public static OrderSummary read(FriendlyByteBuf buf)
+	{
+		return new OrderSummary(buf.readBlockPos(), buf.readVarInt(), OrderTarget.read(buf), buf.readVarLong(),
+				buf.readFloat(), buf.readEnum(StatusCode.class));
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		buf.writeBlockPos(computer);
+		buf.writeVarInt(id);
+		target.write(buf);
+		buf.writeVarLong(amount);
+		buf.writeFloat(progress);
+		buf.writeEnum(status);
+	}
 
 	static OrderSummary of(BlockPos computer, CraftingOrder order)
 	{

@@ -10,14 +10,13 @@ import net.minecraft.util.FormattedCharSequence;
 
 public final class ECGui
 {
-	public static final ResourceLocation SLOT = ResourceLocation.withDefaultNamespace("container/slot");
-	public static final ResourceLocation SCROLLER =
-			ResourceLocation.withDefaultNamespace("container/creative_inventory/scroller");
-	public static final ResourceLocation SCROLLER_DISABLED =
-			ResourceLocation.withDefaultNamespace("container/creative_inventory/scroller_disabled");
-	public static final ResourceLocation BUTTON = ResourceLocation.withDefaultNamespace("widget/button");
-	public static final ResourceLocation BUTTON_HIGHLIGHTED =
-			ResourceLocation.withDefaultNamespace("widget/button_highlighted");
+	// Vanilla's slot, creative inventory scroller and button art, drawn from the textures they live in.
+	private static final ResourceLocation CONTAINER = ResourceLocation.withDefaultNamespace(
+			"textures/gui/container/generic_54.png");
+	private static final ResourceLocation CREATIVE_TABS = ResourceLocation.withDefaultNamespace(
+			"textures/gui/container/creative_inventory/tabs.png");
+	private static final ResourceLocation WIDGETS = ResourceLocation.withDefaultNamespace("textures/gui/widgets.png");
+	public static final int SCROLLER_HEIGHT = 15;
 
 	public static final int LABEL = 0x404040;
 
@@ -66,7 +65,13 @@ public final class ECGui
 
 	public static void button(GuiGraphics graphics, int x, int y, int width, int height, boolean hovered)
 	{
-		graphics.blitSprite(hovered? BUTTON_HIGHLIGHTED: BUTTON, x, y, width, height);
+		graphics.blitNineSliced(WIDGETS, x, y, width, height, 20, 4, 200, 20, 0, hovered? 86: 66);
+	}
+
+	/** The creative inventory's scroll thumb, 12 by {@link #SCROLLER_HEIGHT}. */
+	public static void scroller(GuiGraphics graphics, int x, int y, boolean enabled)
+	{
+		graphics.blit(CREATIVE_TABS, x, y, enabled? 232: 244, 0, 12, SCROLLER_HEIGHT);
 	}
 
 	public static void icon(GuiGraphics graphics, int x, int y, String[] rows, int colour)
@@ -100,7 +105,7 @@ public final class ECGui
 
 	public static void slot(GuiGraphics graphics, int x, int y)
 	{
-		graphics.blitSprite(SLOT, x, y, 18, 18);
+		graphics.blit(CONTAINER, x, y, 7, 17, 18, 18);
 	}
 
 	public static void gauge(GuiGraphics graphics, int x, int y, int width, int height, double fraction)

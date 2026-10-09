@@ -2,6 +2,7 @@ package com.muddykat.engineeredcomputation.gametest;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,17 +12,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestBatch;
 import net.minecraft.gametest.framework.GameTestGenerator;
+import net.minecraft.gametest.framework.GameTestRegistry;
 import net.minecraft.gametest.framework.GameTestServer;
 import net.minecraft.gametest.framework.TestFunction;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
-import net.neoforged.neoforgespi.language.ModFileScanData;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.forgespi.language.ModFileScanData;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 
@@ -44,8 +48,8 @@ public final class TestCategories
 		Set<String> uncategorised = new TreeSet<>();
 		List<TestFunction> tests = testsOf(server);
 		for(TestFunction test : tests)
-			if(!classOfTest.containsKey(test.testName()))
-				uncategorised.add(test.testName());
+			if(!classOfTest.containsKey(test.getTestName()))
+				uncategorised.add(test.getTestName());
 		EngineeredComputation.LOGGER.info("[tests] categories: {}", categories);
 		if(!uncategorised.isEmpty())
 			EngineeredComputation.LOGGER.warn("[tests] tests outside any @TestCategory class (always run): {}", uncategorised);
@@ -64,8 +68,9 @@ public final class TestCategories
 			throw new IllegalArgumentException("Unknown test categories "+unknown+" - there are "+categories.keySet());
 		Set<String> classes = new TreeSet<>();
 		wanted.forEach(category -> classes.addAll(categories.get(category)));
-		tests.removeIf(test -> classOfTest.containsKey(test.testName())&&!classes.contains(classOfTest.get(test.testName())));
-		EngineeredComputation.LOGGER.info("[tests] running {} tests in {}", tests.size(), wanted);
+		int kept = retain(server, test -> !classOfTest.containsKey(test.getTestName())
+				||classes.contains(classOfTest.get(test.getTestName())));
+		EngineeredComputation.LOGGER.info("[tests] running {} tests in {}", kept, wanted);
 	}
 
 	private static Map<String, Set<String>> categories(Map<String, String> classOfTest)
@@ -88,7 +93,7 @@ public final class TestCategories
 								classOfTest.put(method.getName().toLowerCase(Locale.ROOT), simple);
 							else if(method.isAnnotationPresent(GameTestGenerator.class))
 								for(Object test : (Collection<?>)method.invoke(null))
-									classOfTest.put(((TestFunction)test).testName(), simple);
+									classOfTest.put(((TestFunction)test).getTestName(), simple);
 					}
 					catch(ReflectiveOperationException e)
 					{
@@ -105,14 +110,39 @@ public final class TestCategories
 		return value instanceof List<?> list? (List<String>)list: List.of(String.valueOf(value));
 	}
 
-	@SuppressWarnings("unchecked")
 	private static List<TestFunction> testsOf(GameTestServer server)
+	{
+		return batchesOf(server).stream().flatMap(batch -> batch.getTestFunctions().stream()).toList();
+	}
+
+	/** 1.20.1's server keeps batches of tests, not a list: rebuilds them with only the tests kept. */
+	private static int retain(GameTestServer server, Predicate<TestFunction> keep)
+	{
+		List<GameTestBatch> batches = batchesOf(server);
+		List<GameTestBatch> filtered = new ArrayList<>();
+		for(GameTestBatch batch : batches)
+		{
+			List<TestFunction> tests = batch.getTestFunctions().stream().filter(keep).toList();
+			if(!tests.isEmpty())
+			{
+				String name = tests.get(0).getBatchName();
+				filtered.add(new GameTestBatch(batch.getName(), tests, GameTestRegistry.getBeforeBatchFunction(name),
+						GameTestRegistry.getAfterBatchFunction(name)));
+			}
+		}
+		batches.clear();
+		batches.addAll(filtered);
+		return filtered.stream().mapToInt(batch -> batch.getTestFunctions().size()).sum();
+	}
+
+	@SuppressWarnings("unchecked")
+	private static List<GameTestBatch> batchesOf(GameTestServer server)
 	{
 		try
 		{
-			Field field = GameTestServer.class.getDeclaredField("testFunctions");
+			Field field = GameTestServer.class.getDeclaredField("testBatches");
 			field.setAccessible(true);
-			return (List<TestFunction>)field.get(server);
+			return (List<GameTestBatch>)field.get(server);
 		}
 		catch(ReflectiveOperationException e)
 		{

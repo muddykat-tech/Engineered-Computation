@@ -1,17 +1,14 @@
 package com.muddykat.engineeredcomputation.storage;
 
 import com.mojang.serialization.Codec;
-
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
+
 public final class ItemKey
 {
-	public static final Codec<ItemKey> CODEC = ItemStack.SINGLE_ITEM_CODEC.xmap(ItemKey::of, key -> key.stack);
-	public static final StreamCodec<RegistryFriendlyByteBuf, ItemKey> STREAM_CODEC =
-			ItemStack.STREAM_CODEC.map(ItemKey::of, key -> key.stack);
+	public static final Codec<ItemKey> CODEC = ItemStack.CODEC.xmap(ItemKey::of, key -> key.stack);
 
 	private final ItemStack stack;
 	private final int hash;
@@ -19,7 +16,17 @@ public final class ItemKey
 	private ItemKey(ItemStack stack)
 	{
 		this.stack = stack;
-		this.hash = ItemStack.hashItemAndComponents(stack);
+		this.hash = 31*(31+stack.getItem().hashCode())+(stack.getTag()==null? 0: stack.getTag().hashCode());
+	}
+
+	public static ItemKey read(FriendlyByteBuf buf)
+	{
+		return of(buf.readItem());
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		buf.writeItem(stack);
 	}
 
 	public static ItemKey of(ItemStack stack)
@@ -51,13 +58,13 @@ public final class ItemKey
 
 	public boolean matches(ItemStack other)
 	{
-		return ItemStack.isSameItemSameComponents(stack, other);
+		return ItemStack.isSameItemSameTags(stack, other);
 	}
 
 	@Override
 	public boolean equals(Object o)
 	{
-		return o==this||o instanceof ItemKey other&&hash==other.hash&&ItemStack.isSameItemSameComponents(stack, other.stack);
+		return o==this||o instanceof ItemKey other&&hash==other.hash&&ItemStack.isSameItemSameTags(stack, other.stack);
 	}
 
 	@Override

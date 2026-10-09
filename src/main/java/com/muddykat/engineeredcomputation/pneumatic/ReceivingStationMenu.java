@@ -3,7 +3,7 @@ package com.muddykat.engineeredcomputation.pneumatic;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -15,6 +15,7 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.network.NetworkHooks;
 
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
@@ -32,7 +33,7 @@ public class ReceivingStationMenu extends AbstractContainerMenu implements Named
 	private final String name;
 	private final ContainerData data;
 
-	public ReceivingStationMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buf)
+	public ReceivingStationMenu(int id, Inventory inventory, FriendlyByteBuf buf)
 	{
 		this(id, inventory, buf.readBlockPos(), null, new SimpleContainer(TRAY_SLOTS), buf.readUtf(),
 				new SimpleContainerData(1));
@@ -85,7 +86,8 @@ public class ReceivingStationMenu extends AbstractContainerMenu implements Named
 				return 1;
 			}
 		};
-		player.openMenu(new SimpleMenuProvider((id, inventory, p) -> new ReceivingStationMenu(id, inventory,
+		NetworkHooks.openScreen(player, new SimpleMenuProvider((id, inventory, p) -> new ReceivingStationMenu(id,
+				inventory,
 				receiver.getBlockPos(), receiver, receiver.getTray(), receiver.getName(), data),
 				ReceivingStationBlockEntity.TITLE), buf -> {
 			buf.writeBlockPos(receiver.getBlockPos());
@@ -143,6 +145,6 @@ public class ReceivingStationMenu extends AbstractContainerMenu implements Named
 	public boolean stillValid(Player player)
 	{
 		return player.level().getBlockEntity(pos) instanceof ReceivingStationBlockEntity
-				&&player.canInteractWithBlock(pos, 4.0);
+				&&player.canReach(pos, 4.0);
 	}
 }

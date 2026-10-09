@@ -82,9 +82,9 @@ final class BookGuideScreen extends GuideScreen
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void renderBackground(GuiGraphics graphics)
 	{
-		super.renderBackground(graphics, mouseX, mouseY, partialTick);
+		super.renderBackground(graphics);
 		RenderSystem.disableCull();
 		graphics.pose().pushPose();
 		graphics.pose().translate(left()+PAGE_WIDTH, TOP, 0);

@@ -3,7 +3,6 @@ package com.muddykat.engineeredcomputation.adapter;
 import net.minecraft.world.item.ItemStack;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 
 public record AdapterFilter(ItemStack held)
 {
@@ -36,6 +35,6 @@ public record AdapterFilter(ItemStack held)
 
 	private Program program()
 	{
-		return held.getOrDefault(ECDataComponents.PROGRAM.get(), Program.EMPTY);
+		return ProgramFloppyItem.program(held);
 	}
 }

@@ -1,7 +1,7 @@
 package com.muddykat.engineeredcomputation.storage;
 
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandler;
 
 public enum CellStatus
 {

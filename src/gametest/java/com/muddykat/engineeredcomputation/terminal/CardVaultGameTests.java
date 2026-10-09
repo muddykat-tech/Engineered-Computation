@@ -19,9 +19,9 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
@@ -74,11 +74,11 @@ public final class CardVaultGameTests
 			ItemStack deck = new ItemStack(ECCatalogue.decks().get(slot).get());
 			player.setItemInHand(InteractionHand.MAIN_HAND, deck.copy());
 			sneakUse(helper, player, above, floor, facing);
-			StorageGameTests.check(helper, ItemStack.isSameItemSameComponents(vault.getCellSlots().getStackInSlot(slot),
+			StorageGameTests.check(helper, ItemStack.isSameItemSameTags(vault.getCellSlots().getStackInSlot(slot),
 					deck)&&player.getMainHandItem().isEmpty(), "a deck sneak-used into compartment "+slot+" didn't go in");
 			sneakUse(helper, player, above, floor, facing);
 			StorageGameTests.check(helper, vault.getCellSlots().getStackInSlot(slot).isEmpty()
-							&&ItemStack.isSameItemSameComponents(player.getMainHandItem(), deck),
+							&&ItemStack.isSameItemSameTags(player.getMainHandItem(), deck),
 					"sneak-clicking compartment "+slot+" with an empty hand didn't take its deck");
 			player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
 		}
@@ -98,9 +98,9 @@ public final class CardVaultGameTests
 
 		Vec3[] sight = pastTheFrontDeck(helper);
 		sneakUse(helper, player, sight[0], sight[1], facing);
-		StorageGameTests.check(helper, ItemStack.isSameItemSameComponents(player.getMainHandItem(), front)
+		StorageGameTests.check(helper, ItemStack.isSameItemSameTags(player.getMainHandItem(), front)
 						&&vault.getCellSlots().getStackInSlot(0).isEmpty()
-						&&ItemStack.isSameItemSameComponents(vault.getCellSlots().getStackInSlot(1), behind),
+						&&ItemStack.isSameItemSameTags(vault.getCellSlots().getStackInSlot(1), behind),
 				"a click through the front deck took "+player.getMainHandItem()+" rather than the front deck");
 		helper.succeed();
 	}
@@ -118,7 +118,7 @@ public final class CardVaultGameTests
 		Vec3[] sight = pastTheFrontDeck(helper);
 		sneakUse(helper, player, sight[0], sight[1], facing);
 		StorageGameTests.check(helper, vault.getCellSlots().getStackInSlot(1).isEmpty()
-						&&ItemStack.isSameItemSameComponents(player.getMainHandItem(), deck),
+						&&ItemStack.isSameItemSameTags(player.getMainHandItem(), deck),
 				"a deck went into compartment 1 through the deck in front of it");
 		helper.succeed();
 	}
@@ -166,7 +166,7 @@ public final class CardVaultGameTests
 		BlockHitResult hit = new BlockHitResult(Vec3.atLowerCornerOf(origin).add(
 				StorageGameTests.worldOffset(target, facing)), Direction.UP, block, false);
 		if(player.getMainHandItem().isEmpty())
-			level.getBlockState(block).useWithoutItem(level, player, hit);
+			level.getBlockState(block).use(level, player, InteractionHand.MAIN_HAND, hit);
 		else
 			player.getMainHandItem().useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, hit));
 	}

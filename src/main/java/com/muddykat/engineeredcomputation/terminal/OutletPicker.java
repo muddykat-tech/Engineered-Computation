@@ -12,9 +12,9 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
+import com.muddykat.engineeredcomputation.network.ECPayloads;
 
 final class OutletPicker
 {
@@ -41,7 +41,8 @@ final class OutletPicker
 		search.setBordered(false);
 		search.setMaxLength(32);
 		search.setTextColor(0xFFFFFF);
-		search.setHint(Component.translatable("gui.engineered_computation.teletype.search").withColor(0x707070));
+		search.setHint(Component.translatable("gui.engineered_computation.teletype.search")
+				.withStyle(style -> style.withColor(0x707070)));
 		search.setFocused(true);
 		search.setResponder(text -> scroll = 0);
 	}
@@ -151,7 +152,7 @@ final class OutletPicker
 
 	private void pick(TeletypeSlipPayload.Outlet outlet)
 	{
-		PacketDistributor.sendToServer(new TeletypeOutletPayload(menu.containerId, outlet.pos()));
+		ECPayloads.sendToServer(new TeletypeOutletPayload(menu.containerId, outlet.pos()));
 		Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1));
 		closed = true;
 	}

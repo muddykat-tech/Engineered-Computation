@@ -2,12 +2,10 @@ package com.muddykat.engineeredcomputation.terminal;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -21,17 +19,13 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.network.NetworkMember;
+import com.muddykat.engineeredcomputation.network.NetworkMemberBlock;
+import com.muddykat.engineeredcomputation.network.StorageNetwork;
 
-public class EraTerminalBlock extends HorizontalDirectionalBlock
+public class EraTerminalBlock extends HorizontalDirectionalBlock implements NetworkMemberBlock
 {
-	public static final MapCodec<EraTerminalBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-			ComputerEra.CODEC.fieldOf("era").forGetter(EraTerminalBlock::getEra),
-			propertiesCodec()
-	).apply(instance, EraTerminalBlock::new));
-
 	public static final NetworkMember NETWORK_MEMBER = new NetworkMember()
 	{
 	};
@@ -51,9 +45,12 @@ public class EraTerminalBlock extends HorizontalDirectionalBlock
 	}
 
 	@Override
-	protected MapCodec<? extends HorizontalDirectionalBlock> codec()
+	@Nullable
+	public NetworkMember getNetworkMember(Level level, BlockPos pos, BlockState state, @Nullable Direction side)
 	{
-		return CODEC;
+		if(TerminalFeatures.of(era).requests())
+			return null;
+		return level.getBlockEntity(pos) instanceof TerminalDiskBlockEntity bays? bays: NETWORK_MEMBER;
 	}
 
 	@Override
@@ -70,15 +67,17 @@ public class EraTerminalBlock extends HorizontalDirectionalBlock
 	}
 
 	@Override
-	protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
+	public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
 	{
 		return era.terminalShape(state.getValue(FACING));
 	}
 
 	@Override
-	protected InteractionResult useWithoutItem(
-			BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult)
+	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
+			BlockHitResult hitResult)
 	{
+		if(hand!=InteractionHand.MAIN_HAND)
+			return InteractionResult.PASS;
 		if(player instanceof ServerPlayer serverPlayer)
 			TerminalMenu.open(serverPlayer, pos, getName(), features(), craftingGrid(level, pos));
 		return InteractionResult.sidedSuccess(level.isClientSide);
@@ -96,7 +95,7 @@ public class EraTerminalBlock extends HorizontalDirectionalBlock
 	}
 
 	@Override
-	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
+	public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
 	{
 		super.onPlace(state, level, pos, oldState, movedByPiston);
 		if(!oldState.is(state.getBlock()))
@@ -104,7 +103,7 @@ public class EraTerminalBlock extends HorizontalDirectionalBlock
 	}
 
 	@Override
-	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
+	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
 	{
 		if(!state.is(newState.getBlock()))
 			StorageNetwork.changed(level);

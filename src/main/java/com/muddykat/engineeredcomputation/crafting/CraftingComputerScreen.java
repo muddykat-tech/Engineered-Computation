@@ -52,6 +52,7 @@ public class CraftingComputerScreen extends AbstractContainerScreen<CraftingComp
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
 	{
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		if(hoveredSlot!=null&&hoveredSlot.index<CraftingComputerState.PATTERN_SLOTS&&!hoveredSlot.hasItem())
 		{
@@ -235,7 +236,7 @@ public class CraftingComputerScreen extends AbstractContainerScreen<CraftingComp
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY)
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollY)
 	{
 		int x = leftPos+CraftingComputerMenu.DISPLAY_X, y = topPos+CraftingComputerMenu.DISPLAY_Y;
 		if(scrollY!=0&&mouseX>=x&&mouseX<x+CraftingComputerMenu.DISPLAY_WIDTH&&mouseY>=y
@@ -244,6 +245,6 @@ public class CraftingComputerScreen extends AbstractContainerScreen<CraftingComp
 			scroll = Math.max(0, scroll-(int)Math.signum(scrollY));
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+		return super.mouseScrolled(mouseX, mouseY, scrollY);
 	}
 }

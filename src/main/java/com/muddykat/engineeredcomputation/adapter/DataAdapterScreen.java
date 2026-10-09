@@ -60,6 +60,7 @@ public class DataAdapterScreen extends AbstractContainerScreen<DataAdapterMenu>
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
 	{
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		if(!renderOwnTooltip(graphics, mouseX, mouseY))
 			renderTooltip(graphics, mouseX, mouseY);
@@ -135,7 +136,7 @@ public class DataAdapterScreen extends AbstractContainerScreen<DataAdapterMenu>
 			{
 				lines.add(filter.getHoverName());
 				if(AdapterFilter.isProgram(filter))
-					filter.getItem().appendHoverText(filter, Item.TooltipContext.of(minecraft.level), lines,
+					filter.getItem().appendHoverText(filter, minecraft.level, lines,
 							TooltipFlag.NORMAL);
 			}
 			lines.add(Component.translatable("gui.engineered_computation.adapter.filter.hint")

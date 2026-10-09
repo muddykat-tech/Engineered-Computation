@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "KNK",
+    "KRK",
+    "KKK"
+  ],
+  "key": {
+    "K": {
+      "item": "minecraft:dried_kelp"
+    },
+    "N": {
+      "tag": "forge:nuggets/iron"
+    },
+    "R": {
+      "tag": "forge:dusts/redstone"
+    }
+  },
+  "result": {
+    "item": "engineered_computation:floppy_35_cell_1k",
+    "count": 1
+  }
+}

@@ -34,6 +34,7 @@ public class EraDriveScreen extends AbstractContainerScreen<EraDriveMenu>
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
 	{
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		Slot slot = hoveredSlot;
 		int priority = priorityAt(mouseX, mouseY);
@@ -117,7 +118,7 @@ public class EraDriveScreen extends AbstractContainerScreen<EraDriveMenu>
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY)
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollY)
 	{
 		int slot = priorityAt(mouseX, mouseY);
 		if(slot>=0&&scrollY!=0)
@@ -125,7 +126,7 @@ public class EraDriveScreen extends AbstractContainerScreen<EraDriveMenu>
 			change(slot, scrollY>0);
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+		return super.mouseScrolled(mouseX, mouseY, scrollY);
 	}
 
 	@Override

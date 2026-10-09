@@ -1,52 +1,53 @@
 package com.muddykat.engineeredcomputation.terminal;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.world.entity.player.Player;
 
-import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.catalogue.RequestSlip;
 
 public record TeletypeSlipPayload(int containerId, List<RequestSlip.Line> lines, Component outlet, boolean home,
-		List<Outlet> outlets) implements CustomPacketPayload
+		List<Outlet> outlets)
 {
 	public record Outlet(BlockPos pos, Component label, boolean chosen)
 	{
-		public static final StreamCodec<RegistryFriendlyByteBuf, Outlet> STREAM_CODEC = StreamCodec.composite(
-				BlockPos.STREAM_CODEC, Outlet::pos,
-				ComponentSerialization.STREAM_CODEC, Outlet::label,
-				ByteBufCodecs.BOOL, Outlet::chosen,
-				Outlet::new);
+		public void write(FriendlyByteBuf buf)
+		{
+			buf.writeBlockPos(pos);
+			buf.writeComponent(label);
+			buf.writeBoolean(chosen);
+		}
+
+		public static Outlet read(FriendlyByteBuf buf)
+		{
+			return new Outlet(buf.readBlockPos(), buf.readComponent(), buf.readBoolean());
+		}
 	}
 
-	public static final Type<TeletypeSlipPayload> TYPE = new Type<>(
-			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "teletype_slip"));
-
-	public static final StreamCodec<RegistryFriendlyByteBuf, TeletypeSlipPayload> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.VAR_INT, TeletypeSlipPayload::containerId,
-			RequestSlip.Line.STREAM_CODEC.apply(ByteBufCodecs.list(RequestSlip.SIZE)), TeletypeSlipPayload::lines,
-			ComponentSerialization.STREAM_CODEC, TeletypeSlipPayload::outlet,
-			ByteBufCodecs.BOOL, TeletypeSlipPayload::home,
-			Outlet.STREAM_CODEC.apply(ByteBufCodecs.list()), TeletypeSlipPayload::outlets,
-			TeletypeSlipPayload::new);
-
-	@Override
-	public Type<TeletypeSlipPayload> type()
+	public void encode(FriendlyByteBuf buf)
 	{
-		return TYPE;
+		buf.writeVarInt(containerId);
+		buf.writeCollection(lines, (out, line) -> line.write(out));
+		buf.writeComponent(outlet);
+		buf.writeBoolean(home);
+		buf.writeCollection(outlets, (out, entry) -> entry.write(out));
 	}
 
-	public static void handle(TeletypeSlipPayload payload, IPayloadContext context)
+	public static TeletypeSlipPayload decode(FriendlyByteBuf buf)
 	{
-		if(context.player().containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
+		return new TeletypeSlipPayload(buf.readVarInt(),
+				buf.readCollection(FriendlyByteBuf.limitValue(ArrayList::new, RequestSlip.SIZE),
+						RequestSlip.Line::read), buf.readComponent(),
+				buf.readBoolean(), buf.readList(Outlet::read));
+	}
+
+	public static void handle(TeletypeSlipPayload payload, Player player)
+	{
+		if(player.containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
 			menu.applySlip(payload);
 	}
 }

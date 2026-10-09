@@ -6,7 +6,6 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -15,7 +14,7 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraftforge.items.ItemStackHandler;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.network.NetworkMember;
@@ -152,25 +151,25 @@ public class TerminalDiskBlockEntity extends CraftingTerminalBlockEntity impleme
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	protected void saveAdditional(CompoundTag tag)
 	{
-		super.saveAdditional(tag, registries);
-		tag.put("disks", disks.serializeNBT(registries));
+		super.saveAdditional(tag);
+		tag.put("disks", disks.serializeNBT());
 	}
 
 	@Override
-	protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
-		super.loadAdditional(tag, registries);
+		super.load(tag);
 		if(tag.contains("disks"))
-			disks.deserializeNBT(registries, tag.getCompound("disks"));
+			disks.deserializeNBT(tag.getCompound("disks"));
 	}
 
 	@Override
-	public CompoundTag getUpdateTag(HolderLookup.Provider registries)
+	public CompoundTag getUpdateTag()
 	{
 		syncedStatus = CellStatus.pack(disks);
-		return saveWithoutMetadata(registries);
+		return saveWithoutMetadata();
 	}
 
 	@Override

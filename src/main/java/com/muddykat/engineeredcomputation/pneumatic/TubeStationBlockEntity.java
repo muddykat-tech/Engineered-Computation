@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
@@ -21,9 +20,9 @@ import net.minecraft.world.Nameable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.storage.CellContents;
@@ -136,7 +135,9 @@ public class TubeStationBlockEntity extends BlockEntity
 		if(level==null)
 			return null;
 		Direction facing = getBlockState().getValue(TubeStationBlock.FACING);
-		return level.getCapability(Capabilities.ItemHandler.BLOCK, worldPosition.relative(facing), facing.getOpposite());
+		BlockEntity target = level.getBlockEntity(worldPosition.relative(facing));
+		return target==null? null: target.getCapability(ForgeCapabilities.ITEM_HANDLER,
+				facing.getOpposite()).orElse(null);
 	}
 
 	void tickServer()
@@ -186,15 +187,15 @@ public class TubeStationBlockEntity extends BlockEntity
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	protected void saveAdditional(CompoundTag tag)
 	{
-		super.saveAdditional(tag, registries);
+		super.saveAdditional(tag);
 		ListTag list = new ListTag();
 		for(Request request : requests)
 		{
 			CompoundTag entry = new CompoundTag();
-			entry.put("item", ItemKey.CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE),
-					request.key).getOrThrow());
+			entry.put("item", ItemKey.CODEC.encodeStart(NbtOps.INSTANCE,
+					request.key).getOrThrow(false, error -> {}));
 			entry.putInt("remaining", request.remaining);
 			entry.putLong("receiver", request.receiver.asLong());
 			list.add(entry);
@@ -207,14 +208,14 @@ public class TubeStationBlockEntity extends BlockEntity
 	}
 
 	@Override
-	protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
-		super.loadAdditional(tag, registries);
+		super.load(tag);
 		requests.clear();
 		for(Tag item : tag.getList("requests", Tag.TAG_COMPOUND))
 		{
 			CompoundTag entry = (CompoundTag)item;
-			ItemKey.CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), entry.get("item")).result()
+			ItemKey.CODEC.parse(NbtOps.INSTANCE, entry.get("item")).result()
 					.ifPresent(key -> requests.add(new Request(key, entry.getInt("remaining"),
 							BlockPos.of(entry.getLong("receiver")))));
 		}

@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
@@ -19,9 +18,9 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
@@ -162,8 +161,9 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 		Direction facing = getBlockState().getValue(DataAdapterBlock.FACING);
 		if(!(level.getBlockState(worldPosition.relative(facing.getOpposite())).getBlock() instanceof NetworkCableBlock))
 			return AdapterStatus.SERVICE_UNAVAILABLE;
-		IItemHandler target = level.getCapability(Capabilities.ItemHandler.BLOCK, worldPosition.relative(facing),
-				facing.getOpposite());
+		BlockEntity facingEntity = level.getBlockEntity(worldPosition.relative(facing));
+		IItemHandler target = facingEntity==null? null
+				: facingEntity.getCapability(ForgeCapabilities.ITEM_HANDLER, facing.getOpposite()).orElse(null);
 		if(target==null)
 			return AdapterStatus.SERVICE_UNAVAILABLE;
 		StorageNetwork network = StorageNetwork.of(level, worldPosition);
@@ -259,21 +259,21 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	protected void saveAdditional(CompoundTag tag)
 	{
-		super.saveAdditional(tag, registries);
+		super.saveAdditional(tag);
 		if(!getFilter().isEmpty())
-			tag.put("filter", getFilter().save(registries));
+			tag.put("filter", getFilter().save(new CompoundTag()));
 		tag.putInt("items", items);
 		tag.putInt("ticks", ticks);
 		tag.putBoolean("enabled", enabled);
 	}
 
 	@Override
-	protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
-		super.loadAdditional(tag, registries);
-		filter.setItem(0, tag.contains("filter")? ItemStack.parseOptional(registries, tag.getCompound("filter"))
+		super.load(tag);
+		filter.setItem(0, tag.contains("filter")? ItemStack.of(tag.getCompound("filter"))
 				: ItemStack.EMPTY);
 		setSpeed(tag.contains("items")? tag.getInt("items"): speed.items(),
 				tag.contains("ticks")? tag.getInt("ticks"): speed.ticks());

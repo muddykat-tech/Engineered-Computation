@@ -7,9 +7,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
@@ -55,9 +54,9 @@ public final class CasingRecipeGameTests
 	private static Recipe<?> casingRecipe(GameTestHelper helper, ComputerEra era)
 	{
 		ResourceLocation id = ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, era.casingName());
-		RecipeHolder<?> holder = helper.getLevel().getRecipeManager().byKey(id).orElse(null);
-		if(holder==null)
+		Recipe<?> recipe = helper.getLevel().getRecipeManager().byKey(id).orElse(null);
+		if(recipe==null)
 			helper.fail(era.casingName()+" has no recipe");
-		return holder.value();
+		return recipe;
 	}
 }

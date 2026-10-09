@@ -6,4 +6,4 @@ Direct: a crafting table recipe. Lay it out on the 3x3 grid and the result fills
 
 Abstract: anything another machine makes, like smelting. Set what goes in and what comes out, with amounts (click for more, right-click for fewer). Put it in an Advanced Data Processor.
 
-An abstract slot can be a tag instead of one item: click an empty slot, type the tag and press Enter. An output tag takes any of its items, for example c:ingots/iron for any iron ingot. For an input tag, each order asks which of its items to send, so a tag like c:raw_materials can smelt any ore. A pattern with a tag is ordered by itself from the terminal, never as part of another order. An input tag with more than eight items is marked "!".
+An abstract slot can be a tag instead of one item: click an empty slot, type the tag and press Enter. An output tag takes any of its items, for example forge:ingots/iron for any iron ingot. For an input tag, each order asks which of its items to send, so a tag like forge:raw_materials can smelt any ore. A pattern with a tag is ordered by itself from the terminal, never as part of another order. An input tag with more than eight items is marked "!".

@@ -9,7 +9,6 @@ import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -23,7 +22,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.network.NetworkHooks;
 
 import com.muddykat.engineeredcomputation.era.EraMachine;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockContext;
@@ -241,7 +241,7 @@ public class CraftingComputerState implements MultiblockState, NetworkMember
 			return InteractionResult.CONSUME;
 		}
 		if(player instanceof ServerPlayer serverPlayer)
-			serverPlayer.openMenu(new SimpleMenuProvider(
+			NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
 							(id, inventory, p) -> new CraftingComputerMenu(id, inventory, this, ctx.masterPos()),
 							ctx.definition().partBlock().getName()),
 					buf -> buf.writeBlockPos(ctx.masterPos()));
@@ -268,24 +268,24 @@ public class CraftingComputerState implements MultiblockState, NetworkMember
 	}
 
 	@Override
-	public void save(CompoundTag tag, HolderLookup.Provider registries)
+	public void save(CompoundTag tag)
 	{
-		tag.put("patterns", patterns.serializeNBT(registries));
+		tag.put("patterns", patterns.serializeNBT());
 		ListTag list = new ListTag();
 		for(CraftingOrder order : orders)
-			list.add(order.save(registries));
+			list.add(order.save());
 		tag.put("orders", list);
 		tag.putInt("next_id", nextId);
 	}
 
 	@Override
-	public void load(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
 		if(tag.contains("patterns"))
-			patterns.deserializeNBT(registries, tag.getCompound("patterns"));
+			patterns.deserializeNBT(tag.getCompound("patterns"));
 		orders.clear();
 		for(Tag entry : tag.getList("orders", Tag.TAG_COMPOUND))
-			orders.add(CraftingOrder.load((CompoundTag)entry, registries));
+			orders.add(CraftingOrder.load((CompoundTag)entry));
 		nextId = Math.max(1, tag.getInt("next_id"));
 	}
 }

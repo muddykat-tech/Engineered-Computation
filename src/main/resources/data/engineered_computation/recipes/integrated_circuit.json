@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "tag": "forge:gems/quartz"
+    },
+    {
+      "tag": "forge:ingots/gold"
+    },
+    {
+      "tag": "forge:dusts/redstone"
+    },
+    {
+      "item": "engineered_computation:transistor"
+    },
+    {
+      "item": "engineered_computation:transistor"
+    }
+  ],
+  "result": {
+    "item": "engineered_computation:integrated_circuit",
+    "count": 2
+  }
+}

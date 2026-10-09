@@ -1,7 +1,6 @@
 package com.muddykat.engineeredcomputation.terminal;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ContainerHelper;
@@ -71,18 +70,18 @@ public final class CraftingGrid
 		slots.replaceAll(stack -> ItemStack.EMPTY);
 	}
 
-	public CompoundTag save(HolderLookup.Provider registries)
+	public CompoundTag save()
 	{
 		CompoundTag tag = new CompoundTag();
 		tag.putBoolean("linked", linked);
-		ContainerHelper.saveAllItems(tag, slots, true, registries);
+		ContainerHelper.saveAllItems(tag, slots, true);
 		return tag;
 	}
 
-	public void load(CompoundTag tag, HolderLookup.Provider registries)
+	public void load(CompoundTag tag)
 	{
 		linked = !tag.contains("linked")||tag.getBoolean("linked");
 		slots.replaceAll(stack -> ItemStack.EMPTY);
-		ContainerHelper.loadAllItems(tag, slots, registries);
+		ContainerHelper.loadAllItems(tag, slots);
 	}
 }

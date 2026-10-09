@@ -11,14 +11,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.neoforged.neoforge.client.ChunkRenderTypeSet;
-import net.neoforged.neoforge.client.model.data.ModelData;
+import net.minecraftforge.client.ChunkRenderTypeSet;
+import net.minecraftforge.client.model.data.ModelData;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
@@ -34,15 +33,15 @@ public class CoveredTubeModel extends CoveredCableModel
 		this.showsTube = showsTube;
 	}
 
-	public static List<ModelResourceLocation> models()
+	public static List<ResourceLocation> models()
 	{
 		return Arrays.stream(Direction.values()).map(CoveredTubeModel::cap).toList();
 	}
 
-	private static ModelResourceLocation cap(Direction face)
+	private static ResourceLocation cap(Direction face)
 	{
-		return ModelResourceLocation.standalone(ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID,
-				"block/tube/end_cap_"+face.getSerializedName()));
+		return ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID,
+				"block/tube/end_cap_"+face.getSerializedName());
 	}
 
 	private boolean drawsCaps(@Nullable BlockState state, ModelData data)

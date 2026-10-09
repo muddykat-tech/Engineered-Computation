@@ -1,18 +1,17 @@
 package com.muddykat.engineeredcomputation;
 
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class ECConfig
 {
-	private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+	private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
-	public static final ModConfigSpec.BooleanValue TAPE_ARCHIVING = BUILDER
-			.comment("Whether tape drives move a network's biggest stocks onto their reels, and small ones back off them.",
-					"Off, tape still takes items that are already on it, and new ones once other storage is full.")
+	public static final ForgeConfigSpec.BooleanValue TAPE_ARCHIVING = BUILDER
+			.comment("Whether bulk network storage types will move a large stocks automatically, this will also ensure that it moves small (if they have any) stocks onto other drives when doing so.")
 			.translation(EngineeredComputation.MODID+".configuration.tapeArchiving")
 			.define("tapeArchiving", true);
 
-	public static final ModConfigSpec SPEC = BUILDER.build();
+	public static final ForgeConfigSpec SPEC = BUILDER.build();
 
 	private ECConfig()
 	{
@@ -20,6 +19,6 @@ public final class ECConfig
 
 	public static boolean tapeArchiving()
 	{
-		return SPEC.isLoaded() ? TAPE_ARCHIVING.getAsBoolean() : TAPE_ARCHIVING.getDefault();
+		return SPEC.isLoaded() ? TAPE_ARCHIVING.get() : TAPE_ARCHIVING.getDefault();
 	}
 }

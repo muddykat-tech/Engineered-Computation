@@ -1,9 +1,0 @@
-{
-  "type": "minecraft:crafting_shapeless",
-  "category": "misc",
-  "ingredients": [
-    {"type": "neoforge:components", "items": "engineered_computation:disk_pack_cell_24k", "components": {}, "strict": true},
-    {"type": "neoforge:components", "items": "engineered_computation:disk_pack_cell_8k", "components": {}, "strict": true}
-  ],
-  "result": {"id": "engineered_computation:disk_pack_cell_32k", "count": 1}
-}

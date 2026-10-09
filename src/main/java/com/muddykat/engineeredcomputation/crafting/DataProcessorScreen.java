@@ -28,6 +28,7 @@ public class DataProcessorScreen extends AbstractContainerScreen<DataProcessorMe
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
 	{
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		Slot slot = hoveredSlot;
 		StatusCode status = menu.status();

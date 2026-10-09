@@ -2,12 +2,11 @@ package com.muddykat.engineeredcomputation.pneumatic;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.serialization.MapCodec;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -24,10 +23,8 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 
-public class ReceivingStationBlock extends HorizontalDirectionalBlock implements EntityBlock
+public class ReceivingStationBlock extends HorizontalDirectionalBlock implements EntityBlock, TubeMemberBlock
 {
-	public static final MapCodec<ReceivingStationBlock> CODEC = simpleCodec(ReceivingStationBlock::new);
-
 	public ReceivingStationBlock(Properties properties)
 	{
 		super(properties);
@@ -35,9 +32,10 @@ public class ReceivingStationBlock extends HorizontalDirectionalBlock implements
 	}
 
 	@Override
-	protected MapCodec<? extends HorizontalDirectionalBlock> codec()
+	@Nullable
+	public TubeMember getTubeMember(Level level, BlockPos pos, BlockState state, @Nullable Direction side)
 	{
-		return CODEC;
+		return TubeMember.END;
 	}
 
 	@Override
@@ -54,9 +52,11 @@ public class ReceivingStationBlock extends HorizontalDirectionalBlock implements
 	}
 
 	@Override
-	protected InteractionResult useWithoutItem(
-			BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult)
+	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
+			BlockHitResult hitResult)
 	{
+		if(hand!=InteractionHand.MAIN_HAND)
+			return InteractionResult.PASS;
 		if(player instanceof ServerPlayer serverPlayer&&level.getBlockEntity(pos) instanceof ReceivingStationBlockEntity receiver)
 			ReceivingStationMenu.open(serverPlayer, receiver);
 		return InteractionResult.sidedSuccess(level.isClientSide);
@@ -79,7 +79,7 @@ public class ReceivingStationBlock extends HorizontalDirectionalBlock implements
 	}
 
 	@Override
-	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
+	public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston)
 	{
 		super.onPlace(state, level, pos, oldState, movedByPiston);
 		if(!oldState.is(state.getBlock()))
@@ -87,7 +87,7 @@ public class ReceivingStationBlock extends HorizontalDirectionalBlock implements
 	}
 
 	@Override
-	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
+	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
 	{
 		if(!state.is(newState.getBlock()))
 		{

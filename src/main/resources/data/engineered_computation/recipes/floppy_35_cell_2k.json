@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "forge:nbt",
+      "item": "engineered_computation:floppy_35_cell_1k",
+      "count": 1
+    },
+    {
+      "type": "forge:nbt",
+      "item": "engineered_computation:floppy_35_cell_1k",
+      "count": 1
+    }
+  ],
+  "result": {
+    "item": "engineered_computation:floppy_35_cell_2k",
+    "count": 1
+  }
+}

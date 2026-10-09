@@ -7,7 +7,6 @@ import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.math.Transformation;
-
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -19,8 +18,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.ChunkRenderTypeSet;
-import net.neoforged.neoforge.client.model.data.ModelData;
+import net.minecraftforge.client.ChunkRenderTypeSet;
+import net.minecraftforge.client.model.data.ModelData;
 
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
 

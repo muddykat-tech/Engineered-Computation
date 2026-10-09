@@ -10,9 +10,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
+import com.muddykat.engineeredcomputation.network.ECPayloads;
 
 public abstract class NamedStationScreen<M extends AbstractContainerMenu&NamedStationMenu>
 		extends AbstractContainerScreen<M>
@@ -41,15 +41,16 @@ public abstract class NamedStationScreen<M extends AbstractContainerMenu&NamedSt
 		nameField.setBordered(false);
 		nameField.setMaxLength(TubeStationBlockEntity.MAX_NAME);
 		nameField.setTextColor(0xFFFFFF);
-		nameField.setHint(unnamed().copy().withColor(0x707070));
+		nameField.setHint(unnamed().copy().withStyle(style -> style.withColor(0x707070)));
 		nameField.setValue(menu.getName());
-		nameField.setResponder(name -> PacketDistributor.sendToServer(new StationNamePayload(menu.containerId, name)));
+		nameField.setResponder(name -> ECPayloads.sendToServer(new StationNamePayload(menu.containerId, name)));
 		addRenderableWidget(nameField);
 	}
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
 	{
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		renderTooltip(graphics, mouseX, mouseY);
 	}

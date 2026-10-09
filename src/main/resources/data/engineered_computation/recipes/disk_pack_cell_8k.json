@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IRI",
+    "IRI",
+    "KKK"
+  ],
+  "key": {
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "R": {
+      "tag": "forge:dusts/redstone"
+    },
+    "K": {
+      "item": "minecraft:dried_kelp"
+    }
+  },
+  "result": {
+    "item": "engineered_computation:disk_pack_cell_8k",
+    "count": 1
+  }
+}

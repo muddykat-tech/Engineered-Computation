@@ -6,10 +6,7 @@ import java.util.List;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
@@ -24,10 +21,16 @@ public final class RequestSlip
 				Codec.INT.fieldOf("amount").forGetter(Line::amount)
 		).apply(instance, Line::new));
 
-		public static final StreamCodec<RegistryFriendlyByteBuf, Line> STREAM_CODEC = StreamCodec.composite(
-				ItemKey.STREAM_CODEC, Line::key,
-				ByteBufCodecs.VAR_INT, Line::amount,
-				Line::new);
+		public static Line read(FriendlyByteBuf buf)
+		{
+			return new Line(ItemKey.read(buf), buf.readVarInt());
+		}
+
+		public void write(FriendlyByteBuf buf)
+		{
+			key.write(buf);
+			buf.writeVarInt(amount);
+		}
 	}
 
 	public static final Codec<List<Line>> CODEC = Line.CODEC.listOf();

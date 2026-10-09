@@ -12,7 +12,6 @@ import java.util.function.Predicate;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -24,13 +23,12 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
@@ -186,11 +184,11 @@ public final class CraftingOrder
 		Map<ItemKey, Long> inputs = step.resolved.inputTotals();
 		if(!hasAll(inputs))
 			return false;
-		Optional<RecipeHolder<CraftingRecipe>> recipe = step.resolved.recipe(level);
-		CraftingInput input = step.resolved.craftingInput();
-		ItemStack result = recipe.map(holder -> holder.value().assemble(input, level.registryAccess()))
+		Optional<CraftingRecipe> recipe = step.resolved.recipe(level);
+		CraftingContainer input = step.resolved.craftingInput();
+		ItemStack result = recipe.map(found -> found.assemble(input, level.registryAccess()))
 				.orElse(ItemStack.EMPTY);
-		if(!ItemStack.isSameItemSameComponents(result, step.resolved.primaryOutput())
+		if(!ItemStack.isSameItemSameTags(result, step.resolved.primaryOutput())
 				||result.getCount()!=step.resolved.primaryOutput().getCount())
 		{
 			status = StatusCode.NOT_FOUND;
@@ -198,7 +196,7 @@ public final class CraftingOrder
 		}
 		inputs.forEach(this::remove);
 		add(result);
-		NonNullList<ItemStack> leftovers = recipe.get().value().getRemainingItems(input);
+		NonNullList<ItemStack> leftovers = recipe.get().getRemainingItems(input);
 		for(ItemStack leftover : leftovers)
 			add(leftover);
 		step.done++;
@@ -384,11 +382,11 @@ public final class CraftingOrder
 		}
 	}
 
-	CompoundTag save(HolderLookup.Provider registries)
+	CompoundTag save()
 	{
 		CompoundTag tag = new CompoundTag();
 		tag.putInt("id", id);
-		tag.put("target", encode(registries, ItemKey.CODEC, target));
+		tag.put("target", encode(ItemKey.CODEC, target));
 		if(targetTag!=null)
 			tag.putString("target_tag", targetTag.location().toString());
 		tag.putLong("amount", amount);
@@ -396,7 +394,7 @@ public final class CraftingOrder
 		for(Step step : steps)
 		{
 			CompoundTag stepTag = new CompoundTag();
-			stepTag.put("pattern", encode(registries, Pattern.CODEC, step.pattern));
+			stepTag.put("pattern", encode(Pattern.CODEC, step.pattern));
 			if(step.processor!=null)
 				stepTag.put("processor", NbtUtils.writeBlockPos(step.processor));
 			CompoundTag choices = new CompoundTag();
@@ -409,11 +407,11 @@ public final class CraftingOrder
 			stepTags.add(stepTag);
 		}
 		tag.put("steps", stepTags);
-		tag.put("buffer", saveCounts(registries, buffer));
+		tag.put("buffer", saveCounts(buffer));
 		return tag;
 	}
 
-	static CraftingOrder load(CompoundTag tag, HolderLookup.Provider registries)
+	static CraftingOrder load(CompoundTag tag)
 	{
 		List<Step> steps = new ArrayList<>();
 		for(Tag entry : tag.getList("steps", Tag.TAG_COMPOUND))
@@ -424,8 +422,10 @@ public final class CraftingOrder
 			for(String slot : choiceTag.getAllKeys())
 				BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(choiceTag.getString(slot)))
 						.ifPresent(item -> choices.put(Integer.parseInt(slot), item));
-			Step step = new Step(decode(registries, Pattern.CODEC, stepTag.get("pattern")),
-					NbtUtils.readBlockPos(stepTag, "processor").orElse(null), choices, stepTag.getLong("runs"));
+			Step step = new Step(decode(Pattern.CODEC, stepTag.get("pattern")),
+					stepTag.contains("processor")? NbtUtils.readBlockPos(stepTag.getCompound("processor")): null,
+							choices,
+					stepTag.getLong("runs"));
 			step.done = stepTag.getLong("done");
 			long[] received = stepTag.getLongArray("received");
 			System.arraycopy(received, 0, step.received, 0, Math.min(received.length, step.received.length));
@@ -433,40 +433,40 @@ public final class CraftingOrder
 		}
 		TagKey<Item> targetTag = tag.contains("target_tag")? TagKey.create(Registries.ITEM,
 				ResourceLocation.parse(tag.getString("target_tag"))): null;
-		CraftingOrder order = new CraftingOrder(tag.getInt("id"), decode(registries, ItemKey.CODEC, tag.get("target")),
+		CraftingOrder order = new CraftingOrder(tag.getInt("id"), decode(ItemKey.CODEC, tag.get("target")),
 				targetTag, tag.getLong("amount"), steps);
-		loadCounts(registries, tag.getList("buffer", Tag.TAG_COMPOUND), order.buffer);
+		loadCounts(tag.getList("buffer", Tag.TAG_COMPOUND), order.buffer);
 		return order;
 	}
 
-	private static ListTag saveCounts(HolderLookup.Provider registries, Map<ItemKey, Long> counts)
+	private static ListTag saveCounts(Map<ItemKey, Long> counts)
 	{
 		ListTag list = new ListTag();
 		counts.forEach((key, count) -> {
 			CompoundTag entry = new CompoundTag();
-			entry.put("item", encode(registries, ItemKey.CODEC, key));
+			entry.put("item", encode(ItemKey.CODEC, key));
 			entry.putLong("count", count);
 			list.add(entry);
 		});
 		return list;
 	}
 
-	private static void loadCounts(HolderLookup.Provider registries, ListTag list, Map<ItemKey, Long> into)
+	private static void loadCounts(ListTag list, Map<ItemKey, Long> into)
 	{
 		for(Tag entry : list)
 		{
 			CompoundTag compound = (CompoundTag)entry;
-			into.put(decode(registries, ItemKey.CODEC, compound.get("item")), compound.getLong("count"));
+			into.put(decode(ItemKey.CODEC, compound.get("item")), compound.getLong("count"));
 		}
 	}
 
-	private static <T> Tag encode(HolderLookup.Provider registries, com.mojang.serialization.Codec<T> codec, T value)
+	private static <T> Tag encode(com.mojang.serialization.Codec<T> codec, T value)
 	{
-		return codec.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), value).getOrThrow();
+		return codec.encodeStart(NbtOps.INSTANCE, value).getOrThrow(false, error -> {});
 	}
 
-	private static <T> T decode(HolderLookup.Provider registries, com.mojang.serialization.Codec<T> codec, Tag tag)
+	private static <T> T decode(com.mojang.serialization.Codec<T> codec, Tag tag)
 	{
-		return codec.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
+		return codec.parse(NbtOps.INSTANCE, tag).getOrThrow(false, error -> {});
 	}
 }

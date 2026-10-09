@@ -1,34 +1,25 @@
 package com.muddykat.engineeredcomputation.terminal;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 
-import com.muddykat.engineeredcomputation.EngineeredComputation;
-
-public record TeletypeOutletPayload(int containerId, BlockPos outlet) implements CustomPacketPayload
+public record TeletypeOutletPayload(int containerId, BlockPos outlet)
 {
-	public static final Type<TeletypeOutletPayload> TYPE = new Type<>(
-			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "teletype_outlet"));
-
-	public static final StreamCodec<RegistryFriendlyByteBuf, TeletypeOutletPayload> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.VAR_INT, TeletypeOutletPayload::containerId,
-			BlockPos.STREAM_CODEC, TeletypeOutletPayload::outlet,
-			TeletypeOutletPayload::new);
-
-	@Override
-	public Type<TeletypeOutletPayload> type()
+	public void encode(FriendlyByteBuf buf)
 	{
-		return TYPE;
+		buf.writeVarInt(containerId);
+		buf.writeBlockPos(outlet);
 	}
 
-	public static void handle(TeletypeOutletPayload payload, IPayloadContext context)
+	public static TeletypeOutletPayload decode(FriendlyByteBuf buf)
 	{
-		if(context.player().containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
+		return new TeletypeOutletPayload(buf.readVarInt(), buf.readBlockPos());
+	}
+
+	public static void handle(TeletypeOutletPayload payload, Player player)
+	{
+		if(player.containerMenu instanceof TerminalMenu menu&&menu.containerId==payload.containerId())
 			menu.chooseOutlet(payload.outlet());
 	}
 }

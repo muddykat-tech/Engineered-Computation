@@ -1,17 +1,19 @@
 package com.muddykat.engineeredcomputation.multiblock.era;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.SlotItemHandler;
+import net.minecraftforge.network.NetworkHooks;
 
 import com.muddykat.engineeredcomputation.era.EraDrive;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
@@ -70,13 +72,13 @@ public class EraDriveMenu extends AbstractContainerMenu
 			default -> -10;
 		};
 		ItemStack cell = slots.get(slot).getItem().copy();
-		CellInventory.setPriority(cell, Math.clamp(CellInventory.priority(cell)+change, EraDataCell.MIN_PRIORITY,
+		CellInventory.setPriority(cell, Mth.clamp(CellInventory.priority(cell)+change, EraDataCell.MIN_PRIORITY,
 				EraDataCell.MAX_PRIORITY));
 		slots.get(slot).set(cell);
 		return true;
 	}
 
-	public static EraDriveMenu fromNetwork(int id, Inventory playerInventory, RegistryFriendlyByteBuf buf)
+	public static EraDriveMenu fromNetwork(int id, Inventory playerInventory, FriendlyByteBuf buf)
 	{
 		BlockPos pos = buf.readBlockPos();
 		if(buf.readBoolean())
@@ -103,7 +105,7 @@ public class EraDriveMenu extends AbstractContainerMenu
 	public static void openDrive(ServerPlayer player, EraDrive drive, IItemHandler cellSlots, BlockPos masterPos,
 			Component title)
 	{
-		player.openMenu(new SimpleMenuProvider(
+		NetworkHooks.openScreen(player, new SimpleMenuProvider(
 				(id, inventory, p) -> forDrive(id, inventory, drive, cellSlots, masterPos), title), buf -> {
 			buf.writeBlockPos(masterPos);
 			buf.writeBoolean(false);
@@ -113,7 +115,7 @@ public class EraDriveMenu extends AbstractContainerMenu
 
 	public static void openTerminalDisks(ServerPlayer player, BlockPos pos, Component title, IItemHandler disks)
 	{
-		player.openMenu(new SimpleMenuProvider(
+		NetworkHooks.openScreen(player, new SimpleMenuProvider(
 				(id, inventory, p) -> forTerminalDisks(id, inventory, disks, pos), title), buf -> {
 			buf.writeBlockPos(pos);
 			buf.writeBoolean(true);
@@ -158,7 +160,7 @@ public class EraDriveMenu extends AbstractContainerMenu
 	{
 		if(terminalDisks)
 			return player.level().getBlockEntity(pos) instanceof TerminalDiskBlockEntity
-					&&player.canInteractWithBlock(pos, 4.0);
+					&&player.canReach(pos, 4.0);
 		return isDriveInReach(player, pos);
 	}
 
@@ -166,6 +168,6 @@ public class EraDriveMenu extends AbstractContainerMenu
 	{
 		return player.level().getBlockEntity(masterPos) instanceof MultiblockPartBlockEntity part
 				&&part.isMaster()
-				&&player.canInteractWithBlock(masterPos, EXTRA_REACH);
+				&&player.canReach(masterPos, EXTRA_REACH);
 	}
 }

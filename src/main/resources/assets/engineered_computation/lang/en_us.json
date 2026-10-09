@@ -138,7 +138,7 @@
   "gui.engineered_computation.adapter.status.off.title": "Switched off",
   "gui.engineered_computation.adapter.status.off.detail": "Switch on to resume",
   "gui.engineered_computation.program.tag": "Tag",
-  "gui.engineered_computation.program.tag.hint": "e.g. c:ingots",
+  "gui.engineered_computation.program.tag.hint": "e.g. forge:ingots",
   "gui.engineered_computation.program.matches": "Matches %s items",
   "gui.engineered_computation.program.empty": "Empty",
   "gui.engineered_computation.program.help.set_item": "Click while holding an item to set this entry to it",
@@ -234,6 +234,8 @@
   "engineered_computation.configuration.section.engineered.computation.server.toml.title": "Engineered Computation: Server Settings",
   "engineered_computation.configuration.tapeArchiving": "Auto Archiving",
   "engineered_computation.configuration.tapeArchiving.tooltip": "Automatically move overly large item numbers into bulk storage types if possible",
+  "engineered_computation.configuration.undo": "Undo",
+  "engineered_computation.configuration.reset": "Reset",
   "gui.engineered_computation.processor.status.200": "Ok",
   "gui.engineered_computation.processor.status.102": "Running",
   "gui.engineered_computation.processor.status.503": "Needs an inventory in front of its top and its bottom",
@@ -283,5 +285,8 @@
   "gui.engineered_computation.teletype.search": "Search stations",
   "gui.engineered_computation.teletype.search.none": "No station matches",
   "gui.engineered_computation.teletype.here": "here",
-  "gui.engineered_computation.teletype.distance": "%s m"
+  "gui.engineered_computation.teletype.distance": "%s m",
+  "subtitles.entity.breeze.shoot": "Breeze shoots",
+  "subtitles.block.decorated_pot.insert": "Decorated Pot fills",
+  "subtitles.block.decorated_pot.insert_fail": "Decorated Pot wobbles"
 }

@@ -1,7 +1,7 @@
 package com.muddykat.engineeredcomputation.adapter;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
@@ -11,7 +11,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
 public class ProgramFloppyMenu extends AbstractContainerMenu
@@ -24,7 +23,7 @@ public class ProgramFloppyMenu extends AbstractContainerMenu
 	private final Player player;
 	private final InteractionHand hand;
 
-	public ProgramFloppyMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buf)
+	public ProgramFloppyMenu(int id, Inventory inventory, FriendlyByteBuf buf)
 	{
 		this(id, inventory, buf.readEnum(InteractionHand.class));
 	}
@@ -68,7 +67,7 @@ public class ProgramFloppyMenu extends AbstractContainerMenu
 
 	public Program program()
 	{
-		return floppy().getOrDefault(ECDataComponents.PROGRAM.get(), Program.EMPTY);
+		return ProgramFloppyItem.program(floppy());
 	}
 
 	void edit(int index, ProgramEditPayload.Action action, String tag)
@@ -86,7 +85,7 @@ public class ProgramFloppyMenu extends AbstractContainerMenu
 			case CLEAR -> ProgramEntry.EMPTY;
 		};
 		if(entry!=null)
-			floppy().set(ECDataComponents.PROGRAM.get(), program().with(index, entry));
+			ProgramFloppyItem.setProgram(floppy(), program().with(index, entry));
 		broadcastChanges();
 	}
 

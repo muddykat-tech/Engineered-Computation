@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/block",
-  "loader": "neoforge:obj",
+  "loader": "forge:obj",
   "model": "engineered_computation:models/block/multiblocks/era2_drum_bank_drum_3_double_sided.obj",
   "flip_v": true,
   "automatic_culling": false,

@@ -7,12 +7,11 @@ import java.util.WeakHashMap;
 import org.joml.Matrix4f;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.neoforged.neoforge.client.model.IQuadTransformer;
+import net.minecraftforge.client.model.IQuadTransformer;
 
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
 

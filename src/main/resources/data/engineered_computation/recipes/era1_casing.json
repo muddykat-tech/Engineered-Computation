@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "WIW",
+    "IXI",
+    "WIW"
+  ],
+  "key": {
+    "W": {
+      "tag": "minecraft:planks"
+    },
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "X": {
+      "item": "engineered_computation:relay"
+    }
+  },
+  "result": {
+    "item": "engineered_computation:era1_casing",
+    "count": 8
+  }
+}

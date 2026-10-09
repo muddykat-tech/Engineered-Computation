@@ -1,0 +1,64 @@
+{
+  "entity.breeze.shoot": {
+    "sounds": [
+      {
+        "name": "engineered_computation:mob/breeze/shoot"
+      },
+      {
+        "name": "engineered_computation:mob/breeze/shoot",
+        "pitch": 1.1
+      },
+      {
+        "name": "engineered_computation:mob/breeze/shoot",
+        "pitch": 1.2
+      }
+    ],
+    "subtitle": "subtitles.entity.breeze.shoot"
+  },
+  "block.decorated_pot.insert": {
+    "sounds": [
+      {
+        "name": "engineered_computation:block/decorated_pot/insert1",
+        "volume": 0.9
+      },
+      {
+        "name": "engineered_computation:block/decorated_pot/insert2",
+        "volume": 0.9
+      },
+      {
+        "name": "engineered_computation:block/decorated_pot/insert3",
+        "volume": 0.9
+      },
+      {
+        "name": "engineered_computation:block/decorated_pot/insert4",
+        "volume": 0.9
+      }
+    ],
+    "subtitle": "subtitles.block.decorated_pot.insert"
+  },
+  "block.decorated_pot.insert_fail": {
+    "sounds": [
+      {
+        "name": "engineered_computation:block/decorated_pot/insert_fail1",
+        "volume": 0.9
+      },
+      {
+        "name": "engineered_computation:block/decorated_pot/insert_fail2",
+        "volume": 0.9
+      },
+      {
+        "name": "engineered_computation:block/decorated_pot/insert_fail3",
+        "volume": 0.9
+      },
+      {
+        "name": "engineered_computation:block/decorated_pot/insert_fail4",
+        "volume": 0.9
+      },
+      {
+        "name": "engineered_computation:block/decorated_pot/insert_fail5",
+        "volume": 0.9
+      }
+    ],
+    "subtitle": "subtitles.block.decorated_pot.insert_fail"
+  }
+}

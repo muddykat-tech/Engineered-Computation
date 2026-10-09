@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MCM",
+    "CXC",
+    "MCM"
+  ],
+  "key": {
+    "M": {
+      "tag": "forge:ingots/gold"
+    },
+    "C": {
+      "item": "engineered_computation:era2_casing"
+    },
+    "X": {
+      "item": "engineered_computation:transistor"
+    }
+  },
+  "result": {
+    "item": "engineered_computation:era3_casing",
+    "count": 8
+  }
+}

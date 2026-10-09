@@ -5,17 +5,26 @@ import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 
 public final class CellInventory implements ItemStorage
 {
 	public static final int ITEMS_PER_BYTE = 8;
 
+	private static final String CONTENTS = "cell_contents";
+	private static final String PRIORITY = "priority";
+
 	private final ItemStack stack;
 	private final EraDataCell cell;
 	private final Runnable onChanged;
+	/** The stored tag {@link #decoded} was read from: every write stores a new one, so this tells if it's current. */
+	@Nullable
+	private Tag decodedFrom;
+	private CellContents decoded = CellContents.EMPTY;
 
 	private CellInventory(ItemStack stack, EraDataCell cell, Runnable onChanged)
 	{
@@ -37,7 +46,13 @@ public final class CellInventory implements ItemStorage
 
 	public CellContents getContents()
 	{
-		return getContents(stack);
+		Tag stored = stack.getTag()==null? null: stack.getTag().get(CONTENTS);
+		if(stored!=decodedFrom)
+		{
+			decoded = decode(stored);
+			decodedFrom = stored;
+		}
+		return decoded;
 	}
 
 	public StorageRole getRole()
@@ -52,15 +67,16 @@ public final class CellInventory implements ItemStorage
 
 	public static int priority(ItemStack stack)
 	{
-		return stack.getOrDefault(ECDataComponents.PRIORITY.get(), 0);
+		CompoundTag tag = stack.getTag();
+		return tag==null? 0: Mth.clamp(tag.getInt(PRIORITY), EraDataCell.MIN_PRIORITY, EraDataCell.MAX_PRIORITY);
 	}
 
 	public static void setPriority(ItemStack stack, int priority)
 	{
 		if(priority==0)
-			stack.remove(ECDataComponents.PRIORITY.get());
+			stack.removeTagKey(PRIORITY);
 		else
-			stack.set(ECDataComponents.PRIORITY.get(), priority);
+			stack.getOrCreateTag().putInt(PRIORITY, priority);
 	}
 
 	public long getFreeTypes()
@@ -70,7 +86,13 @@ public final class CellInventory implements ItemStorage
 
 	public static CellContents getContents(ItemStack stack)
 	{
-		return stack.getOrDefault(ECDataComponents.CELL_CONTENTS.get(), CellContents.EMPTY);
+		return decode(stack.getTag()==null? null: stack.getTag().get(CONTENTS));
+	}
+
+	private static CellContents decode(@Nullable Tag stored)
+	{
+		return stored==null? CellContents.EMPTY
+				: CellContents.CODEC.parse(NbtOps.INSTANCE, stored).result().orElse(CellContents.EMPTY);
 	}
 
 	public long getTotalBytes()
@@ -195,9 +217,10 @@ public final class CellInventory implements ItemStorage
 	private void write(Map<ItemKey, Long> amounts)
 	{
 		if(amounts.isEmpty())
-			stack.remove(ECDataComponents.CELL_CONTENTS.get());
+			stack.removeTagKey(CONTENTS);
 		else
-			stack.set(ECDataComponents.CELL_CONTENTS.get(), CellContents.of(amounts));
+			CellContents.CODEC.encodeStart(NbtOps.INSTANCE, CellContents.of(amounts)).result()
+					.ifPresent(encoded -> stack.getOrCreateTag().put(CONTENTS, encoded));
 		onChanged.run();
 	}
 }

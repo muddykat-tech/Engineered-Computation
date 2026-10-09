@@ -15,7 +15,6 @@ import org.joml.Vector4f;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -25,27 +24,25 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.BlockModelRotation;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.client.model.IQuadTransformer;
-import net.neoforged.neoforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.IQuadTransformer;
+import net.minecraftforge.client.model.data.ModelData;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
-import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
 import com.muddykat.engineeredcomputation.crafting.DataProcessorState;
+import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.era.EraDrive;
 import com.muddykat.engineeredcomputation.era.NetworkPort;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockContext;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockOrientation;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
+import com.muddykat.engineeredcomputation.network.NetworkMemberBlock;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.storage.CellStatus;
@@ -82,7 +79,6 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 	private static final float FLOPPY_BAY_STEP = 9/16F;
 	private static final float FLOPPY_SLIDE = 5/16F;
 
-	private static final int RENDER_REACH = 5;
 
 	private final DiskPackAnimation diskPack = new DiskPackAnimation();
 	private final TapeReels tapeReels = new TapeReels();
@@ -93,13 +89,13 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 	{
 	}
 
-	public static List<ModelResourceLocation> models()
+	public static List<ResourceLocation> models()
 	{
 		return Stream.of(FLOPPY_DISKS.stream(), BANK_FLOPPY_DISKS.stream(), CARD_DECKS.stream(), BANK_DRUMS.stream(),
 						Stream.of(FLOPPY_LIGHT, BANK_FLOPPY_LIGHT, COMPUTER_DISK, COMPUTER_LIGHT, PROCESSOR_LAMP),
 						DiskPackAnimation.models().stream())
 				.flatMap(models -> models)
-				.map(ModelResourceLocation::standalone).toList();
+				.toList();
 	}
 
 	@Override
@@ -120,6 +116,8 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 			return;
 		}
 		EraDrive drive = ECMultiblocks.driveOf(part.getDefinition());
+		if(drive==null)
+			return;
 		int filled = part.getClientSyncData().getInt(EraDriveState.FILLED_SLOTS);
 		switch(drive)
 		{
@@ -134,7 +132,7 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 			case TAPE_DRIVE -> tapeReels.render(part, isNetworked(part, drive), partialTick, pose, buffers, packedOverlay);
 			case PUNCHCARD_VAULT -> drawDecks(part, drive, filled, partialTick, pose, buffers, packedOverlay);
 			case DRUM_BANK -> drawDrums(part, drive, filled, partialTick, pose, buffers, packedOverlay);
-			case null, default ->
+			default ->
 			{
 			}
 		}
@@ -254,7 +252,7 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 	{
 		float red = (colour>>16&0xFF)/255F, green = (colour>>8&0xFF)/255F, blue = (colour&0xFF)/255F;
 		Minecraft mc = Minecraft.getInstance();
-		BakedModel model = mc.getModelManager().getModel(ModelResourceLocation.standalone(modelId));
+		BakedModel model = mc.getModelManager().getModel(modelId);
 		Direction facing = part.getFacing();
 
 		Vector3f centre = centres.computeIfAbsent(model, DriveRenderer::centreOf);
@@ -263,25 +261,25 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 
 		pose.pushPose();
 		rotate(pose, facing);
-		pose.mulPose(local);
+		pose.mulPoseMatrix(local);
 		List<BakedQuad> quads = allQuads(model);
 		VertexConsumer solid = buffers.getBuffer(Sheets.cutoutBlockSheet());
 		for(BakedQuad quad : quads)
 			if(style.apply(quad)==QuadStyle.SOLID)
-				solid.putBulkData(pose.last(), quad, red, green, blue, 1, light, packedOverlay);
+				solid.putBulkData(pose.last(), quad, red, green, blue, 1, light, packedOverlay, false);
 		if(quads.stream().anyMatch(quad -> style.apply(quad)==QuadStyle.SEE_THROUGH))
 		{
 			VertexConsumer translucent = buffers.getBuffer(Sheets.translucentCullBlockSheet());
 			for(BakedQuad quad : quads)
 				if(style.apply(quad)==QuadStyle.SEE_THROUGH)
-					translucent.putBulkData(pose.last(), quad, red, green, blue, alpha, light, packedOverlay);
+					translucent.putBulkData(pose.last(), quad, red, green, blue, alpha, light, packedOverlay, false);
 		}
 		pose.popPose();
 	}
 
 	static void rotate(PoseStack pose, Direction facing)
 	{
-		pose.mulPose(BlockModelRotation.by(0, yRotation(facing)).getRotation().blockCenterToCorner().getMatrix());
+		pose.mulPoseMatrix(BlockModelRotation.by(0, yRotation(facing)).getRotation().blockCenterToCorner().getMatrix());
 	}
 
 	static int lightAt(MultiblockPartBlockEntity part, Vector3f point)
@@ -298,7 +296,7 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 		{
 			Direction side = MultiblockOrientation.rotationFor(context.facing()).rotate(port.side());
 			BlockPos neighbour = context.toAbsolute(port.pos()).relative(side);
-			if(master.getLevel().getCapability(ECCapabilities.NETWORK_MEMBER, neighbour, side.getOpposite())!=null)
+			if(NetworkMemberBlock.at(master.getLevel(), neighbour, side.getOpposite())!=null)
 				return true;
 		}
 		return false;
@@ -340,11 +338,6 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 		return count==0? sum: sum.div(count);
 	}
 
-	@Override
-	public AABB getRenderBoundingBox(MultiblockPartBlockEntity part)
-	{
-		return part.isMaster()? new AABB(part.getBlockPos()).inflate(RENDER_REACH): new AABB(part.getBlockPos());
-	}
 
 	static ResourceLocation id(String path)
 	{

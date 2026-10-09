@@ -12,10 +12,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
@@ -44,11 +44,11 @@ public final class GuideContentsGameTests
 			for(ResourceLocation id : all)
 			{
 				StorageGameTests.check(helper, recipes.byKey(id).isPresent(), era.guideName()+": no recipe "+id);
-				made.add(recipe(recipes, id).value().getResultItem(helper.getLevel().registryAccess()).getItem());
+				made.add(recipe(recipes, id).getResultItem(helper.getLevel().registryAccess()).getItem());
 			}
 
 			for(ResourceLocation id : all)
-				for(Ingredient ingredient : recipe(recipes, id).value().getIngredients())
+				for(Ingredient ingredient : recipe(recipes, id).getIngredients())
 				{
 					ItemStack[] options = ingredient.getItems();
 					boolean modOnly = options.length>0;
@@ -80,7 +80,7 @@ public final class GuideContentsGameTests
 		helper.succeed();
 	}
 
-	private static RecipeHolder<?> recipe(RecipeManager recipes, ResourceLocation id)
+	private static Recipe<?> recipe(RecipeManager recipes, ResourceLocation id)
 	{
 		return recipes.byKey(id).orElseThrow();
 	}

@@ -1,26 +1,25 @@
 package com.muddykat.engineeredcomputation.adapter;
 
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 
-import com.muddykat.engineeredcomputation.EngineeredComputation;
+import com.muddykat.engineeredcomputation.adapter.ProgramFloppyMenu;
 
-public record ProgramEditPayload(int containerId, int index, Action action, String tag) implements CustomPacketPayload
+public record ProgramEditPayload(int containerId, int index, Action action, String tag)
 {
-	public static final Type<ProgramEditPayload> TYPE = new Type<>(
-			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "program_edit"));
+	public void encode(FriendlyByteBuf buf)
+	{
+		buf.writeVarInt(containerId);
+		buf.writeVarInt(index);
+		buf.writeEnum(action);
+		buf.writeUtf(tag, 256);
+	}
 
-	public static final StreamCodec<RegistryFriendlyByteBuf, ProgramEditPayload> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.VAR_INT, ProgramEditPayload::containerId,
-			ByteBufCodecs.VAR_INT, ProgramEditPayload::index,
-			NeoForgeStreamCodecs.enumCodec(Action.class), ProgramEditPayload::action,
-			ByteBufCodecs.stringUtf8(256), ProgramEditPayload::tag,
-			ProgramEditPayload::new);
+	public static ProgramEditPayload decode(FriendlyByteBuf buf)
+	{
+		return new ProgramEditPayload(buf.readVarInt(), buf.readVarInt(), buf.readEnum(Action.class),
+				buf.readUtf(256));
+	}
 
 	public enum Action
 	{
@@ -29,15 +28,9 @@ public record ProgramEditPayload(int containerId, int index, Action action, Stri
 		CLEAR
 	}
 
-	@Override
-	public Type<ProgramEditPayload> type()
+	public static void handle(ProgramEditPayload payload, Player player)
 	{
-		return TYPE;
-	}
-
-	public static void handle(ProgramEditPayload payload, IPayloadContext context)
-	{
-		if(context.player().containerMenu instanceof ProgramFloppyMenu menu&&menu.containerId==payload.containerId())
+		if(player.containerMenu instanceof ProgramFloppyMenu menu&&menu.containerId==payload.containerId())
 			menu.edit(payload.index(), payload.action(), payload.tag());
 	}
 }

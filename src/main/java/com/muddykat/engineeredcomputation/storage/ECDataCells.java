@@ -7,15 +7,15 @@ import java.util.List;
 import java.util.Map;
 
 import net.minecraft.world.item.Item.Properties;
-import net.neoforged.neoforge.registries.DeferredItem;
+import net.minecraftforge.registries.RegistryObject;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
 
 public final class ECDataCells
 {
-	private static final Map<ComputerEra, List<DeferredItem<EraDataCell>>> CELLS = new EnumMap<>(ComputerEra.class);
-	private static final List<DeferredItem<EraDataCell>> TERMINAL_DISKS = new ArrayList<>();
+	private static final Map<ComputerEra, List<RegistryObject<EraDataCell>>> CELLS = new EnumMap<>(ComputerEra.class);
+	private static final List<RegistryObject<EraDataCell>> TERMINAL_DISKS = new ArrayList<>();
 
 	static
 	{
@@ -49,7 +49,7 @@ public final class ECDataCells
 		terminalDisk(8192, 64, 10);
 	}
 
-	public static final DeferredItem<EraDataCell> DRUM_1K = cellsOf(ComputerEra.DRUM).get(2);
+	public static final RegistryObject<EraDataCell> DRUM_1K = cellsOf(ComputerEra.DRUM).get(2);
 
 	private ECDataCells()
 	{
@@ -59,12 +59,12 @@ public final class ECDataCells
 	{
 	}
 
-	public static List<DeferredItem<EraDataCell>> cellsOf(ComputerEra era)
+	public static List<RegistryObject<EraDataCell>> cellsOf(ComputerEra era)
 	{
 		return Collections.unmodifiableList(CELLS.getOrDefault(era, List.of()));
 	}
 
-	public static List<DeferredItem<EraDataCell>> terminalDisks()
+	public static List<RegistryObject<EraDataCell>> terminalDisks()
 	{
 		return Collections.unmodifiableList(TERMINAL_DISKS);
 	}
@@ -78,7 +78,7 @@ public final class ECDataCells
 	private static void tier(ComputerEra era, int totalBytes, int bytesPerType, int totalTypes)
 	{
 		String size = totalBytes<1024? totalBytes+"b": totalBytes<1024*1024? (totalBytes/1024)+"k": (totalBytes/(1024*1024))+"m";
-		DeferredItem<EraDataCell> item = ECRegistrationHolder.ITEMS.register(
+		RegistryObject<EraDataCell> item = ECRegistrationHolder.ITEMS.register(
 				era.memoryName()+"_cell_"+size,
 				() -> new EraDataCell(new Properties(), era, totalBytes, bytesPerType, totalTypes)
 		);

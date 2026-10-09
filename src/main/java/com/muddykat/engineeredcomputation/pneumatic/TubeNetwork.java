@@ -14,10 +14,10 @@ import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
 
 public final class TubeNetwork
 {
@@ -59,11 +59,11 @@ public final class TubeNetwork
 
 	public static void register()
 	{
-		NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, event -> {
+		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ChunkEvent.Load.class, event -> {
 			if(event.getLevel() instanceof Level level)
 				changed(level);
 		});
-		NeoForge.EVENT_BUS.addListener(ChunkEvent.Unload.class, event -> {
+		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ChunkEvent.Unload.class, event -> {
 			if(event.getLevel() instanceof Level level)
 				changed(level);
 		});
@@ -94,7 +94,7 @@ public final class TubeNetwork
 				break;
 			}
 			BlockPos pos = queue.poll();
-			TubeMember member = level.getCapability(ECCapabilities.TUBE_MEMBER, pos, null);
+			TubeMember member = TubeMemberBlock.at(level, pos, null);
 			if(member==null&&!pos.equals(start))
 				continue;
 			if(member!=null)
@@ -104,9 +104,9 @@ public final class TubeNetwork
 				BlockPos next = pos.relative(direction);
 				if(!level.isLoaded(next))
 					continue;
-				if(member!=null&&level.getCapability(ECCapabilities.TUBE_MEMBER, pos, direction)==null)
+				if(member!=null&&TubeMemberBlock.at(level, pos, direction)==null)
 					continue;
-				if(level.getCapability(ECCapabilities.TUBE_MEMBER, next, direction.getOpposite())==null)
+				if(TubeMemberBlock.at(level, next, direction.getOpposite())==null)
 					continue;
 				links.computeIfAbsent(pos, p -> new ArrayList<>()).add(next);
 				links.computeIfAbsent(next, p -> new ArrayList<>()).add(pos);

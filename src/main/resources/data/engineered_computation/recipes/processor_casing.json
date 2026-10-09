@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "CMC",
+    " C "
+  ],
+  "key": {
+    "C": {
+      "item": "engineered_computation:era5_casing"
+    },
+    "M": {
+      "item": "engineered_computation:microprocessor"
+    }
+  },
+  "result": {
+    "item": "engineered_computation:processor_casing",
+    "count": 4
+  }
+}

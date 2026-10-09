@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
-
 import org.lwjgl.glfw.GLFW;
 
 import net.minecraft.ChatFormatting;
@@ -25,7 +24,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.crafting.CraftingPlanner;
@@ -33,6 +31,7 @@ import com.muddykat.engineeredcomputation.crafting.OrderPlanPayload;
 import com.muddykat.engineeredcomputation.crafting.OrderRequestPayload;
 import com.muddykat.engineeredcomputation.crafting.Pattern;
 import com.muddykat.engineeredcomputation.crafting.PatternOffer;
+import com.muddykat.engineeredcomputation.network.ECPayloads;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
@@ -146,7 +145,7 @@ final class OrderPopup
 		{
 			asked = amount();
 			askedPicks = Map.copyOf(picks);
-			PacketDistributor.sendToServer(request(false));
+			ECPayloads.sendToServer(request(false));
 		}
 	}
 
@@ -509,7 +508,7 @@ final class OrderPopup
 		if(plan==null||plan.status()!=StatusCode.OK)
 			return;
 		click();
-		PacketDistributor.sendToServer(request(true));
+		ECPayloads.sendToServer(request(true));
 	}
 
 	private static void click()

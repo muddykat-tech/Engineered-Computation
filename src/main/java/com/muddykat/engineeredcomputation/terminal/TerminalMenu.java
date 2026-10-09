@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -35,13 +35,11 @@ import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.ResultSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.CommonHooks;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.network.NetworkHooks;
 
 import com.muddykat.engineeredcomputation.catalogue.CatalogueDesk;
 import com.muddykat.engineeredcomputation.catalogue.RequestSlip;
@@ -52,7 +50,8 @@ import com.muddykat.engineeredcomputation.crafting.OrderPlanPayload;
 import com.muddykat.engineeredcomputation.crafting.OrderSummary;
 import com.muddykat.engineeredcomputation.crafting.PatternOffer;
 import com.muddykat.engineeredcomputation.crafting.TerminalCraftingPayload;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
+import com.muddykat.engineeredcomputation.network.ECPayloads;
+import com.muddykat.engineeredcomputation.network.NetworkMemberBlock;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
@@ -140,7 +139,7 @@ public class TerminalMenu extends AbstractContainerMenu
 	private List<TeletypeSlipPayload.Outlet> clientOutlets = List.of();
 	private int clientVersion;
 
-	public TerminalMenu(int id, Inventory playerInventory, RegistryFriendlyByteBuf buf)
+	public TerminalMenu(int id, Inventory playerInventory, FriendlyByteBuf buf)
 	{
 		this(id, playerInventory, buf.readBlockPos(),
 				new TerminalFeatures(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean()));
@@ -208,7 +207,7 @@ public class TerminalMenu extends AbstractContainerMenu
 	public static void open(ServerPlayer player, BlockPos terminalPos, Component title, TerminalFeatures features,
 			@Nullable CraftingGrid grid)
 	{
-		player.openMenu(new SimpleMenuProvider(
+		NetworkHooks.openScreen(player, new SimpleMenuProvider(
 						(id, inventory, p) -> new TerminalMenu(id, inventory, terminalPos, features, grid), title),
 				buf ->
 				{
@@ -289,7 +288,7 @@ public class TerminalMenu extends AbstractContainerMenu
 			if(!view.unreachable().equals(sentUnreachable))
 			{
 				sentUnreachable = view.unreachable();
-				PacketDistributor.sendToPlayer(serverPlayer,
+				ECPayloads.sendToPlayer(serverPlayer,
 						new TerminalUnreachablePayload(containerId, List.copyOf(sentUnreachable)));
 			}
 			List<TeletypeSlipPayload.Outlet> outlets = view.outlets().stream().map(pos -> new TeletypeSlipPayload.Outlet(
@@ -301,7 +300,7 @@ public class TerminalMenu extends AbstractContainerMenu
 			if(!slip.equals(sentSlip))
 			{
 				sentSlip = slip;
-				PacketDistributor.sendToPlayer(serverPlayer, slip);
+				ECPayloads.sendToPlayer(serverPlayer, slip);
 			}
 		}
 		else
@@ -329,7 +328,7 @@ public class TerminalMenu extends AbstractContainerMenu
 		for(int start = 0; start<Math.max(1, changes.size()); start += ENTRIES_PER_PAYLOAD)
 		{
 			List<CellContents.Entry> batch = changes.subList(start, Math.min(changes.size(), start+ENTRIES_PER_PAYLOAD));
-			PacketDistributor.sendToPlayer(serverPlayer,
+			ECPayloads.sendToPlayer(serverPlayer,
 					new TerminalContentsPayload(containerId, reset&&start==0, batch, stats));
 		}
 		sentContents = contents;
@@ -350,7 +349,7 @@ public class TerminalMenu extends AbstractContainerMenu
 		sentCraftables = craftables;
 		sentOffers = offers;
 		sentOrders = orders;
-		PacketDistributor.sendToPlayer(serverPlayer, new TerminalCraftingPayload(containerId,
+		ECPayloads.sendToPlayer(serverPlayer, new TerminalCraftingPayload(containerId,
 				craftables.subList(0, Math.min(craftables.size(), TerminalCraftingPayload.MAX)),
 				offers.subList(0, Math.min(offers.size(), TerminalCraftingPayload.MAX)),
 				orders.subList(0, Math.min(orders.size(), TerminalCraftingPayload.MAX))));
@@ -366,7 +365,7 @@ public class TerminalMenu extends AbstractContainerMenu
 				.orElse(null): CraftingNetwork.plan(level, network, storage, target, amount);
 		if(plan==null)
 		{
-			PacketDistributor.sendToPlayer(serverPlayer, new OrderPlanPayload(containerId, target, amount, List.of(),
+			ECPayloads.sendToPlayer(serverPlayer, new OrderPlanPayload(containerId, target, amount, List.of(),
 					StatusCode.NOT_FOUND, false));
 			return;
 		}
@@ -382,7 +381,7 @@ public class TerminalMenu extends AbstractContainerMenu
 				: CraftingNetwork.order(level, network, storage, target, amount)).isEmpty();
 		if(placed)
 			craftingCountdown = 0;
-		PacketDistributor.sendToPlayer(serverPlayer, new OrderPlanPayload(containerId, plan.target(), plan.amount(),
+		ECPayloads.sendToPlayer(serverPlayer, new OrderPlanPayload(containerId, plan.target(), plan.amount(),
 				planLines(plan), status, placed));
 	}
 
@@ -594,7 +593,7 @@ public class TerminalMenu extends AbstractContainerMenu
 			return ItemStack.EMPTY;
 		slot.onQuickCraft(result, crafted);
 		if(result.isEmpty())
-			slot.setByPlayer(ItemStack.EMPTY, crafted);
+			slot.setByPlayer(ItemStack.EMPTY);
 		else
 			slot.setChanged();
 		if(result.getCount()==crafted.getCount())
@@ -662,13 +661,13 @@ public class TerminalMenu extends AbstractContainerMenu
 		if(!(player.level() instanceof ServerLevel level)||!(player instanceof ServerPlayer serverPlayer))
 			return;
 		resultVersion = grid.version();
-		CraftingInput input = craftGrid.asCraftInput();
+		CraftingContainer input = craftGrid;
 		ItemStack result = ItemStack.EMPTY;
-		Optional<RecipeHolder<CraftingRecipe>> recipe =
+		Optional<CraftingRecipe> recipe =
 				level.getServer().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
 		if(recipe.isPresent()&&craftResult.setRecipeUsed(level, serverPlayer, recipe.get()))
 		{
-			ItemStack assembled = recipe.get().value().assemble(input, level.registryAccess());
+			ItemStack assembled = recipe.get().assemble(input, level.registryAccess());
 			if(assembled.isItemEnabled(level.enabledFeatures()))
 				result = assembled;
 		}
@@ -716,11 +715,11 @@ public class TerminalMenu extends AbstractContainerMenu
 	private void takeLinkedIngredients(Player taker)
 	{
 		NetworkStorage storage = storage();
-		CraftingInput input = craftGrid.asCraftInput();
-		CommonHooks.setCraftingPlayer(taker);
+		CraftingContainer input = craftGrid;
+		ForgeHooks.setCraftingPlayer(taker);
 		NonNullList<ItemStack> leftovers = taker.level().getRecipeManager()
 				.getRemainingItemsFor(RecipeType.CRAFTING, input, taker.level());
-		CommonHooks.setCraftingPlayer(null);
+		ForgeHooks.setCraftingPlayer(null);
 		for(ItemStack link : grid.slots())
 			if(!link.isEmpty())
 				storage.extract(ItemKey.of(link), 1, false);
@@ -809,9 +808,9 @@ public class TerminalMenu extends AbstractContainerMenu
 
 	private ItemStack assemble(Level level)
 	{
-		CraftingInput input = craftGrid.asCraftInput();
+		CraftingContainer input = craftGrid;
 		return level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level)
-				.map(recipe -> recipe.value().assemble(input, level.registryAccess()))
+				.map(recipe -> recipe.assemble(input, level.registryAccess()))
 				.orElse(ItemStack.EMPTY);
 	}
 
@@ -912,8 +911,8 @@ public class TerminalMenu extends AbstractContainerMenu
 	public boolean stillValid(Player player)
 	{
 		boolean there = features.requests()? player.level().getBlockState(terminalPos).getBlock() instanceof EraTerminalBlock
-				: player.level().getCapability(ECCapabilities.NETWORK_MEMBER, terminalPos, null)!=null;
-		return there&&player.canInteractWithBlock(terminalPos, 4.0);
+				: NetworkMemberBlock.at(player.level(), terminalPos, null)!=null;
+		return there&&player.canReach(terminalPos, 4.0);
 	}
 
 	void applyUpdate(TerminalContentsPayload payload)

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "engineered_computation:era3_casing"
+    },
+    {
+      "item": "engineered_computation:transistor"
+    },
+    {
+      "item": "minecraft:hopper"
+    },
+    {
+      "item": "engineered_computation:network_cable"
+    }
+  ],
+  "result": {
+    "item": "engineered_computation:era3_data_importer",
+    "count": 1
+  }
+}

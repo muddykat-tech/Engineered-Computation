@@ -13,8 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.adapter.AdapterKind;
@@ -23,13 +23,13 @@ import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlockEntity;
 import com.muddykat.engineeredcomputation.adapter.Program;
 import com.muddykat.engineeredcomputation.adapter.ProgramEntry;
+import com.muddykat.engineeredcomputation.adapter.ProgramFloppyItem;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.gametest.TestCategory;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECAdapters;
 import com.muddykat.engineeredcomputation.registration.ECCables;
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.storage.ECDataCells;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
@@ -154,7 +154,8 @@ public final class DataAdapterGameTests
 		network.insert(ItemKey.of(new ItemStack(Items.GOLD_INGOT)), 5, false);
 		network.insert(ItemKey.of(new ItemStack(Items.COBBLESTONE)), 5, false);
 		ItemStack floppy = new ItemStack(ECAdapters.PROGRAM_FLOPPY.get());
-		floppy.set(ECDataComponents.PROGRAM.get(), Program.EMPTY.with(0, ProgramEntry.of(TagKey.create(Registries.ITEM, ResourceLocation.parse("c:ingots")))));
+		ProgramFloppyItem.setProgram(floppy, Program.EMPTY.with(0,
+				ProgramEntry.of(TagKey.create(Registries.ITEM, ResourceLocation.parse("forge:ingots")))));
 		adapter.setFilter(floppy);
 		AdapterStatus status = adapter.transfer();
 		StorageGameTests.check(helper, status==AdapterStatus.OK, "Transfer should succeed");

@@ -10,12 +10,11 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import com.mojang.math.Transformation;
-
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
-import net.neoforged.neoforge.client.model.IQuadTransformer;
+import net.minecraftforge.client.model.IQuadTransformer;
 
 final class QuadSplitter
 {

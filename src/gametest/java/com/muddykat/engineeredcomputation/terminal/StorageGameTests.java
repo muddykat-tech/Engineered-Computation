@@ -5,33 +5,29 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalInt;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.authlib.GameProfile;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.PacketSendListener;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.world.MenuProvider;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -41,11 +37,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
-import net.neoforged.neoforge.common.util.FakePlayer;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.common.util.FakePlayerFactory;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.network.NetworkDirection;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
@@ -58,9 +55,9 @@ import com.muddykat.engineeredcomputation.multiblock.core.MultiblockOrientation;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveMenu;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
+import com.muddykat.engineeredcomputation.network.ECPayloads;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECContent;
-import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
@@ -69,6 +66,7 @@ import com.muddykat.engineeredcomputation.storage.CellInventory;
 import com.muddykat.engineeredcomputation.storage.ECDataCells;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
+import com.muddykat.engineeredcomputation.terminal.TerminalStats;
 
 @TestCategory("storage")
 @GameTestHolder(EngineeredComputation.MODID)
@@ -100,8 +98,7 @@ public final class StorageGameTests
 		check(helper, cell.extract(dirt, 984, false)==984&&cell.getAmount(dirt)==1000, "extract went wrong");
 		check(helper, cell.insert(stone, 10_000, true)==920, "new type room should be 920");
 		check(helper, cell.extract(dirt, 5000, false)==1000&&cell.getContents().types()==0, "cell didn't empty");
-		check(helper, !drumCell.has(ECDataComponents.CELL_CONTENTS.get()),
-				"an empty cell kept its contents component");
+		check(helper, !drumCell.hasTag(), "an empty cell kept its contents tag");
 
 		CellInventory small = CellInventory.of(new ItemStack(ECDataCells.cellsOf(ComputerEra.DRUM).get(0).get()), () -> {
 		});
@@ -122,7 +119,7 @@ public final class StorageGameTests
 		});
 		ItemKey sword = ItemKey.of(new ItemStack(Items.DIAMOND_SWORD));
 		ItemStack damaged = new ItemStack(Items.DIAMOND_SWORD);
-		damaged.set(DataComponents.DAMAGE, 10);
+		damaged.setDamageValue(10);
 		ItemKey damagedSword = ItemKey.of(damaged);
 
 		check(helper, cell.insert(sword, 500, false)==500, "500 identical swords didn't fit");
@@ -133,10 +130,10 @@ public final class StorageGameTests
 		ItemStack copy = drumCell.copy();
 		check(helper, CellInventory.of(copy, () -> {
 		}).getAmount(sword)==500, "copied cell lost its contents");
-		Tag encoded = CellContents.CODEC.encodeStart(helper.getLevel().registryAccess().createSerializationContext(NbtOps.INSTANCE),
-				cell.getContents()).getOrThrow();
-		CellContents decoded = CellContents.CODEC.parse(helper.getLevel().registryAccess().createSerializationContext(NbtOps.INSTANCE),
-				encoded).getOrThrow();
+		Tag encoded = CellContents.CODEC.encodeStart(NbtOps.INSTANCE,
+				cell.getContents()).getOrThrow(false, error -> {});
+		CellContents decoded = CellContents.CODEC.parse(NbtOps.INSTANCE,
+				encoded).getOrThrow(false, error -> {});
 		check(helper, decoded.equals(cell.getContents()), "contents changed through save/load");
 		helper.succeed();
 	}
@@ -155,7 +152,7 @@ public final class StorageGameTests
 		EraDriveGeometry geometry = EraDrive.FLOPPY_WORKSTATION.geometry();
 		MultiblockPartBlockEntity master = (MultiblockPartBlockEntity)level.getBlockEntity(
 				world(helper.absolutePos(ORIGIN), geometry.master(), Direction.NORTH));
-		int filled = master.getUpdateTag(level.registryAccess()).getCompound("sync").getInt(EraDriveState.FILLED_SLOTS);
+		int filled = master.getUpdateTag().getCompound("sync").getInt(EraDriveState.FILLED_SLOTS);
 		check(helper, filled==0b10, "sync data should flag slot 1 only, got "+Integer.toBinaryString(filled));
 
 		ItemStackHandler old = new ItemStackHandler(4);
@@ -163,9 +160,9 @@ public final class StorageGameTests
 		old.setStackInSlot(0, first);
 		old.setStackInSlot(3, new ItemStack(ECDataCells.cellsOf(ComputerEra.FLOPPY).get(3).get()));
 		CompoundTag saved = new CompoundTag();
-		saved.put("cells", old.serializeNBT(level.registryAccess()));
+		saved.put("cells", old.serializeNBT());
 		EraDriveState loaded = new EraDriveState(EraDrive.FLOPPY_WORKSTATION, MultiblockGameTests.NO_HOST);
-		loaded.load(saved, level.registryAccess());
+		loaded.load(saved);
 		check(helper, loaded.getCellSlots().getSlots()==2&&ItemStack.isSameItem(loaded.getCellSlots().getStackInSlot(0), first),
 				"loading a 4-slot save didn't keep 2 slots with the first cell");
 		helper.succeed();
@@ -331,9 +328,10 @@ public final class StorageGameTests
 		BlockPos block = world(origin, BlockPos.containing(templatePoint), facing);
 		Vec3 hit = Vec3.atLowerCornerOf(origin).add(worldOffset(templatePoint, facing));
 		player.setPos(hit);
-		player.opened = null;
-		level.getBlockState(block).useWithoutItem(level, player, new BlockHitResult(hit, facing.getOpposite(), block, false));
-		return player.opened==null? null: player.opened.createMenu(1, player.getInventory(), player);
+		player.forgetMenu();
+		level.getBlockState(block).use(level, player, InteractionHand.MAIN_HAND, new BlockHitResult(hit,
+				facing.getOpposite(), block, false));
+		return player.openedMenu();
 	}
 
 	static Vec3 worldOffset(Vec3 templatePoint, Direction facing)
@@ -397,46 +395,53 @@ public final class StorageGameTests
 			helper.fail(failure);
 	}
 
+	/** A fake player whose menu tests can look at: Forge opens menus for fake players as for real ones. */
 	static final class MenuRecordingPlayer extends FakePlayer
 	{
-		@Nullable
-		MenuProvider opened;
-
 		MenuRecordingPlayer(ServerLevel level)
 		{
 			super(level, new GameProfile(UUID.randomUUID(), "ec_menu_test"));
 		}
 
-		@Override
-		public OptionalInt openMenu(
-				@Nullable MenuProvider provider, @Nullable Consumer<RegistryFriendlyByteBuf> extraDataWriter)
+		/** The menu opened since the last {@link #forgetMenu}, if any. */
+		@Nullable
+		AbstractContainerMenu openedMenu()
 		{
-			opened = provider;
-			return OptionalInt.of(1);
+			return containerMenu==inventoryMenu? null: containerMenu;
+		}
+
+		void forgetMenu()
+		{
+			containerMenu = inventoryMenu;
 		}
 	}
 
-	private static final class CapturingConnection extends ServerGamePacketListenerImpl
+	/** Keeps the terminal updates sent to a player, the way the mod's channel encodes them. */
+	private static final class CapturingConnection extends Connection
 	{
 		final List<TerminalContentsPayload> payloads = new ArrayList<>();
+		private final ResourceLocation channel;
+		private final int contentsId;
 
 		CapturingConnection(ServerPlayer player)
 		{
-			super(player.server, new Connection(PacketFlow.CLIENTBOUND), player,
-					CommonListenerCookie.createInitial(player.getGameProfile(), false));
-		}
-
-		@Override
-		public void send(Packet<?> packet)
-		{
-			if(packet instanceof ClientboundCustomPayloadPacket custom&&custom.payload() instanceof TerminalContentsPayload update)
-				payloads.add(update);
+			super(PacketFlow.CLIENTBOUND);
+			new ServerGamePacketListenerImpl(player.server, this, player);
+			ClientboundCustomPayloadPacket sample = (ClientboundCustomPayloadPacket)ECPayloads.CHANNEL.toVanillaPacket(
+					new TerminalContentsPayload(0, false, List.of(), new TerminalStats(0, 0, 0, 0, 0, 0)),
+					NetworkDirection.PLAY_TO_CLIENT);
+			channel = sample.getIdentifier();
+			contentsId = new FriendlyByteBuf(sample.getData().copy()).readUnsignedByte();
 		}
 
 		@Override
 		public void send(Packet<?> packet, @Nullable PacketSendListener listener)
 		{
-			send(packet);
+			if(!(packet instanceof ClientboundCustomPayloadPacket custom)||!custom.getIdentifier().equals(channel))
+				return;
+			FriendlyByteBuf data = new FriendlyByteBuf(custom.getData().copy());
+			if(data.readUnsignedByte()==contentsId)
+				payloads.add(TerminalContentsPayload.decode(data));
 		}
 	}
 }

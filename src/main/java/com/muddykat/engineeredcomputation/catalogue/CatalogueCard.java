@@ -2,13 +2,10 @@ package com.muddykat.engineeredcomputation.catalogue;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import net.minecraft.core.GlobalPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.ExtraCodecs;
 
 import com.muddykat.engineeredcomputation.storage.CellContents;
 
@@ -18,17 +15,23 @@ public record CatalogueCard(GlobalPos station, Component label, CellContents tal
 
 	public static final Codec<CatalogueCard> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			GlobalPos.CODEC.fieldOf("station").forGetter(CatalogueCard::station),
-			ComponentSerialization.CODEC.fieldOf("label").forGetter(CatalogueCard::label),
+			ExtraCodecs.COMPONENT.fieldOf("label").forGetter(CatalogueCard::label),
 			CellContents.CODEC.fieldOf("tally").forGetter(CatalogueCard::tally),
 			Codec.LONG.fieldOf("tallied_at").forGetter(CatalogueCard::talliedAt)
 	).apply(instance, CatalogueCard::new));
 
-	public static final StreamCodec<RegistryFriendlyByteBuf, CatalogueCard> STREAM_CODEC = StreamCodec.composite(
-			GlobalPos.STREAM_CODEC, CatalogueCard::station,
-			ComponentSerialization.STREAM_CODEC, CatalogueCard::label,
-			CellContents.STREAM_CODEC, CatalogueCard::tally,
-			ByteBufCodecs.VAR_LONG, CatalogueCard::talliedAt,
-			CatalogueCard::new);
+	public static CatalogueCard read(FriendlyByteBuf buf)
+	{
+		return new CatalogueCard(buf.readGlobalPos(), buf.readComponent(), CellContents.read(buf), buf.readVarLong());
+	}
+
+	public void write(FriendlyByteBuf buf)
+	{
+		buf.writeGlobalPos(station);
+		buf.writeComponent(label);
+		tally.write(buf);
+		buf.writeVarLong(talliedAt);
+	}
 
 	public CatalogueCard withTally(CellContents tally, long now)
 	{

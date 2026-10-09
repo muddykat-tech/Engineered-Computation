@@ -241,12 +241,13 @@ final class TapeReels
 
 		private void vertex(Vector3f point, int colour, float nx, float ny, float nz)
 		{
-			buffer.addVertex(pose, point.x(), point.y(), point.z())
-					.setColor(colour>>16&0xFF, colour>>8&0xFF, colour&0xFF, 255)
-					.setUv(white.getU(0.5F), white.getV(0.5F))
-					.setOverlay(overlay)
-					.setLight(light)
-					.setNormal(pose, nx, ny, nz);
+			buffer.vertex(pose.pose(), point.x(), point.y(), point.z())
+					.color(colour>>16&0xFF, colour>>8&0xFF, colour&0xFF, 255)
+					.uv(white.getU(8), white.getV(8))
+					.overlayCoords(overlay)
+					.uv2(light)
+					.normal(pose.normal(), nx, ny, nz)
+					.endVertex();
 		}
 	}
 }

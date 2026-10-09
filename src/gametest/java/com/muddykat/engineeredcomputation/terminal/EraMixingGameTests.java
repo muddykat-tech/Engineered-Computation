@@ -7,6 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -18,9 +19,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.common.util.FakePlayerFactory;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.EngineeredComputation;
@@ -330,18 +331,16 @@ public final class EraMixingGameTests
 
 		Vec3 hitBays = Vec3.atLowerCornerOf(terminalPos).add(0.5, 0.15, 0.0625);
 		player.setPos(hitBays);
-		level.getBlockState(terminalPos).useWithoutItem(level, player, new BlockHitResult(hitBays, Direction.NORTH,
-				terminalPos, false));
-		AbstractContainerMenu menuBays = player.opened==null? null: player.opened.createMenu(1, player.getInventory(),
-				player);
-		player.opened = null;
+		level.getBlockState(terminalPos).use(level, player, InteractionHand.MAIN_HAND,
+				new BlockHitResult(hitBays, Direction.NORTH, terminalPos, false));
+		AbstractContainerMenu menuBays = player.openedMenu();
+		player.forgetMenu();
 
 		Vec3 hitScreen = Vec3.atLowerCornerOf(terminalPos).add(0.5, 0.6, 0.0625);
 		player.setPos(hitScreen);
-		level.getBlockState(terminalPos).useWithoutItem(level, player, new BlockHitResult(hitScreen, Direction.NORTH,
-				terminalPos, false));
-		AbstractContainerMenu menuScreen = player.opened==null? null: player.opened.createMenu(1,
-				player.getInventory(), player);
+		level.getBlockState(terminalPos).use(level, player, InteractionHand.MAIN_HAND,
+				new BlockHitResult(hitScreen, Direction.NORTH, terminalPos, false));
+		AbstractContainerMenu menuScreen = player.openedMenu();
 
 		StorageGameTests.check(helper, menuBays instanceof EraDriveMenu,
 				"clicking the bays should open an EraDriveMenu, got "+menuBays);

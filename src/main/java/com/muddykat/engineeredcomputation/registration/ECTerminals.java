@@ -10,21 +10,17 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredItem;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.RegistryObject;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
 import com.muddykat.engineeredcomputation.terminal.CraftingTerminalBlock;
 import com.muddykat.engineeredcomputation.terminal.CraftingTerminalBlockEntity;
 import com.muddykat.engineeredcomputation.terminal.EraTerminalBlock;
 import com.muddykat.engineeredcomputation.terminal.FloppyTerminalBlock;
-import com.muddykat.engineeredcomputation.terminal.TerminalDiskBlockEntity;
 import com.muddykat.engineeredcomputation.terminal.TeletypeBlock;
 import com.muddykat.engineeredcomputation.terminal.TeletypeBlockEntity;
+import com.muddykat.engineeredcomputation.terminal.TerminalDiskBlockEntity;
 import com.muddykat.engineeredcomputation.terminal.TerminalFeatures;
 
 public final class ECTerminals
@@ -36,8 +32,8 @@ public final class ECTerminals
 			.noOcclusion()
 			.requiresCorrectToolForDrops();
 
-	private static final Map<ComputerEra, DeferredBlock<EraTerminalBlock>> BLOCKS = new EnumMap<>(ComputerEra.class);
-	private static final Map<ComputerEra, DeferredItem<BlockItem>> ITEMS = new EnumMap<>(ComputerEra.class);
+	private static final Map<ComputerEra, RegistryObject<EraTerminalBlock>> BLOCKS = new EnumMap<>(ComputerEra.class);
+	private static final Map<ComputerEra, RegistryObject<BlockItem>> ITEMS = new EnumMap<>(ComputerEra.class);
 
 	static
 	{
@@ -45,7 +41,7 @@ public final class ECTerminals
 		{
 			if(!era.hasTerminal())
 				continue;
-			DeferredBlock<EraTerminalBlock> block = ECRegistrationHolder.BLOCKS.register(era.terminalName(),
+			RegistryObject<EraTerminalBlock> block = ECRegistrationHolder.BLOCKS.register(era.terminalName(),
 					() -> era==ComputerEra.FLOPPY? new FloppyTerminalBlock(PROPERTIES)
 							: era==ComputerEra.PUNCHCARD? new TeletypeBlock(PROPERTIES)
 							: TerminalFeatures.of(era).crafting()? new CraftingTerminalBlock(era, PROPERTIES)
@@ -56,15 +52,15 @@ public final class ECTerminals
 		}
 	}
 
-	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TerminalDiskBlockEntity>> TERMINAL_DISKS =
+	public static final RegistryObject<BlockEntityType<TerminalDiskBlockEntity>> TERMINAL_DISKS =
 			ECRegistrationHolder.BLOCK_ENTITIES.register("terminal_disks", () -> BlockEntityType.Builder.of(
 					TerminalDiskBlockEntity::new, BLOCKS.get(ComputerEra.FLOPPY).get()).build(null));
 
-	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TeletypeBlockEntity>> TELETYPE =
+	public static final RegistryObject<BlockEntityType<TeletypeBlockEntity>> TELETYPE =
 			ECRegistrationHolder.BLOCK_ENTITIES.register("teletype", () -> BlockEntityType.Builder.of(
 					TeletypeBlockEntity::new, BLOCKS.get(ComputerEra.PUNCHCARD).get()).build(null));
 
-	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CraftingTerminalBlockEntity>> CRAFTING_TERMINAL =
+	public static final RegistryObject<BlockEntityType<CraftingTerminalBlockEntity>> CRAFTING_TERMINAL =
 			ECRegistrationHolder.BLOCK_ENTITIES.register("crafting_terminal", () -> BlockEntityType.Builder.of(
 					CraftingTerminalBlockEntity::new, BLOCKS.entrySet().stream()
 							.filter(entry -> TerminalFeatures.of(entry.getKey()).crafting()&&entry.getKey()!=ComputerEra.FLOPPY)
@@ -78,23 +74,17 @@ public final class ECTerminals
 	{
 	}
 
-	public static DeferredBlock<EraTerminalBlock> block(ComputerEra era)
+	public static RegistryObject<EraTerminalBlock> block(ComputerEra era)
 	{
 		return BLOCKS.get(era);
 	}
 
-	public static Map<ComputerEra, DeferredItem<BlockItem>> items()
+	public static Map<ComputerEra, RegistryObject<BlockItem>> items()
 	{
 		return Collections.unmodifiableMap(ITEMS);
 	}
 
 	public static void register(IEventBus modEventBus)
 	{
-		modEventBus.addListener(RegisterCapabilitiesEvent.class, event -> event.registerBlock(
-				ECCapabilities.NETWORK_MEMBER,
-				(level, pos, state, blockEntity, context) -> blockEntity instanceof TerminalDiskBlockEntity bays
-						? bays: EraTerminalBlock.NETWORK_MEMBER,
-				BLOCKS.entrySet().stream().filter(entry -> !TerminalFeatures.of(entry.getKey()).requests())
-						.map(entry -> entry.getValue().get()).toArray(EraTerminalBlock[]::new)));
 	}
 }

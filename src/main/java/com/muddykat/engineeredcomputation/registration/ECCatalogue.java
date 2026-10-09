@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import net.minecraft.world.item.Item;
-import net.neoforged.neoforge.registries.DeferredItem;
+import net.minecraftforge.registries.RegistryObject;
 
 import com.muddykat.engineeredcomputation.catalogue.CardDeckItem;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCardItem;
@@ -14,10 +14,10 @@ public final class ECCatalogue
 	private static final int SMALLEST_DECK = 8;
 	public static final int DECK_TIERS = 4;
 
-	public static final DeferredItem<CatalogueCardItem> CARD = ECRegistrationHolder.ITEMS.register("catalogue_card",
+	public static final RegistryObject<CatalogueCardItem> CARD = ECRegistrationHolder.ITEMS.register("catalogue_card",
 			() -> new CatalogueCardItem(new Item.Properties()));
 
-	private static final List<DeferredItem<CardDeckItem>> DECKS = IntStream.range(0, DECK_TIERS)
+	private static final List<RegistryObject<CardDeckItem>> DECKS = IntStream.range(0, DECK_TIERS)
 			.mapToObj(tier -> SMALLEST_DECK<<tier)
 			.map(capacity -> ECRegistrationHolder.ITEMS.register("card_deck_"+capacity,
 					() -> new CardDeckItem(new Item.Properties().stacksTo(1), capacity)))
@@ -31,7 +31,7 @@ public final class ECCatalogue
 	{
 	}
 
-	public static List<DeferredItem<CardDeckItem>> decks()
+	public static List<RegistryObject<CardDeckItem>> decks()
 	{
 		return DECKS;
 	}
