@@ -107,6 +107,8 @@ public class CoveredCableBlock extends NetworkCableBlock implements EntityBlock
 	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest,
 			FluidState fluid)
 	{
+		// What Forge's default does first: the break sound and particles (and anything else vanilla does on a break).
+		playerWillDestroy(level, pos, state, player);
 		if(!level.isClientSide)
 		{
 			ItemStack cover = uncover(level, pos);
