@@ -18,6 +18,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Nameable;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -39,6 +40,18 @@ public class TubeStationBlockEntity extends BlockEntity
 	private int cooldown;
 	private String name = "";
 	private boolean takesNewItems;
+	/** An Advanced Tube Station's Filter Card or Program Deck. */
+	private final SimpleContainer filterCard = new SimpleContainer(1)
+	{
+		@Override
+		public void setChanged()
+		{
+			super.setChanged();
+			TubeStationBlockEntity.this.setChanged();
+		}
+	};
+	/** Whether the card's filter is a block list rather than an allow list. */
+	private boolean blocking;
 
 	public TubeStationBlockEntity(BlockPos pos, BlockState state)
 	{
@@ -102,6 +115,44 @@ public class TubeStationBlockEntity extends BlockEntity
 		setChanged();
 	}
 
+	public boolean filters()
+	{
+		return getBlockState().getBlock() instanceof TubeStationBlock block&&block.filters();
+	}
+
+	public SimpleContainer filterContainer()
+	{
+		return filterCard;
+	}
+
+	public ItemStack getFilterCard()
+	{
+		return filterCard.getItem(0);
+	}
+
+	public void setFilterCard(ItemStack card)
+	{
+		filterCard.setItem(0, card);
+	}
+
+	public boolean isBlocking()
+	{
+		return blocking;
+	}
+
+	public void setBlocking(boolean blocking)
+	{
+		this.blocking = blocking;
+		setChanged();
+	}
+
+	/** What may be deposited here, or null for a plain station: what it holds, and new items if it takes them. */
+	@Nullable
+	public StationFilter filter()
+	{
+		return filters()? StationFilter.of(getFilterCard(), blocking): null;
+	}
+
 	public Component label()
 	{
 		return name.isEmpty()? inventoryName(): Component.literal(name);
@@ -121,7 +172,10 @@ public class TubeStationBlockEntity extends BlockEntity
 	public ItemStack accept(ItemStack items)
 	{
 		IItemHandler source = getSource();
-		return source==null? items: ItemHandlerHelper.insertItemStacked(source, items.copy(), false);
+		StationFilter filter = filter();
+		if(source==null||filter!=null&&!filter.allows(items))
+			return items;
+		return ItemHandlerHelper.insertItemStacked(source, items.copy(), false);
 	}
 
 	public int room(ItemStack items)
@@ -204,6 +258,9 @@ public class TubeStationBlockEntity extends BlockEntity
 		if(!name.isEmpty())
 			tag.putString("name", name);
 		tag.putBoolean("takes_new_items", takesNewItems);
+		if(!getFilterCard().isEmpty())
+			tag.put("filter_card", getFilterCard().save(registries));
+		tag.putBoolean("blocking", blocking);
 	}
 
 	@Override
@@ -221,6 +278,9 @@ public class TubeStationBlockEntity extends BlockEntity
 		cooldown = tag.getInt("cooldown");
 		name = tag.getString("name");
 		takesNewItems = tag.getBoolean("takes_new_items");
+		filterCard.setItem(0, tag.contains("filter_card")? ItemStack.parseOptional(registries,
+				tag.getCompound("filter_card")): ItemStack.EMPTY);
+		blocking = tag.getBoolean("blocking");
 	}
 
 	private static final class Request

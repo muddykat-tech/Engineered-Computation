@@ -22,6 +22,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -30,6 +31,8 @@ import com.muddykat.engineeredcomputation.adapter.DataAdapterScreen;
 import com.muddykat.engineeredcomputation.adapter.ProgramFloppyScreen;
 import com.muddykat.engineeredcomputation.catalogue.CardDeckScreen;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCardItem;
+import com.muddykat.engineeredcomputation.catalogue.FilterCardItem;
+import com.muddykat.engineeredcomputation.client.gui.FilterCardDecorator;
 import com.muddykat.engineeredcomputation.client.guide.GuideText;
 import com.muddykat.engineeredcomputation.client.model.CoveredCableModel;
 import com.muddykat.engineeredcomputation.client.model.CoveredTubeModel;
@@ -75,6 +78,8 @@ public class EngineeredComputationClient {
         modEventBus.addListener(this::registerBlockColours);
         modEventBus.addListener(this::registerTubeColours);
         modEventBus.addListener(this::registerTubeItemColours);
+        modEventBus.addListener(RegisterItemDecorationsEvent.class,
+                event -> event.register(ECCatalogue.FILTER_CARD.get(), new FilterCardDecorator()));
         CarrierRenderer.register();
     }
 
@@ -88,6 +93,9 @@ public class EngineeredComputationClient {
             ItemProperties.register(ECCatalogue.CARD.get(),
                     ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "punched"),
                     (stack, level, entity, seed) -> CatalogueCardItem.card(stack) != null? 1: 0);
+            ItemProperties.register(ECCatalogue.FILTER_CARD.get(),
+                    ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "punched"),
+                    (stack, level, entity, seed) -> FilterCardItem.filter(stack).isEmpty()? 0: 1);
         });
     }
 

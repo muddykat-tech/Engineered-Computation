@@ -44,7 +44,7 @@ public class EngineeredComputation {
             "engineered_computation_tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.engineered_computation"))
             .withTabsBefore(CreativeModeTabs.COMBAT)
-            .icon(() -> ECDataCells.DRUM_1K.get().getDefaultInstance())
+            .icon(() -> ECTerminals.items().get(ComputerEra.FLOPPY).get().getDefaultInstance())
             .displayItems((parameters, output) -> {
                 output.accept(ECContent.ASSEMBLY_WRENCH.get());
                 output.accept(ECCables.item().get());
@@ -60,6 +60,8 @@ public class EngineeredComputation {
                         ECPneumatics.items().forEach(item -> output.accept(item.get()));
                         output.accept(ECCatalogue.CARD.get());
                         ECCatalogue.decks().forEach(deck -> output.accept(deck.get()));
+                        output.accept(ECCatalogue.FILTER_CARD.get());
+                        output.accept(ECCatalogue.PROGRAM_DECK.get());
                     }
                     ECDataCells.cellsOf(era).forEach(cell -> output.accept(cell.get()));
                     if (era == ComputerEra.FLOPPY) {

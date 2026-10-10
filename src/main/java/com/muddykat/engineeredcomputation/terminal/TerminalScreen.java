@@ -20,6 +20,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -212,6 +213,26 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 	{
 		int index = gridIndexAt(mouseX, mouseY);
 		return index>=0&&index<view.size()? view.get(index): null;
+	}
+
+	/** A stored item as drawn in the item grid, and its cell on screen. */
+	public record GridIngredient(ItemStack stack, Rect2i area)
+	{
+	}
+
+	/** The stored item under the mouse, unless a panel covers the grid (for JEI, so its recipe and use keys work). */
+	public Optional<GridIngredient> gridIngredientAt(double mouseX, double mouseY)
+	{
+		Map.Entry<ItemKey, Long> entry = orderPopup!=null||outletPicker!=null||jobs!=null||statusCode()!=null? null:
+				entryAt(mouseX, mouseY);
+		if(entry==null)
+			return Optional.empty();
+		int cell = gridIndexAt(mouseX, mouseY)-scrollRow*TerminalMenu.COLUMNS;
+		PatternOffer offer = offerEntries.get(entry);
+		ItemStack stack = offer!=null? offer.shown(minecraft.level.getGameTime()): entry.getKey().displayStack();
+		int x = leftPos+TerminalMenu.GRID_X+cell%TerminalMenu.COLUMNS*18+1;
+		int y = topPos+layout.gridY()+cell/TerminalMenu.COLUMNS*18+1;
+		return Optional.of(new GridIngredient(stack, new Rect2i(x, y, 16, 16)));
 	}
 
 	private int gridIndexAt(double mouseX, double mouseY)

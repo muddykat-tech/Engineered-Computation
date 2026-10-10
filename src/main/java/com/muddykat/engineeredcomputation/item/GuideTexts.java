@@ -29,6 +29,9 @@ public final class GuideTexts
 	public static final String STORAGE_BAY = "storage_bay";
 	public static final String TUBES = "tubes";
 	public static final String CATALOGUE_CARDS = "catalogue_cards";
+	public static final String ADVANCED_STATION = "advanced_station";
+	public static final String FILTER_CARDS = "filter_cards";
+	public static final String PROGRAM_DECK = "program_deck";
 	public static final String TERMINAL_DISKS = "terminal_disks";
 	public static final String ADAPTERS = "adapters";
 	public static final String PROGRAM_FLOPPY = "program_floppy";
@@ -76,8 +79,9 @@ public final class GuideTexts
 			if(era.hasTerminal())
 				pages.put(eraTerminal(era), Set.of());
 		}
-		for(String page : List.of(BUILTIN_TERMINAL, STORAGE_BAY, TUBES, CATALOGUE_CARDS, TERMINAL_DISKS, ADAPTERS, PROGRAM_FLOPPY,
-				CRAFTING_COMPUTER, DATA_PROCESSOR, PATTERN_FLOPPY, ORDERING, OTHER_PARTS))
+		for(String page : List.of(BUILTIN_TERMINAL, STORAGE_BAY, TUBES, CATALOGUE_CARDS, ADVANCED_STATION, FILTER_CARDS,
+				PROGRAM_DECK, TERMINAL_DISKS, ADAPTERS, PROGRAM_FLOPPY, CRAFTING_COMPUTER, DATA_PROCESSOR,
+				PATTERN_FLOPPY, ORDERING, OTHER_PARTS))
 			pages.put(page, Set.of());
 		pages.put(NEXT, Set.of(NEXT_GUIDE, NEXT_ERA));
 		pages.put(PALM, Set.of());

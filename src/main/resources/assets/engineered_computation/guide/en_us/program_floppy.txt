@@ -1,5 +1,5 @@
 Program Floppy
 
-A Program Floppy holds a filter of up to nine entries, each an item or a tag, for example you could use `c:ingots` to filter for ingots.
+A Program Floppy holds a filter of up to nine entries, each an item or a tag, for example `c:ingots` for all ingots.
 
-Right-click it to program it: click an entry while holding an item, or select an entry and type a tag. Can only be used in the floppy era data importer / exporter devices.
+To program it, right-click while holding it, then click an entry while holding an item, or select an entry and type a tag. Only supported in Floppy Disk Era Data Importers and Exporters.

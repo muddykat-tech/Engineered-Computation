@@ -9,12 +9,14 @@ import com.muddykat.engineeredcomputation.crafting.CraftingComputerPayload;
 import com.muddykat.engineeredcomputation.crafting.OrderPlanPayload;
 import com.muddykat.engineeredcomputation.crafting.OrderRequestPayload;
 import com.muddykat.engineeredcomputation.crafting.PatternEditPayload;
+import com.muddykat.engineeredcomputation.crafting.PatternFillPayload;
 import com.muddykat.engineeredcomputation.crafting.TerminalCraftingPayload;
-import com.muddykat.engineeredcomputation.terminal.TerminalClickPayload;
 import com.muddykat.engineeredcomputation.pneumatic.CarrierSyncPayload;
 import com.muddykat.engineeredcomputation.pneumatic.StationNamePayload;
+import com.muddykat.engineeredcomputation.terminal.GridFillPayload;
 import com.muddykat.engineeredcomputation.terminal.TeletypeOutletPayload;
 import com.muddykat.engineeredcomputation.terminal.TeletypeSlipPayload;
+import com.muddykat.engineeredcomputation.terminal.TerminalClickPayload;
 import com.muddykat.engineeredcomputation.terminal.TerminalContentsPayload;
 import com.muddykat.engineeredcomputation.terminal.TerminalUnreachablePayload;
 
@@ -41,6 +43,8 @@ public final class ECPayloads
 						TerminalClickPayload::handle)
 				.playToServer(ProgramEditPayload.TYPE, ProgramEditPayload.STREAM_CODEC, ProgramEditPayload::handle)
 				.playToServer(PatternEditPayload.TYPE, PatternEditPayload.STREAM_CODEC, PatternEditPayload::handle)
+				.playToServer(PatternFillPayload.TYPE, PatternFillPayload.STREAM_CODEC, PatternFillPayload::handle)
+				.playToServer(GridFillPayload.TYPE, GridFillPayload.STREAM_CODEC, GridFillPayload::handle)
 				.playToServer(OrderRequestPayload.TYPE, OrderRequestPayload.STREAM_CODEC, OrderRequestPayload::handle)
 				.playToServer(CancelOrderPayload.TYPE, CancelOrderPayload.STREAM_CODEC, CancelOrderPayload::handle)
 				.playToClient(OrderPlanPayload.TYPE, OrderPlanPayload.STREAM_CODEC, OrderPlanPayload::handle)

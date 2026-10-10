@@ -13,6 +13,7 @@ import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.adapter.Program;
 import com.muddykat.engineeredcomputation.catalogue.CardDeck;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCard;
+import com.muddykat.engineeredcomputation.catalogue.FilterDeck;
 import com.muddykat.engineeredcomputation.crafting.Pattern;
 import com.muddykat.engineeredcomputation.storage.CellContents;
 import com.muddykat.engineeredcomputation.storage.EraDataCell;
@@ -55,6 +56,12 @@ public final class ECDataComponents
 			REGISTER.registerComponentType("card_deck", builder -> builder
 					.persistent(CardDeck.CODEC)
 					.networkSynchronized(CardDeck.STREAM_CODEC)
+					.cacheEncoding());
+
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<FilterDeck>> FILTER_DECK =
+			REGISTER.registerComponentType("filter_deck", builder -> builder
+					.persistent(FilterDeck.CODEC)
+					.networkSynchronized(FilterDeck.STREAM_CODEC)
 					.cacheEncoding());
 
 	private ECDataComponents()

@@ -7,7 +7,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -16,7 +15,7 @@ import net.minecraft.world.level.Level;
 
 import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 
-public class ProgramFloppyItem extends Item
+public class ProgramFloppyItem extends Item implements ProgrammableItem
 {
 	public ProgramFloppyItem(Properties properties)
 	{
@@ -24,11 +23,16 @@ public class ProgramFloppyItem extends Item
 	}
 
 	@Override
+	public int programSize()
+	{
+		return Program.SIZE;
+	}
+
+	@Override
 	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand)
 	{
 		if(player instanceof ServerPlayer serverPlayer)
-			serverPlayer.openMenu(new SimpleMenuProvider((id, inventory, p) -> new ProgramFloppyMenu(id, inventory, hand),
-					player.getItemInHand(hand).getHoverName()), buf -> buf.writeEnum(hand));
+			ProgrammableItem.open(serverPlayer, hand);
 		return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
 	}
 

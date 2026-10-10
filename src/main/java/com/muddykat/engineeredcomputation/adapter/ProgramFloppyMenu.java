@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
+/** Edits the held {@link ProgrammableItem}'s entries: a Program Floppy's or a Filter Card's. */
 public class ProgramFloppyMenu extends AbstractContainerMenu
 {
 	public static final int ENTRIES_X = 8;
@@ -71,13 +72,19 @@ public class ProgramFloppyMenu extends AbstractContainerMenu
 		return floppy().getOrDefault(ECDataComponents.PROGRAM.get(), Program.EMPTY);
 	}
 
-	void edit(int index, ProgramEditPayload.Action action, String tag)
+	/** How many entries the held item has. */
+	public int size()
 	{
-		if(index<0||index>=Program.SIZE||!(floppy().getItem() instanceof ProgramFloppyItem))
+		return floppy().getItem() instanceof ProgrammableItem item? item.programSize(): 0;
+	}
+
+	void edit(int index, ProgramEditPayload.Action action, String tag, ItemStack item)
+	{
+		if(index<0||index>=size())
 			return;
 		ProgramEntry entry = switch(action)
 		{
-			case SET_ITEM -> ProgramEntry.of(getCarried());
+			case SET_ITEM -> ProgramEntry.of(item.isEmpty()? getCarried(): item);
 			case SET_TAG ->
 			{
 				ResourceLocation id = ResourceLocation.tryParse(tag.trim().replaceFirst("^#", ""));
@@ -99,6 +106,6 @@ public class ProgramFloppyMenu extends AbstractContainerMenu
 	@Override
 	public boolean stillValid(Player player)
 	{
-		return floppy().getItem() instanceof ProgramFloppyItem;
+		return floppy().getItem() instanceof ProgrammableItem;
 	}
 }

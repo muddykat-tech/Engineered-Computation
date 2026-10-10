@@ -7,6 +7,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
@@ -35,6 +36,12 @@ public class TubeStationBlock extends DirectionalBlock implements EntityBlock
 	{
 		super(properties);
 		registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+	}
+
+	/** Whether this station takes a Filter Card or Program Deck: an Advanced Tube Station. */
+	public boolean filters()
+	{
+		return false;
 	}
 
 	public static boolean connectsOn(BlockState state, @Nullable Direction side)
@@ -106,7 +113,11 @@ public class TubeStationBlock extends DirectionalBlock implements EntityBlock
 	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston)
 	{
 		if(!state.is(newState.getBlock()))
+		{
+			if(level.getBlockEntity(pos) instanceof TubeStationBlockEntity station)
+				Containers.dropContents(level, pos, station.filterContainer());
 			TubeNetwork.changed(level);
+		}
 		super.onRemove(state, level, pos, newState, movedByPiston);
 	}
 }

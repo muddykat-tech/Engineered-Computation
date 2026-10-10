@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "type": "neoforge:components",
+      "items": "engineered_computation:catalogue_card",
+      "components": {},
+      "strict": true
+    },
+    {
+      "tag": "c:dyes/orange"
+    }
+  ],
+  "result": {
+    "id": "engineered_computation:filter_card",
+    "count": 1
+  }
+}

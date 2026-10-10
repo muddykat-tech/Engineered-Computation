@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "engineered_computation:tube_station"
+    },
+    {
+      "item": "engineered_computation:vacuum_tube"
+    }
+  ],
+  "result": {
+    "id": "engineered_computation:advanced_tube_station",
+    "count": 1
+  }
+}

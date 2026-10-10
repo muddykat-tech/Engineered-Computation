@@ -165,6 +165,104 @@ public final class DataAdapterGameTests
 	}
 
 	@GameTest(template = StorageGameTests.TEMPLATE)
+	public static void blockListExporterSendsEverythingButItsFilter(GameTestHelper helper)
+	{
+		DataAdapterBlockEntity adapter = setUp(helper, ComputerEra.FLOPPY, AdapterKind.EXPORTER, true);
+		NetworkStorage network = StorageNetwork.scan(helper.getLevel(), adapter.getBlockPos().below()).getStorage();
+		network.insert(ItemKey.of(new ItemStack(Items.COBBLESTONE)), 5, false);
+		network.insert(ItemKey.of(new ItemStack(Items.DIRT)), 5, false);
+		adapter.setFilter(new ItemStack(Items.COBBLESTONE));
+		StorageGameTests.check(helper, !adapter.isBlocking(), "an adapter should start with an allow list");
+		adapter.setBlocking(true);
+		AdapterStatus last = drain(adapter);
+		StorageGameTests.check(helper, inChest(helper, adapter, Items.DIRT)==5, "Chest should hold all 5 dirt");
+		StorageGameTests.check(helper, inChest(helper, adapter, Items.COBBLESTONE)==0,
+				"the blocked cobblestone was exported");
+		StorageGameTests.check(helper, last==AdapterStatus.NOT_FOUND,
+				"with only blocked items left the exporter should find nothing, not "+last);
+		helper.succeed();
+	}
+
+	@GameTest(template = StorageGameTests.TEMPLATE)
+	public static void emptyBlockListExporterSendsEverything(GameTestHelper helper)
+	{
+		DataAdapterBlockEntity adapter = setUp(helper, ComputerEra.FLOPPY, AdapterKind.EXPORTER, true);
+		NetworkStorage network = StorageNetwork.scan(helper.getLevel(), adapter.getBlockPos().below()).getStorage();
+		network.insert(ItemKey.of(new ItemStack(Items.COBBLESTONE)), 3, false);
+		network.insert(ItemKey.of(new ItemStack(Items.DIRT)), 2, false);
+		adapter.setBlocking(true);
+		drain(adapter);
+		StorageGameTests.check(helper, inChest(helper, adapter, Items.COBBLESTONE)==3
+						&&inChest(helper, adapter, Items.DIRT)==2,
+				"an empty block list blocks nothing, so everything should be exported");
+		helper.succeed();
+	}
+
+	@GameTest(template = StorageGameTests.TEMPLATE)
+	public static void blockListImporterLeavesItsFilter(GameTestHelper helper)
+	{
+		DataAdapterBlockEntity adapter = setUp(helper, ComputerEra.FLOPPY, AdapterKind.IMPORTER, true);
+		ChestBlockEntity chest = (ChestBlockEntity)helper.getLevel().getBlockEntity(adapter.getBlockPos().above());
+		chest.setItem(0, new ItemStack(Items.COBBLESTONE, 20));
+		chest.setItem(1, new ItemStack(Items.DIRT, 3));
+		adapter.setFilter(new ItemStack(Items.DIRT));
+		adapter.setBlocking(true);
+		drain(adapter);
+		NetworkStorage network = StorageNetwork.scan(helper.getLevel(), adapter.getBlockPos().below()).getStorage();
+		StorageGameTests.check(helper, network.getAmount(ItemKey.of(new ItemStack(Items.COBBLESTONE)))==20L,
+				"Network should hold all 20 cobblestone");
+		StorageGameTests.check(helper, inChest(helper, adapter, Items.DIRT)==3, "the blocked dirt was imported");
+		helper.succeed();
+	}
+
+	@GameTest(template = StorageGameTests.TEMPLATE)
+	public static void blockListProgramFloppyBlocksItsEntries(GameTestHelper helper)
+	{
+		DataAdapterBlockEntity adapter = setUp(helper, ComputerEra.FLOPPY, AdapterKind.EXPORTER, true);
+		NetworkStorage network = StorageNetwork.scan(helper.getLevel(), adapter.getBlockPos().below()).getStorage();
+		network.insert(ItemKey.of(new ItemStack(Items.IRON_INGOT)), 5, false);
+		network.insert(ItemKey.of(new ItemStack(Items.COBBLESTONE)), 5, false);
+		ItemStack floppy = new ItemStack(ECAdapters.PROGRAM_FLOPPY.get());
+		floppy.set(ECDataComponents.PROGRAM.get(), Program.EMPTY.with(0, ProgramEntry.of(TagKey.create(Registries.ITEM,
+				ResourceLocation.parse("c:ingots")))));
+		adapter.setFilter(floppy);
+		adapter.setBlocking(true);
+		drain(adapter);
+		StorageGameTests.check(helper, inChest(helper, adapter, Items.COBBLESTONE)==5,
+				"Chest should hold 5 cobblestone");
+		StorageGameTests.check(helper, inChest(helper, adapter, Items.IRON_INGOT)==0,
+				"the program's blocked ingots were exported");
+		helper.succeed();
+	}
+
+	@GameTest(template = StorageGameTests.TEMPLATE)
+	public static void theBlockListIsSaved(GameTestHelper helper)
+	{
+		DataAdapterBlockEntity adapter = setUp(helper, ComputerEra.DRUM, AdapterKind.EXPORTER, true);
+		adapter.setBlocking(true);
+		var registries = helper.getLevel().registryAccess();
+		DataAdapterBlockEntity loaded = new DataAdapterBlockEntity(adapter.getBlockPos(), adapter.getBlockState());
+		loaded.loadWithComponents(adapter.saveWithoutMetadata(registries), registries);
+		StorageGameTests.check(helper, loaded.isBlocking(), "the block list wasn't saved");
+		DataAdapterBlockEntity old = new DataAdapterBlockEntity(adapter.getBlockPos(), adapter.getBlockState());
+		var tag = adapter.saveWithoutMetadata(registries);
+		tag.remove("blocking");
+		old.loadWithComponents(tag, registries);
+		StorageGameTests.check(helper, !old.isBlocking(),
+				"an adapter saved before the setting existed isn't an allow list");
+		helper.succeed();
+	}
+
+	/** Transfers until the adapter stops moving anything (or 64 times); the last status. */
+	private static AdapterStatus drain(DataAdapterBlockEntity adapter)
+	{
+		AdapterStatus status = AdapterStatus.OK;
+		for(int i = 0; i<64&&status==AdapterStatus.OK; i++)
+			status = adapter.transfer();
+		return status;
+	}
+
+	@GameTest(template = StorageGameTests.TEMPLATE)
 	public static void switchedOffMovesNothing(GameTestHelper helper)
 	{
 		DataAdapterBlockEntity adapter = setUp(helper, ComputerEra.DRUM, AdapterKind.EXPORTER, true);

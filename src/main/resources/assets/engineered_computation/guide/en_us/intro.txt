@@ -1,9 +1,9 @@
 Engineered Computation
 Introduction
-Store your items in thematic machines that reference real history.
+Store items in machines based on real computing history.
 
-These are loosely broken in to five eras.
+The mod is split into five eras.
 
-Each era has a guide of its own, which will show you how to build that era's drives and craft everything they need.
+Each era has its own guide, covering how to build that era's drives and craft everything they need.
 
 This edition covers the {era} in detail.

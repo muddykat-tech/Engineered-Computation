@@ -85,7 +85,18 @@ public final class GuideRecipes
 
 	public static List<ResourceLocation> tubes(ComputerEra era)
 	{
-		return era==ComputerEra.PUNCHCARD? ECPneumatics.items().stream().map(item -> item.getId()).toList(): List.of();
+		return era==ComputerEra.PUNCHCARD? ECPneumatics.items().stream().map(item -> item.getId())
+				.filter(id -> !id.equals(ECPneumatics.ADVANCED_TUBE_STATION.getId())).toList(): List.of();
+	}
+
+	/**
+	 * The Advanced Tube Station, Filter Card and Program Deck, in that order: with the tubes, in the first edition (its
+	 * Vacuum Tube's recipe shows under Other Parts).
+	 */
+	public static List<ResourceLocation> filterStation(ComputerEra era)
+	{
+		return era==ComputerEra.PUNCHCARD? List.of(ECPneumatics.ADVANCED_TUBE_STATION.getId(),
+				ECCatalogue.FILTER_CARD.getId(), ECCatalogue.PROGRAM_DECK.getId()): List.of();
 	}
 
 	public static Optional<ResourceLocation> catalogueCard(ComputerEra era)
@@ -109,6 +120,7 @@ public final class GuideRecipes
 		recipes.addAll(terminalDisks(era));
 		recipes.addAll(tubes(era));
 		catalogueCard(era).ifPresent(recipes::add);
+		recipes.addAll(filterStation(era));
 		recipes.addAll(adapters(era));
 		programFloppy(era).ifPresent(recipes::add);
 		patternFloppy(era).ifPresent(recipes::add);

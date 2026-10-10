@@ -17,6 +17,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 
 import com.muddykat.engineeredcomputation.network.ECCapabilities;
+import com.muddykat.engineeredcomputation.pneumatic.AdvancedTubeStationBlock;
 import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
 import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlockEntity;
 import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
@@ -46,6 +47,8 @@ public final class ECPneumatics
 			"pneumatic_tube", () -> new PneumaticTubeBlock(TUBE_PROPERTIES));
 	public static final DeferredBlock<TubeStationBlock> TUBE_STATION = ECRegistrationHolder.BLOCKS.register(
 			"tube_station", () -> new TubeStationBlock(STATION_PROPERTIES));
+	public static final DeferredBlock<AdvancedTubeStationBlock> ADVANCED_TUBE_STATION = ECRegistrationHolder.BLOCKS
+			.register("advanced_tube_station", () -> new AdvancedTubeStationBlock(STATION_PROPERTIES));
 	public static final DeferredBlock<ReceivingStationBlock> RECEIVING_STATION = ECRegistrationHolder.BLOCKS.register(
 			"receiving_station", () -> new ReceivingStationBlock(STATION_PROPERTIES));
 
@@ -64,11 +67,12 @@ public final class ECPneumatics
 
 	private static final List<DeferredItem<? extends BlockItem>> ITEMS = List.of(TUBE_ITEM, WINDOWED_TUBE_ITEM,
 			ECRegistrationHolder.ITEMS.registerSimpleBlockItem(TUBE_STATION),
+			ECRegistrationHolder.ITEMS.registerSimpleBlockItem(ADVANCED_TUBE_STATION),
 			ECRegistrationHolder.ITEMS.registerSimpleBlockItem(RECEIVING_STATION));
 
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TubeStationBlockEntity>> TUBE_STATION_ENTITY =
 			ECRegistrationHolder.BLOCK_ENTITIES.register("tube_station", () -> BlockEntityType.Builder.of(
-					TubeStationBlockEntity::new, TUBE_STATION.get()).build(null));
+					TubeStationBlockEntity::new, TUBE_STATION.get(), ADVANCED_TUBE_STATION.get()).build(null));
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ReceivingStationBlockEntity>>
 			RECEIVING_STATION_ENTITY = ECRegistrationHolder.BLOCK_ENTITIES.register("receiving_station",
 			() -> BlockEntityType.Builder.of(ReceivingStationBlockEntity::new, RECEIVING_STATION.get()).build(null));
@@ -97,7 +101,7 @@ public final class ECPneumatics
 					TUBE.get(), COVERED_TUBE.get(), CLEAR_COVERED_TUBE.get());
 			event.registerBlock(ECCapabilities.TUBE_MEMBER,
 					(level, pos, state, blockEntity, side) -> TubeStationBlock.connectsOn(state, side)
-							? TubeMember.END: null, TUBE_STATION.get());
+							? TubeMember.END: null, TUBE_STATION.get(), ADVANCED_TUBE_STATION.get());
 			event.registerBlock(ECCapabilities.TUBE_MEMBER,
 					(level, pos, state, blockEntity, side) -> TubeMember.END, RECEIVING_STATION.get());
 			event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, RECEIVING_STATION_ENTITY.get(),

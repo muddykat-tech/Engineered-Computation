@@ -4,7 +4,7 @@ Error Codes
 200: Moving items.
 204: Storage is empty.
 404: Nothing matches the search or filter.
-409: Mixed Hardware on one network.
+409: Mixed hardware on one network.
 413: Network is over 4,096 blocks.
 424: Something it needs isn't on the network, likely a processor or a Crafting Computer. A teletype needs a Receiving Station against it.
 503: No cells, cable or inventory. For a teletype, no Tabulator Machine on its tubes.

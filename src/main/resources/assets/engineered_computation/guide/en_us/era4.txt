@@ -1,9 +1,8 @@
 Disk Pack Era
 
-Stacked spinning platters, a whole pack of disks, lowered into the drive as one.
-These have the highest Item Variety limit for the purpose of this mod, storage capacity is moderate but nothing huge.
+Stacked spinning platters, a whole pack of disks lowered into the drive as one. Disk packs have the highest item variety in this mod, with moderate capacity.
 
-The Disk Pack Mainframe is this era's processor, to add more Disk Banks you need one on the network.
+The Disk Pack Mainframe is this era's processor. Disk Banks need one on the network.
 
 Memory: {memory}
 Part: {part}

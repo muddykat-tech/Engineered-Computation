@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "engineered_computation:item/filter_card"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "engineered_computation:punched": 1.0
+      },
+      "model": "engineered_computation:item/filter_card_punched"
+    }
+  ]
+}

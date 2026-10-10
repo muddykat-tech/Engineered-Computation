@@ -8,6 +8,8 @@ import net.neoforged.neoforge.registries.DeferredItem;
 
 import com.muddykat.engineeredcomputation.catalogue.CardDeckItem;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCardItem;
+import com.muddykat.engineeredcomputation.catalogue.FilterCardItem;
+import com.muddykat.engineeredcomputation.catalogue.ProgramDeckItem;
 
 public final class ECCatalogue
 {
@@ -16,6 +18,11 @@ public final class ECCatalogue
 
 	public static final DeferredItem<CatalogueCardItem> CARD = ECRegistrationHolder.ITEMS.register("catalogue_card",
 			() -> new CatalogueCardItem(new Item.Properties()));
+
+	public static final DeferredItem<FilterCardItem> FILTER_CARD = ECRegistrationHolder.ITEMS.register("filter_card",
+			() -> new FilterCardItem(new Item.Properties()));
+	public static final DeferredItem<ProgramDeckItem> PROGRAM_DECK = ECRegistrationHolder.ITEMS.register("program_deck",
+			() -> new ProgramDeckItem(new Item.Properties().stacksTo(1)));
 
 	private static final List<DeferredItem<CardDeckItem>> DECKS = IntStream.range(0, DECK_TIERS)
 			.mapToObj(tier -> SMALLEST_DECK<<tier)

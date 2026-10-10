@@ -745,6 +745,96 @@ public class TerminalMenu extends AbstractContainerMenu
 		}
 	}
 
+	/**
+	 * Lays a recipe out in the crafting grid (JEI's recipe transfer): per slot, the items that would do, best first. A
+	 * linked grid links each slot to the one the network has most of. An unlinked one puts its items away first, then
+	 * takes real ones from the network and then the player's inventory: one of each, or with {@code max} as many sets
+	 * as there are, up to a stack. Slots with nothing to take are left empty.
+	 */
+	public void fillGrid(List<List<ItemStack>> options, boolean max)
+	{
+		if(craftGrid==null||player.level().isClientSide||options.size()>CraftingGrid.SIZE)
+			return;
+		NetworkStorage storage = storage();
+		boolean linked = isLinked();
+		if(!linked)
+			emptyCraftGrid(player);
+		List<ItemStack> chosen = new ArrayList<>(CraftingGrid.SIZE);
+		for(int i = 0; i<CraftingGrid.SIZE; i++)
+			chosen.add(i<options.size()? mostAvailable(options.get(i), storage, !linked): ItemStack.EMPTY);
+		int sets = linked? 1: max? availableSets(chosen, storage): 1;
+		for(int i = 0; i<CraftingGrid.SIZE; i++)
+		{
+			ItemStack wanted = chosen.get(i);
+			grid.slots().set(i, wanted.isEmpty()? ItemStack.EMPTY: linked? wanted.copyWithCount(1):
+					take(wanted, sets, storage));
+		}
+		grid.changed();
+		updateCraftResult();
+	}
+
+	private long available(ItemStack stack, NetworkStorage storage, boolean withInventory)
+	{
+		long count = storage.getAmount(ItemKey.of(stack));
+		if(withInventory)
+			for(ItemStack held : player.getInventory().items)
+				if(ItemStack.isSameItemSameComponents(held, stack))
+					count += held.getCount();
+		return count;
+	}
+
+	private ItemStack mostAvailable(List<ItemStack> options, NetworkStorage storage, boolean withInventory)
+	{
+		ItemStack best = ItemStack.EMPTY;
+		long bestCount = -1;
+		for(ItemStack option : options)
+		{
+			long count = option.isEmpty()? -1: available(option, storage, withInventory);
+			if(count>bestCount)
+			{
+				best = option;
+				bestCount = count;
+			}
+		}
+		return best;
+	}
+
+	/** How many sets of the chosen items there are, network and inventory together: at least one, at most a stack. */
+	private int availableSets(List<ItemStack> chosen, NetworkStorage storage)
+	{
+		Map<ItemKey, Integer> uses = new HashMap<>();
+		Map<ItemKey, ItemStack> stacks = new HashMap<>();
+		int sets = Integer.MAX_VALUE;
+		for(ItemStack stack : chosen)
+			if(!stack.isEmpty())
+			{
+				uses.merge(ItemKey.of(stack), 1, Integer::sum);
+				stacks.putIfAbsent(ItemKey.of(stack), stack);
+				sets = Math.min(sets, stack.getMaxStackSize());
+			}
+		for(Map.Entry<ItemKey, Integer> use : uses.entrySet())
+			sets = (int)Math.min(sets, available(stacks.get(use.getKey()), storage, true)/use.getValue());
+		return Math.max(1, sets);
+	}
+
+	private ItemStack take(ItemStack wanted, int count, NetworkStorage storage)
+	{
+		ItemKey key = ItemKey.of(wanted);
+		int taken = (int)storage.extract(key, count, false);
+		for(ItemStack held : player.getInventory().items)
+		{
+			if(taken>=count)
+				break;
+			if(ItemStack.isSameItemSameComponents(held, wanted))
+			{
+				int moved = Math.min(count-taken, held.getCount());
+				held.shrink(moved);
+				taken += moved;
+			}
+		}
+		return taken==0? ItemStack.EMPTY: key.toStack(taken);
+	}
+
 	private static void giveBack(Player player, ItemStack stack)
 	{
 		if(stack.isEmpty())

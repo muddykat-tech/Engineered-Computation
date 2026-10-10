@@ -3,6 +3,8 @@ package com.muddykat.engineeredcomputation.catalogue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -17,6 +19,7 @@ import net.minecraft.world.item.ItemStack;
 
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
+/** A deck in hand laid out, rows of eight cards: any {@link DeckItem}, Catalogue Cards or Filter Cards. */
 public class CardDeckMenu extends AbstractContainerMenu
 {
 	public static final int COLUMNS = 8;
@@ -26,6 +29,8 @@ public class CardDeckMenu extends AbstractContainerMenu
 	private final Player player;
 	private final InteractionHand hand;
 	private final int capacity;
+	@Nullable
+	private final DeckItem deckItem;
 	private final SimpleContainer cards;
 	private final int deckSlot;
 
@@ -34,15 +39,16 @@ public class CardDeckMenu extends AbstractContainerMenu
 		this(id, inventory, buf.readEnum(InteractionHand.class), buf.readVarInt(), List.of());
 	}
 
-	private CardDeckMenu(int id, Inventory inventory, InteractionHand hand, int capacity, List<CatalogueCard> filed)
+	private CardDeckMenu(int id, Inventory inventory, InteractionHand hand, int capacity, List<ItemStack> filed)
 	{
 		super(ECMenuTypes.CARD_DECK.get(), id);
 		this.player = inventory.player;
 		this.hand = hand;
 		this.capacity = capacity;
+		this.deckItem = player.getItemInHand(hand).getItem() instanceof DeckItem item? item: null;
 		this.cards = new SimpleContainer(capacity);
 		for(int i = 0; i<filed.size()&&i<capacity; i++)
-			cards.setItem(i, CatalogueCardItem.punched(filed.get(i)));
+			cards.setItem(i, filed.get(i));
 		if(!player.level().isClientSide)
 			cards.addListener(container -> writeBack());
 
@@ -52,7 +58,7 @@ public class CardDeckMenu extends AbstractContainerMenu
 				@Override
 				public boolean mayPlace(ItemStack stack)
 				{
-					return CatalogueCardItem.card(stack)!=null;
+					return isCard(stack);
 				}
 
 				@Override
@@ -96,10 +102,10 @@ public class CardDeckMenu extends AbstractContainerMenu
 	public static void open(ServerPlayer player, InteractionHand hand)
 	{
 		ItemStack deck = player.getItemInHand(hand);
-		if(!(deck.getItem() instanceof CardDeckItem item))
+		if(!(deck.getItem() instanceof DeckItem item))
 			return;
 		player.openMenu(new SimpleMenuProvider((id, inventory, p) -> new CardDeckMenu(id, inventory, hand,
-				item.getCapacity(), CardDeckItem.deck(deck).cards()), deck.getHoverName()), buf -> {
+				item.getCapacity(), item.cards(deck)), deck.getHoverName()), buf -> {
 			buf.writeEnum(hand);
 			buf.writeVarInt(item.getCapacity());
 		});
@@ -123,16 +129,13 @@ public class CardDeckMenu extends AbstractContainerMenu
 	private void writeBack()
 	{
 		ItemStack deck = player.getItemInHand(hand);
-		if(!(deck.getItem() instanceof CardDeckItem))
+		if(!(deck.getItem() instanceof DeckItem item))
 			return;
-		List<CatalogueCard> filed = new ArrayList<>();
+		List<ItemStack> filed = new ArrayList<>();
 		for(int i = 0; i<cards.getContainerSize(); i++)
-		{
-			CatalogueCard card = CatalogueCardItem.card(cards.getItem(i));
-			if(card!=null)
-				filed.add(card);
-		}
-		CardDeckItem.setDeck(deck, new CardDeck(filed));
+			if(item.isCard(cards.getItem(i)))
+				filed.add(cards.getItem(i));
+		item.setCards(deck, filed);
 	}
 
 	@Override
@@ -153,7 +156,7 @@ public class CardDeckMenu extends AbstractContainerMenu
 		ItemStack stack = slot.getItem();
 		ItemStack original = stack.copy();
 		boolean moved = index<capacity? moveItemStackTo(stack, capacity, slots.size(), true)
-				: CatalogueCardItem.card(stack)!=null&&moveItemStackTo(stack, 0, capacity, false);
+				: isCard(stack)&&moveItemStackTo(stack, 0, capacity, false);
 		if(!moved)
 			return ItemStack.EMPTY;
 		if(stack.isEmpty())
@@ -167,6 +170,11 @@ public class CardDeckMenu extends AbstractContainerMenu
 	@Override
 	public boolean stillValid(Player player)
 	{
-		return player.getItemInHand(hand).getItem() instanceof CardDeckItem;
+		return player.getItemInHand(hand).getItem() instanceof DeckItem;
+	}
+
+	private boolean isCard(ItemStack stack)
+	{
+		return deckItem!=null&&deckItem.isCard(stack);
 	}
 }

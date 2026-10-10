@@ -1,0 +1,5 @@
+Filter Cards
+
+A Filter Card is a punch card designed to filter incoming items to an advanced tube station. These can be made by dyeing a blank Catalogue Card orange.
+
+You can right-click an item onto a filter card to set the filter, or you can open it and set it in the GUI, it also supports tag based filters.

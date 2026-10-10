@@ -2,14 +2,14 @@ Pneumatic Tubes
 
 Pneumatic Tubes carry items between stations.
 
-After crafting a Pneumatic Tube, you can also craft between Windowed Pneumatic Tubes and Solid Bronze tubes, or by using shift-right-click on a placed tube with an empty hand to toggle it's window.
+To add or remove a tube's window, sneak while right-clicking it with an empty hand, or craft one tube into the other.
 
-Use a dye on a window to tint it; the dye is not used during this process. Holding a dye in your other hand tints windowed tubes as you place them.
+To tint a window, right-click it with a dye. The dye won't be consumed. Windowed tubes placed with a dye in the off hand will be tinted.
 
-Tubes can be hidden inside blocks, like Network Cables: sneak-use a full block on a tube to cover it. The tube will keep working, and will also keep its window and tint settings. A see-through cover such as glass will show the tube inside. Breaking a covered tube breaks only the cover, although the Assembly Wrench can also take the cover off.
+To hide a tube, sneak while placing a block on it to cover it. Breaking a covered tube, or using the Assembly Wrench on it will remove the cover.
 
-A Tube Station goes against an inventory, such as a chest, with its hatch facing it. It sends that inventory's items off when asked, one stack per carrier. Right-click it to give it a name, which its cards will show, and to choose whether it will allow storage of new item types.
+Place a Tube Station against an inventory, such as a chest, with its hatch facing it. It will send that inventory's items when requested, one stack per carrier. Right-click it to name it, and to choose whether it takes new item types.
 
-Items are routed towards Receiving Station's, you can Right-click them to open the GUI to retrieve items, name the station, or set it to drop the items in front of it, as a dropper would, this includes the ability to insert into a chest or other inventory's in front of it, It will spill items on the ground if nothing is available. You can also use hoppers to pull items out of it too. If no space exists items will wait in the tube until it fits in the tray.
+Items are routed to Receiving Stations. Right-click one to retrieve items, name it, or set it to eject items through its front into an inventory, or onto the ground if there's none. Hoppers can also pull items out of it. If the tray is full, items will wait in the tube until there's room.
 
-If a tube is broken while an item is on its way, it will spill out into the world at the breakpoint.
+If a tube is broken while an item is in transit, the item will spill out at the break.

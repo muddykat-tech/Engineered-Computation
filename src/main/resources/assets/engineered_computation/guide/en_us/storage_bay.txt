@@ -1,3 +1,3 @@
 Storage Bay
 
-The drawers under this drive's desk are a storage bay: nine slots of ordinary storage, filled and stacked just like a chest, right-click the draws to open this bay.
+The drawers under this drive's desk are a storage bay with nine slots. Right-click the drawers to open it.
