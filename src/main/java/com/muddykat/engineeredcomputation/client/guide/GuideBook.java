@@ -9,6 +9,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.Item;
@@ -72,7 +74,7 @@ final class GuideBook
 			List<ContentsPage.Entry> entries = new ArrayList<>();
 			for(ContentsPage.Entry chapter : chapters.subList(start, Math.min(chapters.size(), start+ContentsPage.ENTRIES)))
 				entries.add(new ContentsPage.Entry(chapter.label(), chapter.page()+contentsPages, chapter.section()));
-			all.add(new ContentsPage(Component.translatable(KEY+"contents"), entries));
+			all.add(new ContentsPage(new TranslatableComponent(KEY+"contents"), entries));
 		}
 		all.addAll(pages);
 		Map<Item, Integer> recipes = new HashMap<>();
@@ -125,8 +127,8 @@ final class GuideBook
 		{
 			section(ECMultiblocks.ERA_DRIVES.get(drive).partBlock().getName());
 			String slots = drive.era().onDataNetwork()? "structure.slots": "structure.decks";
-			pages.add(new StructurePage(drive, font.split(Component.translatable(KEY+slots, drive.slots())
-					.append("\n").append(Component.translatable(KEY+"structure.hint")), GuidePage.WIDTH)));
+			pages.add(new StructurePage(drive, font.split(new TranslatableComponent(KEY+slots, drive.slots())
+					.append("\n").append(new TranslatableComponent(KEY+"structure.hint")), GuidePage.WIDTH)));
 			if(!drive.geometry().terminalZones().isEmpty())
 				text(GuideTexts.BUILTIN_TERMINAL);
 			if(!drive.geometry().storageZones().isEmpty())
@@ -174,12 +176,12 @@ final class GuideBook
 			EraMachine computer = EraMachine.CRAFTING_COMPUTER;
 			pages.add(new StructurePage(ECMultiblocks.CRAFTING_COMPUTER.partBlock().getName(),
 					ECContent.casing(computer.era()).get(), computer.geometry(),
-					font.split(Component.translatable(KEY+"structure.hint"), GuidePage.WIDTH)));
+					font.split(new TranslatableComponent(KEY+"structure.hint"), GuidePage.WIDTH)));
 			section(GuideTexts.DATA_PROCESSOR);
 			text(GuideTexts.DATA_PROCESSOR);
 			pages.add(new StructurePage(ECMultiblocks.DATA_PROCESSOR.partBlock().getName(),
 					ECContent.PROCESSOR_CASING.get(), EraMachine.DATA_PROCESSOR.geometry(),
-					font.split(Component.translatable(KEY+"structure.hint"), GuidePage.WIDTH)));
+					font.split(new TranslatableComponent(KEY+"structure.hint"), GuidePage.WIDTH)));
 			recipe(GuideRecipes.PROCESSOR_CASING);
 			section(GuideTexts.PATTERN_FLOPPY);
 			text(GuideTexts.PATTERN_FLOPPY);
@@ -188,8 +190,8 @@ final class GuideBook
 			text(GuideTexts.ORDERING);
 		});
 
-		section(era.onDataNetwork()? Component.translatable(KEY+"section.memory", era.memoryDisplayName())
-				: Component.translatable(KEY+"section.decks"));
+		section(era.onDataNetwork()? new TranslatableComponent(KEY+"section.memory", era.memoryDisplayName())
+				: new TranslatableComponent(KEY+"section.decks"));
 		GuideRecipes.cells(era).forEach(this::recipe);
 	}
 
@@ -213,7 +215,7 @@ final class GuideBook
 		Map<Integer, String> meanings = GuideTexts.codes(GuideText.page(GuideTexts.CODES).body());
 		List<Component> entries = new ArrayList<>();
 		for(StatusCode code : StatusCode.values())
-			entries.add(Component.empty().append(code.title().copy().withStyle(ChatFormatting.BOLD)).append("\n")
+			entries.add(new TextComponent("").append(code.title().copy().withStyle(ChatFormatting.BOLD)).append("\n")
 					.append(meanings.getOrDefault(code.code(), "")));
 		entries(GuideText.title(GuideTexts.CODES), entries);
 	}

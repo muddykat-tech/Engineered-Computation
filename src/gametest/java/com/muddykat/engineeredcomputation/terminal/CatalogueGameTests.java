@@ -9,7 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
@@ -81,7 +81,7 @@ public final class CatalogueGameTests
 
 		CatalogueCard card(ServerLevel level)
 		{
-			return new CatalogueCard(GlobalPos.of(level.dimension(), station), Component.literal("Chest"),
+			return new CatalogueCard(GlobalPos.of(level.dimension(), station), new TextComponent("Chest"),
 					CellContents.EMPTY, CatalogueCard.NEVER);
 		}
 
@@ -158,8 +158,8 @@ public final class CatalogueGameTests
 		CardDeckItem item = (CardDeckItem)deck.getItem();
 		Slot slot = new Slot(new SimpleContainer(1), 0, 0, 0);
 		slot.set(deck);
-		CatalogueCard card = new CatalogueCard(GlobalPos.of(level.dimension(), BlockPos.ZERO), Component.literal("Chest"),
-				CellContents.EMPTY, CatalogueCard.NEVER);
+		CatalogueCard card = new CatalogueCard(GlobalPos.of(level.dimension(), BlockPos.ZERO),
+				new TextComponent("Chest"), CellContents.EMPTY, CatalogueCard.NEVER);
 		ItemStack[] cursor = {ItemStack.EMPTY};
 		SlotAccess carried = new SlotAccess()
 		{
@@ -244,9 +244,10 @@ public final class CatalogueGameTests
 		menu.clickMenuButton(player, TerminalMenu.SEND_SLIP);
 		StorageGameTests.check(helper, teletype.getSlip().isEmpty(), "a sent slip should be empty");
 		helper.succeedWhen(() -> {
-			helper.assertTrue(setup.receiverEntity(level).getTray().countItem(Items.DIAMOND)==39,
+			StorageGameTests.require(setup.receiverEntity(level).getTray().countItem(Items.DIAMOND)==39,
 					"39 diamonds should land in the Receiving Station");
-			helper.assertTrue(setup.chestEntity(level).countItem(Items.DIAMOND)==1, "1 should be left in the chest");
+			StorageGameTests.require(setup.chestEntity(level).countItem(Items.DIAMOND)==1,
+					"1 should be left in the chest");
 		});
 	}
 
@@ -287,8 +288,9 @@ public final class CatalogueGameTests
 		menu.quickMoveStack(player, 27);
 		StorageGameTests.check(helper, player.getInventory().getItem(0).isEmpty(), "shift-clicked cobblestone wasn't sent");
 		helper.succeedWhen(() -> {
-			helper.assertTrue(setup.chestEntity(level).countItem(Items.DIAMOND)==15, "the diamonds should reach the chest");
-			helper.assertTrue(setup.chestEntity(level).countItem(Items.COBBLESTONE)==16,
+			StorageGameTests.require(setup.chestEntity(level).countItem(Items.DIAMOND)==15,
+					"the diamonds should reach the chest");
+			StorageGameTests.require(setup.chestEntity(level).countItem(Items.COBBLESTONE)==16,
 					"the cobblestone should reach the chest");
 		});
 	}
@@ -305,7 +307,8 @@ public final class CatalogueGameTests
 		for(int slot = 1; slot<chest.getContainerSize(); slot++)
 			chest.setItem(slot, new ItemStack(Items.STONE, 64));
 		chest.setItem(0, new ItemStack(Items.DIAMOND, 64));
-		helper.succeedWhen(() -> helper.assertTrue(setup.receiverEntity(level).getTray().countItem(Items.DIAMOND)==10,
+		helper.succeedWhen(() -> StorageGameTests.require(setup.receiverEntity(level).getTray()
+				.countItem(Items.DIAMOND)==10,
 				"diamonds with no room left should come back to the Receiving Station"));
 	}
 
@@ -336,9 +339,9 @@ public final class CatalogueGameTests
 		menu.handleClick(DIAMOND, TerminalAction.TAKE_STACK);
 		menu.clickMenuButton(player, TerminalMenu.SEND_SLIP);
 		helper.succeedWhen(() -> {
-			helper.assertTrue(((ReceivingStationBlockEntity)level.getBlockEntity(away)).getTray()
+			StorageGameTests.require(((ReceivingStationBlockEntity)level.getBlockEntity(away)).getTray()
 					.countItem(Items.DIAMOND)==20, "the diamonds should land at the Packing Room");
-			helper.assertTrue(setup.receiverEntity(level).getTray().isEmpty(), "nothing should land at home");
+			StorageGameTests.require(setup.receiverEntity(level).getTray().isEmpty(), "nothing should land at home");
 		});
 	}
 
@@ -372,7 +375,7 @@ public final class CatalogueGameTests
 		receiver.accept(new ItemStack(Items.DIAMOND, 7));
 		receiver.setEjecting(true);
 		helper.succeedWhen(() -> {
-			helper.assertTrue(receiver.getTray().isEmpty(), "the tray should have been emptied");
+			StorageGameTests.require(receiver.getTray().isEmpty(), "the tray should have been emptied");
 			helper.assertItemEntityPresent(Items.DIAMOND, new BlockPos(4, 1, 3), 1.5);
 		});
 	}
@@ -385,8 +388,8 @@ public final class CatalogueGameTests
 		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ECCatalogue.decks().get(0).get()));
 		CardDeckMenu.open(player, InteractionHand.MAIN_HAND);
 		CardDeckMenu menu = (CardDeckMenu)player.openedMenu();
-		CatalogueCard card = new CatalogueCard(GlobalPos.of(level.dimension(), BlockPos.ZERO), Component.literal("Chest"),
-				CellContents.EMPTY, CatalogueCard.NEVER);
+		CatalogueCard card = new CatalogueCard(GlobalPos.of(level.dimension(), BlockPos.ZERO),
+				new TextComponent("Chest"), CellContents.EMPTY, CatalogueCard.NEVER);
 		StorageGameTests.check(helper, !menu.getSlot(0).mayPlace(new ItemStack(ECCatalogue.CARD.get())),
 				"a blank card shouldn't go in a deck");
 		menu.getSlot(3).set(CatalogueCardItem.punched(card));

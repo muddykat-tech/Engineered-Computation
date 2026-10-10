@@ -15,8 +15,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.RegistryObject;
 
@@ -38,15 +38,13 @@ import com.muddykat.engineeredcomputation.storage.StorageRole;
 
 public final class ECMultiblocks
 {
-	private static final BlockBehaviour.Properties PART_PROPERTIES = BlockBehaviour.Properties.of()
-			.mapColor(MapColor.METAL)
+	private static final BlockBehaviour.Properties PART_PROPERTIES = BlockBehaviour.Properties
+			.of(Material.METAL, MaterialColor.METAL)
 			.strength(5.0F, 6.0F)
 			.sound(SoundType.METAL)
 			.requiresCorrectToolForDrops()
 			.noOcclusion()
-			.forceSolidOn()
-			.isViewBlocking((state, level, pos) -> false)
-			.pushReaction(PushReaction.BLOCK);
+			.isViewBlocking((state, level, pos) -> false);
 
 	private static final Map<EraDrive, RegistryObject<MultiblockPartBlock>> ERA_DRIVE_BLOCKS =
 			new EnumMap<>(EraDrive.class);

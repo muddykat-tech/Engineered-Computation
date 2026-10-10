@@ -5,12 +5,13 @@ import java.util.Locale;
 
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
@@ -37,13 +38,12 @@ final class OutletPicker
 		this.font = font;
 		this.x = x;
 		this.y = y;
-		search = new EditBox(font, x+4, y+3, WIDTH-8, 10, Component.translatable("gui.engineered_computation.teletype.search"));
+		search = new EditBox(font, x+4, y+3, WIDTH-8, 10,
+				new TranslatableComponent("gui.engineered_computation.teletype.search"));
 		search.setBordered(false);
 		search.setMaxLength(32);
 		search.setTextColor(0xFFFFFF);
-		search.setHint(Component.translatable("gui.engineered_computation.teletype.search")
-				.withStyle(style -> style.withColor(0x707070)));
-		search.setFocused(true);
+		search.setFocus(true);
 		search.setResponder(text -> scroll = 0);
 	}
 
@@ -82,20 +82,22 @@ final class OutletPicker
 		return index<shown().size()? index: -1;
 	}
 
-	void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
 		List<TeletypeSlipPayload.Outlet> shown = shown();
 		int lines = lines();
 		scroll = Math.max(0, Math.min(scroll, shown.size()-lines));
-		graphics.pose().pushPose();
-		graphics.pose().translate(0, 0, 400);
-		graphics.fill(x-1, y-1, x+WIDTH+1, y+height()+1, 0xFFA0A0A0);
-		graphics.fill(x, y, x+WIDTH, y+height(), 0xF0101010);
-		graphics.fill(x, y+SEARCH_HEIGHT-1, x+WIDTH, y+SEARCH_HEIGHT, 0xFF505050);
-		search.render(graphics, mouseX, mouseY, partialTick);
+		pose.pushPose();
+		pose.translate(0, 0, 400);
+		GuiComponent.fill(pose, x-1, y-1, x+WIDTH+1, y+height()+1, 0xFFA0A0A0);
+		GuiComponent.fill(pose, x, y, x+WIDTH, y+height(), 0xF0101010);
+		GuiComponent.fill(pose, x, y+SEARCH_HEIGHT-1, x+WIDTH, y+SEARCH_HEIGHT, 0xFF505050);
+		search.render(pose, mouseX, mouseY, partialTick);
+		ECGui.hint(pose, font, search, new TranslatableComponent("gui.engineered_computation.teletype.search")
+				.withStyle(style -> style.withColor(0x707070)), false);
 		if(shown.isEmpty())
-			graphics.drawString(font, Component.translatable("gui.engineered_computation.teletype.search.none"), x+4,
-					y+SEARCH_HEIGHT+3, 0xA0A0A0, false);
+			font.draw(pose, new TranslatableComponent("gui.engineered_computation.teletype.search.none"), x+4,
+					y+SEARCH_HEIGHT+3, 0xA0A0A0);
 		int hovered = lineAt(mouseX, mouseY);
 		TeletypeSlipPayload.Outlet home = menu.getClientOutlets().isEmpty()? null: menu.getClientOutlets().get(0);
 		for(int i = 0; i<Math.min(lines, shown.size()-scroll); i++)
@@ -103,15 +105,16 @@ final class OutletPicker
 			TeletypeSlipPayload.Outlet outlet = shown.get(scroll+i);
 			int lineY = y+SEARCH_HEIGHT+1+i*LINE_HEIGHT;
 			if(scroll+i==hovered)
-				graphics.fill(x+1, lineY, x+WIDTH-1, lineY+LINE_HEIGHT, 0x40FFFFFF);
-			String where = outlet.equals(home)? Component.translatable("gui.engineered_computation.teletype.here").getString()
-					: Component.translatable("gui.engineered_computation.teletype.distance",
-					Math.round(Math.sqrt(outlet.pos().distSqr(menu.getTerminalPos())))).getString();
-			graphics.drawString(font, where, x+WIDTH-4-font.width(where), lineY+2, 0x8CC8FF, false);
-			graphics.drawString(font, ECGui.fit(font, outlet.label(), WIDTH-12-font.width(where)), x+4, lineY+2,
-					outlet.chosen()? 0xFFD24A: 0xFFFFFF, false);
+				GuiComponent.fill(pose, x+1, lineY, x+WIDTH-1, lineY+LINE_HEIGHT, 0x40FFFFFF);
+			String where = outlet.equals(home)?
+					new TranslatableComponent("gui.engineered_computation.teletype.here").getString()
+					: new TranslatableComponent("gui.engineered_computation.teletype.distance",
+							Math.round(Math.sqrt(outlet.pos().distSqr(menu.getTerminalPos())))).getString();
+			font.draw(pose, where, x+WIDTH-4-font.width(where), lineY+2, 0x8CC8FF);
+			font.draw(pose, ECGui.fit(font, outlet.label(), WIDTH-12-font.width(where)), x+4, lineY+2,
+					outlet.chosen()? 0xFFD24A: 0xFFFFFF);
 		}
-		graphics.pose().popPose();
+		pose.popPose();
 	}
 
 	boolean mouseClicked(double mouseX, double mouseY, int button)

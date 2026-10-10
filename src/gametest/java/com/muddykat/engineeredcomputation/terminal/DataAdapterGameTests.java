@@ -2,7 +2,7 @@ package com.muddykat.engineeredcomputation.terminal;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -155,7 +155,7 @@ public final class DataAdapterGameTests
 		network.insert(ItemKey.of(new ItemStack(Items.COBBLESTONE)), 5, false);
 		ItemStack floppy = new ItemStack(ECAdapters.PROGRAM_FLOPPY.get());
 		ProgramFloppyItem.setProgram(floppy, Program.EMPTY.with(0,
-				ProgramEntry.of(TagKey.create(Registries.ITEM, ResourceLocation.parse("forge:ingots")))));
+				ProgramEntry.of(TagKey.create(Registry.ITEM_REGISTRY, ResourceLocation.parse("forge:ingots")))));
 		adapter.setFilter(floppy);
 		AdapterStatus status = adapter.transfer();
 		StorageGameTests.check(helper, status==AdapterStatus.OK, "Transfer should succeed");

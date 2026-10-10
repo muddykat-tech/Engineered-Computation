@@ -22,8 +22,9 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.pathfinder.PathComputationType;
-import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -136,7 +137,7 @@ public class MultiblockPartBlock extends Block implements EntityBlock, NetworkMe
 	}
 
 	@Override
-	public List<ItemStack> getDrops(BlockState state, LootParams.Builder params)
+	public List<ItemStack> getDrops(BlockState state, LootContext.Builder params)
 	{
 		if(params.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof MultiblockPartBlockEntity part)
 		{
@@ -152,6 +153,12 @@ public class MultiblockPartBlock extends Block implements EntityBlock, NetworkMe
 	public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state)
 	{
 		return new ItemStack(getDefinition().templateBlock());
+	}
+
+	@Override
+	public PushReaction getPistonPushReaction(BlockState state)
+	{
+		return PushReaction.BLOCK;
 	}
 
 	@Override

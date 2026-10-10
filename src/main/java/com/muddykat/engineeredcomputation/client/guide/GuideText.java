@@ -2,6 +2,8 @@ package com.muddykat.engineeredcomputation.client.guide;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,7 @@ import java.util.stream.Collectors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -31,7 +34,7 @@ public final class GuideText
 
 	static GuideTexts.Page page(String page)
 	{
-		String language = Minecraft.getInstance().getLanguageManager().getSelected();
+		String language = Minecraft.getInstance().getLanguageManager().getSelected().getCode();
 		return PAGES.computeIfAbsent(language+"/"+page, key -> read(language, page)
 				.or(() -> read(GuideTexts.FALLBACK_LANGUAGE, page))
 				.orElseGet(() -> {
@@ -42,12 +45,12 @@ public final class GuideText
 
 	static Component title(String page)
 	{
-		return Component.literal(page(page).title());
+		return new TextComponent(page(page).title());
 	}
 
 	static Component contents(String page)
 	{
-		return Component.literal(page(page).contents());
+		return new TextComponent(page(page).contents());
 	}
 
 	static Component body(String page, Map<String, Component> values)
@@ -62,7 +65,7 @@ public final class GuideText
 
 	static Component fill(String text, Map<String, Component> values)
 	{
-		MutableComponent filled = Component.empty();
+		MutableComponent filled = new TextComponent("");
 		List<String> parts = GuideTexts.split(text);
 		for(int i = 0; i<parts.size(); i++)
 		{
@@ -70,7 +73,7 @@ public final class GuideText
 			if(i%2==0)
 				filled.append(part);
 			else
-				filled.append(values.getOrDefault(part, Component.literal("{"+part+"}")));
+				filled.append(values.getOrDefault(part, new TextComponent("{"+part+"}")));
 		}
 		return filled;
 	}
@@ -80,10 +83,11 @@ public final class GuideText
 		ResourceManager resources = Minecraft.getInstance().getResourceManager();
 		ResourceLocation id = ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID,
 				GuideTexts.path(language, page));
-		Optional<Resource> resource = resources.getResource(id);
-		if(resource.isEmpty())
+		if(!resources.hasResource(id))
 			return Optional.empty();
-		try(BufferedReader reader = resource.get().openAsReader())
+		try(Resource resource = resources.getResource(id);
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)))
 		{
 			return Optional.of(GuideTexts.parse(reader.lines().collect(Collectors.joining("\n"))));
 		}

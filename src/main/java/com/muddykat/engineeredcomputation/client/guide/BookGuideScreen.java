@@ -1,14 +1,15 @@
 package com.muddykat.engineeredcomputation.client.guide;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-
-import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.BookViewScreen;
 import net.minecraft.client.gui.screens.inventory.PageButton;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 
+import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 
 final class BookGuideScreen extends GuideScreen
@@ -74,55 +75,55 @@ final class BookGuideScreen extends GuideScreen
 	protected void init()
 	{
 		super.init();
-		addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
-				.bounds(width/2-100, TOP+PAGE_HEIGHT+4, 200, 20).build());
+		addRenderableWidget(new Button(width/2-100, TOP+PAGE_HEIGHT+4, 200, 20, CommonComponents.GUI_DONE,
+				button -> onClose()));
 		backward = addRenderableWidget(new PageButton(left()+24, TOP+157, false, button -> turn(-1), true));
 		forward = addRenderableWidget(new PageButton(left()+SPREAD_WIDTH-24-23, TOP+157, true, button -> turn(1),
 				true));
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics graphics)
+	public void renderBackground(PoseStack pose)
 	{
-		super.renderBackground(graphics);
+		super.renderBackground(pose);
 		RenderSystem.disableCull();
-		graphics.pose().pushPose();
-		graphics.pose().translate(left()+PAGE_WIDTH, TOP, 0);
-		graphics.pose().scale(-1, 1, 1);
-		graphics.blit(BookViewScreen.BOOK_LOCATION, 0, 0, ART_U, 0, PAGE_WIDTH, PAGE_HEIGHT);
-		graphics.pose().popPose();
+		pose.pushPose();
+		pose.translate(left()+PAGE_WIDTH, TOP, 0);
+		pose.scale(-1, 1, 1);
+		ECGui.blit(pose, BookViewScreen.BOOK_LOCATION, 0, 0, ART_U, 0, PAGE_WIDTH, PAGE_HEIGHT);
+		pose.popPose();
 		RenderSystem.enableCull();
-		graphics.blit(BookViewScreen.BOOK_LOCATION, left()+PAGE_WIDTH, TOP, ART_U, 0, PAGE_WIDTH, PAGE_HEIGHT);
+		ECGui.blit(pose, BookViewScreen.BOOK_LOCATION, left()+PAGE_WIDTH, TOP, ART_U, 0, PAGE_WIDTH, PAGE_HEIGHT);
 	}
 
 	@Override
-	protected void renderControls(GuiGraphics graphics, int mouseX, int mouseY)
+	protected void renderControls(PoseStack pose, int mouseX, int mouseY)
 	{
 		backward.visible = canTurn(-1);
 		forward.visible = canTurn(1);
 		int y = TOP+HEADER_Y;
 		int x = contentX(0);
-		graphics.drawString(font, backLabel(), x, y, !canGoBack()? DISABLED: linkColour(isOverBack(mouseX, mouseY)),
-				false);
+		font.draw(pose, backLabel(), x, y, !canGoBack()? DISABLED: linkColour(isOverBack(mouseX, mouseY)));
 		Component contents = contentsLabel();
-		graphics.drawString(font, contents, x+GuidePage.WIDTH-font.width(contents), y,
-				linkColour(isOverContents(mouseX, mouseY)), false);
+		font.draw(pose, contents, x+GuidePage.WIDTH-font.width(contents), y,
+				linkColour(isOverContents(mouseX, mouseY)));
 
 		int last = Math.min(page+2, guide.pages().size());
 		Component pages = page+1==last
-				? Component.translatable("book.pageIndicator", last, guide.pages().size())
-				: Component.translatable("guide.engineered_computation.nav.pages", page+1, last, guide.pages().size());
-		graphics.drawString(font, pages, contentX(1)+GuidePage.WIDTH-font.width(pages), y, TEXT, false);
+				? new TranslatableComponent("book.pageIndicator", last, guide.pages().size())
+				: new TranslatableComponent("guide.engineered_computation.nav.pages", page+1, last,
+						guide.pages().size());
+		font.draw(pose, pages, contentX(1)+GuidePage.WIDTH-font.width(pages), y, TEXT);
 	}
 
 	private Component backLabel()
 	{
-		return Component.translatable("guide.engineered_computation.nav.back");
+		return new TranslatableComponent("guide.engineered_computation.nav.back");
 	}
 
 	private Component contentsLabel()
 	{
-		return Component.translatable("guide.engineered_computation.nav.contents");
+		return new TranslatableComponent("guide.engineered_computation.nav.contents");
 	}
 
 	private boolean isOverBack(double mouseX, double mouseY)

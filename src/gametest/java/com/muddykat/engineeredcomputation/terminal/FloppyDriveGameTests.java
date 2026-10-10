@@ -21,9 +21,9 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
@@ -171,7 +171,7 @@ public final class FloppyDriveGameTests
 
 		Vec3 point = bayFront(EraDrive.FLOPPY_WORKSTATION, 0);
 		BlockPos origin = helper.absolutePos(StorageGameTests.ORIGIN);
-		BlockPos block = StorageGameTests.world(origin, BlockPos.containing(point), facing);
+		BlockPos block = StorageGameTests.world(origin, new BlockPos(point), facing);
 		Vec3 hit = Vec3.atLowerCornerOf(origin).add(StorageGameTests.worldOffset(point, facing));
 		player.gameMode.useItemOn(player, level, player.getMainHandItem(), InteractionHand.MAIN_HAND,
 				new BlockHitResult(hit, facing.getOpposite(), block, false));
@@ -239,7 +239,7 @@ public final class FloppyDriveGameTests
 			boolean sneaking, Vec3 templatePoint, Direction facing)
 	{
 		BlockPos origin = helper.absolutePos(StorageGameTests.ORIGIN);
-		BlockPos block = StorageGameTests.world(origin, BlockPos.containing(templatePoint), facing);
+		BlockPos block = StorageGameTests.world(origin, new BlockPos(templatePoint), facing);
 		Vec3 hit = Vec3.atLowerCornerOf(origin).add(StorageGameTests.worldOffset(templatePoint, facing));
 		player.setShiftKeyDown(sneaking);
 		player.setItemInHand(InteractionHand.MAIN_HAND,
@@ -257,7 +257,7 @@ public final class FloppyDriveGameTests
 
 		BlockPos origin = helper.absolutePos(StorageGameTests.ORIGIN);
 		IItemHandler handler = level.getBlockEntity(StorageGameTests.world(origin, new BlockPos(1, 0, 1), facing))
-				.getCapability(ForgeCapabilities.ITEM_HANDLER, null).orElse(null);
+				.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).orElse(null);
 
 		StorageGameTests.check(helper, handler!=null&&handler.getSlots()==9,
 				"storage bay capability not found or wrong slot count");

@@ -2,9 +2,10 @@ package com.muddykat.engineeredcomputation.pneumatic;
 
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 
 public class TubeStationScreen extends NamedStationScreen<TubeStationMenu>
@@ -26,21 +27,21 @@ public class TubeStationScreen extends NamedStationScreen<TubeStationMenu>
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY)
+	protected void renderBg(PoseStack pose, float partialTick, int mouseX, int mouseY)
 	{
-		super.renderBg(graphics, partialTick, mouseX, mouseY);
-		renderSwitch(graphics, NEW_ITEMS_Y, Component.translatable("gui.engineered_computation.station.new_items"),
+		super.renderBg(pose, partialTick, mouseX, mouseY);
+		renderSwitch(pose, NEW_ITEMS_Y, new TranslatableComponent("gui.engineered_computation.station.new_items"),
 				menu.takesNewItems(), mouseX, mouseY);
-		graphics.drawString(font, Component.translatable("gui.engineered_computation.station.waiting",
-				menu.getPendingRequests()), leftPos+8, topPos+STATUS_Y, 0x707070, false);
+		font.draw(pose, new TranslatableComponent("gui.engineered_computation.station.waiting",
+				menu.getPendingRequests()), leftPos+8, topPos+STATUS_Y, 0x707070);
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
-		super.render(graphics, mouseX, mouseY, partialTick);
+		super.render(pose, mouseX, mouseY, partialTick);
 		if(isOverSwitch(NEW_ITEMS_Y, mouseX, mouseY))
-			graphics.renderTooltip(font, font.split(Component.translatable(
+			renderTooltip(pose, font.split(new TranslatableComponent(
 					"gui.engineered_computation.station.new_items.detail").withStyle(ChatFormatting.GRAY), TOOLTIP_WIDTH),
 					mouseX, mouseY);
 	}

@@ -13,11 +13,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
@@ -144,7 +145,7 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side)
 	{
-		if(capability==ForgeCapabilities.ITEM_HANDLER)
+		if(capability==CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
 		{
 			IItemHandler handler = getItemHandler(side);
 			if(handler!=null)
@@ -235,8 +236,9 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 	}
 
 	@Override
-	public ModelData getModelData()
+	public IModelData getModelData()
 	{
-		return ModelData.builder().with(MODEL_OFFSET, posInMultiblock.subtract(definition.masterPos())).build();
+		return new ModelDataMap.Builder().withInitial(MODEL_OFFSET,
+				posInMultiblock.subtract(definition.masterPos())).build();
 	}
 }

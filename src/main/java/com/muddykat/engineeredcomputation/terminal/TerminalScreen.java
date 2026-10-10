@@ -15,15 +15,15 @@ import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
@@ -128,13 +128,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		if(!menu.getFeatures().search())
 			return;
 		search = new EditBox(font, leftPos+TerminalMenu.GRID_X+3, topPos+SEARCH_Y+2, GRID_WIDTH+SCROLLBAR_WIDTH-2, 10,
-				Component.translatable("gui.engineered_computation.terminal.search"));
+				new TranslatableComponent("gui.engineered_computation.terminal.search"));
 		search.setBordered(false);
 		search.setMaxLength(64);
 		search.setTextColor(0xFFFFFF);
-		search.setHint(Component.translatable("gui.engineered_computation.terminal.search")
-				.withStyle(ChatFormatting.GRAY));
-		search.setTooltip(Tooltip.create(Component.translatable("gui.engineered_computation.terminal.search.tooltip")));
 		search.setValue(seenQuery);
 		addRenderableWidget(search);
 	}
@@ -192,7 +189,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		if(query.isEmpty())
 			return true;
 		if(query.startsWith("@"))
-			return BuiltInRegistries.ITEM.getKey(key.getItem()).getNamespace().startsWith(query.substring(1));
+			return Registry.ITEM.getKey(key.getItem()).getNamespace().startsWith(query.substring(1));
 		return searchName(key).contains(query);
 	}
 
@@ -232,50 +229,52 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
-		renderBackground(graphics);
-		super.render(graphics, mouseX, mouseY, partialTick);
+		renderBackground(pose);
+		super.render(pose, mouseX, mouseY, partialTick);
+		ECGui.hint(pose, font, search, new TranslatableComponent("gui.engineered_computation.terminal.search")
+				.withStyle(ChatFormatting.GRAY), false);
 		if(orderPopup!=null)
 		{
-			orderPopup.render(graphics, mouseX, mouseY, partialTick);
+			orderPopup.render(pose, mouseX, mouseY, partialTick);
 			List<Component> lines = orderPopup.tooltip(mouseX, mouseY);
 			if(!lines.isEmpty())
 			{
-				graphics.pose().pushPose();
-				graphics.pose().translate(0, 0, 500);
-				graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
-				graphics.pose().popPose();
+				pose.pushPose();
+				pose.translate(0, 0, 500);
+				renderComponentTooltip(pose, lines, mouseX, mouseY);
+				pose.popPose();
 			}
 			return;
 		}
 		if(jobs!=null)
 		{
-			jobs.render(graphics, mouseX, mouseY);
+			jobs.render(pose, mouseX, mouseY);
 			List<Component> lines = jobs.tooltip(mouseX, mouseY);
 			if(!lines.isEmpty())
-				graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
-			else if(!jobs.isOver(mouseX, mouseY)&&!renderWidgetTooltips(graphics, mouseX, mouseY))
-				renderTooltip(graphics, mouseX, mouseY);
+				renderComponentTooltip(pose, lines, mouseX, mouseY);
+			else if(!jobs.isOver(mouseX, mouseY)&&!renderWidgetTooltips(pose, mouseX, mouseY))
+				renderTooltip(pose, mouseX, mouseY);
 			return;
 		}
 		if(outletPicker!=null&&outletPicker.isClosed())
 			outletPicker = null;
 		if(outletPicker!=null)
 		{
-			outletPicker.render(graphics, mouseX, mouseY, partialTick);
+			outletPicker.render(pose, mouseX, mouseY, partialTick);
 			return;
 		}
-		if(!renderGridTooltip(graphics, mouseX, mouseY)&&!renderWidgetTooltips(graphics, mouseX, mouseY))
-			renderTooltip(graphics, mouseX, mouseY);
+		if(!renderGridTooltip(pose, mouseX, mouseY)&&!renderWidgetTooltips(pose, mouseX, mouseY))
+			renderTooltip(pose, mouseX, mouseY);
 	}
 
 	/** Called from renderLabels, which runs right after the slots are drawn (renderSlot itself is private). */
-	private void renderMissingSlots(GuiGraphics graphics)
+	private void renderMissingSlots(PoseStack pose)
 	{
 		for(Slot slot : menu.slots)
 			if(slot.isActive()&&isMissing(slot))
-				graphics.fill(RenderType.guiOverlay(), slot.x, slot.y, slot.x+16, slot.y+16, MISSING);
+				ECGui.overlay(pose, slot.x, slot.y, slot.x+16, slot.y+16, MISSING);
 	}
 
 	private boolean isMissing(Slot slot)
@@ -288,36 +287,36 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 	}
 
 	@Override
-	protected List<Component> getTooltipFromContainerItem(ItemStack stack)
+	public List<Component> getTooltipFromItem(ItemStack stack)
 	{
-		List<Component> lines = new ArrayList<>(super.getTooltipFromContainerItem(stack));
+		List<Component> lines = new ArrayList<>(super.getTooltipFromItem(stack));
 		if(hoveredSlot!=null&&menu.isLinked()&&menu.isGridSlot(hoveredSlot))
-			lines.add(Component.translatable("gui.engineered_computation.terminal.linked.stored",
+			lines.add(new TranslatableComponent("gui.engineered_computation.terminal.linked.stored",
 							String.format(Locale.ROOT, "%,d", menu.storedOnClient(stack)))
 					.withStyle(ChatFormatting.GOLD));
 		else if(hoveredSlot!=null&&isMissing(hoveredSlot))
-			lines.add(Component.translatable("gui.engineered_computation.terminal.linked.missing")
+			lines.add(new TranslatableComponent("gui.engineered_computation.terminal.linked.missing")
 					.withStyle(ChatFormatting.RED));
 		return lines;
 	}
 
-	private boolean renderGridTooltip(GuiGraphics graphics, int mouseX, int mouseY)
+	private boolean renderGridTooltip(PoseStack pose, int mouseX, int mouseY)
 	{
 		if(gridIndexAt(mouseX, mouseY)<0||!menu.getClientStats().conflictingEras().isEmpty())
 			return false;
 		if(!menu.getCarried().isEmpty()&&menu.getFeatures().requests())
 		{
-			graphics.renderComponentTooltip(font, List.of(
-					Component.translatable("gui.engineered_computation.teletype.put_away"),
-					Component.translatable("gui.engineered_computation.teletype.put_away.detail")
+			renderComponentTooltip(pose, List.of(
+					new TranslatableComponent("gui.engineered_computation.teletype.put_away"),
+					new TranslatableComponent("gui.engineered_computation.teletype.put_away.detail")
 							.withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
 			return true;
 		}
 		if(!menu.getCarried().isEmpty())
 		{
-			graphics.renderComponentTooltip(font, List.of(
-					Component.translatable("gui.engineered_computation.terminal.store_all"),
-					Component.translatable("gui.engineered_computation.terminal.store_one")
+			renderComponentTooltip(pose, List.of(
+					new TranslatableComponent("gui.engineered_computation.terminal.store_all"),
+					new TranslatableComponent("gui.engineered_computation.terminal.store_one")
 							.withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
 			return true;
 		}
@@ -328,166 +327,184 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		if(offer!=null)
 		{
 			ItemStack shown = offer.shown(minecraft.level.getGameTime());
-			List<Component> lines = new ArrayList<>(getTooltipFromContainerItem(shown));
-			offer.outputTag().ifPresent(tag -> lines.add(Component.translatable(
+			List<Component> lines = new ArrayList<>(getTooltipFromItem(shown));
+			offer.outputTag().ifPresent(tag -> lines.add(new TranslatableComponent(
 					"gui.engineered_computation.terminal.offer.any", "#"+tag.location()).withStyle(ChatFormatting.GRAY)));
 			if(!offer.pattern().inputTags().isEmpty())
-				lines.add(Component.translatable("gui.engineered_computation.terminal.offer.pick")
+				lines.add(new TranslatableComponent("gui.engineered_computation.terminal.offer.pick")
 						.withStyle(ChatFormatting.GRAY));
-			lines.add(Component.translatable("gui.engineered_computation.terminal.order").withStyle(ChatFormatting.AQUA));
-			graphics.renderTooltip(font, lines, shown.getTooltipImage(), shown, mouseX, mouseY);
+			lines.add(new TranslatableComponent("gui.engineered_computation.terminal.order")
+					.withStyle(ChatFormatting.AQUA));
+			renderTooltip(pose, lines, shown.getTooltipImage(), mouseX, mouseY, shown);
 			return true;
 		}
 		ItemStack stack = hovered.getKey().displayStack();
-		List<Component> lines = new ArrayList<>(getTooltipFromContainerItem(stack));
+		List<Component> lines = new ArrayList<>(getTooltipFromItem(stack));
 		if(menu.getFeatures().requests())
 		{
-			lines.add(Component.translatable("gui.engineered_computation.teletype.tallied",
+			lines.add(new TranslatableComponent("gui.engineered_computation.teletype.tallied",
 					String.format(Locale.ROOT, "%,d", hovered.getValue())).withStyle(ChatFormatting.GOLD));
 			lines.add(menu.isUnreachableOnClient(hovered.getKey())
-					? Component.translatable("gui.engineered_computation.teletype.unreachable").withStyle(ChatFormatting.RED)
-					: Component.translatable("gui.engineered_computation.teletype.add").withStyle(ChatFormatting.AQUA));
-			graphics.renderTooltip(font, lines, stack.getTooltipImage(), stack, mouseX, mouseY);
+					? new TranslatableComponent("gui.engineered_computation.teletype.unreachable")
+							.withStyle(ChatFormatting.RED)
+					: new TranslatableComponent("gui.engineered_computation.teletype.add")
+							.withStyle(ChatFormatting.AQUA));
+			renderTooltip(pose, lines, stack.getTooltipImage(), mouseX, mouseY, stack);
 			return true;
 		}
-		lines.add(Component.translatable("gui.engineered_computation.terminal.stored",
+		lines.add(new TranslatableComponent("gui.engineered_computation.terminal.stored",
 				String.format(Locale.ROOT, "%,d", hovered.getValue())).withStyle(ChatFormatting.GOLD));
 		if(menu.getClientCraftables().contains(hovered.getKey()))
-			lines.add(Component.translatable(hovered.getValue()==0? "gui.engineered_computation.terminal.order"
+			lines.add(new TranslatableComponent(hovered.getValue()==0? "gui.engineered_computation.terminal.order"
 					: "gui.engineered_computation.terminal.order_more").withStyle(ChatFormatting.AQUA));
-		graphics.renderTooltip(font, lines, stack.getTooltipImage(), stack, mouseX, mouseY);
+		renderTooltip(pose, lines, stack.getTooltipImage(), mouseX, mouseY, stack);
 		return true;
 	}
 
-	private boolean renderWidgetTooltips(GuiGraphics graphics, int mouseX, int mouseY)
+	private boolean renderWidgetTooltips(PoseStack pose, int mouseX, int mouseY)
 	{
+		if(search!=null&&search.isVisible()&&search.isMouseOver(mouseX, mouseY))
+		{
+			renderTooltip(pose, font.split(
+					new TranslatableComponent("gui.engineered_computation.terminal.search.tooltip"), 170),
+					mouseX, mouseY);
+			return true;
+		}
 		List<Component> lines = null;
 		int slipLine = slipLineAt(mouseX, mouseY);
 		if(slipLine>=0)
 		{
 			RequestSlip.Line line = menu.getClientSlip().get(slipLine);
 			ItemStack stack = line.key().displayStack();
-			List<Component> tooltip = new ArrayList<>(getTooltipFromContainerItem(stack));
-			tooltip.add(Component.translatable("gui.engineered_computation.teletype.on_slip",
+			List<Component> tooltip = new ArrayList<>(getTooltipFromItem(stack));
+			tooltip.add(new TranslatableComponent("gui.engineered_computation.teletype.on_slip",
 					String.format(Locale.ROOT, "%,d", line.amount())).withStyle(ChatFormatting.GOLD));
-			tooltip.add(Component.translatable("gui.engineered_computation.teletype.on_slip.detail")
+			tooltip.add(new TranslatableComponent("gui.engineered_computation.teletype.on_slip.detail")
 					.withStyle(ChatFormatting.GRAY));
-			graphics.renderTooltip(font, tooltip, stack.getTooltipImage(), stack, mouseX, mouseY);
+			renderTooltip(pose, tooltip, stack.getTooltipImage(), mouseX, mouseY, stack);
 			return true;
 		}
 		if(isOverSend(mouseX, mouseY))
-			lines = List.of(Component.translatable("gui.engineered_computation.teletype.send").withStyle(ChatFormatting.YELLOW),
-					Component.translatable("gui.engineered_computation.teletype.send.detail", menu.getClientOutlet())
+			lines = List.of(new TranslatableComponent("gui.engineered_computation.teletype.send")
+							.withStyle(ChatFormatting.YELLOW),
+					new TranslatableComponent("gui.engineered_computation.teletype.send.detail", menu.getClientOutlet())
 							.withStyle(ChatFormatting.GRAY));
 		else if(isOverOutlet(mouseX, mouseY))
-			lines = List.of(Component.translatable("gui.engineered_computation.teletype.outlet",
+			lines = List.of(new TranslatableComponent("gui.engineered_computation.teletype.outlet",
 							menu.getClientOutlet()).withStyle(ChatFormatting.YELLOW),
-					Component.translatable(menu.isClientOutletHome()? "gui.engineered_computation.teletype.outlet.home"
+					new TranslatableComponent(menu.isClientOutletHome()
+							? "gui.engineered_computation.teletype.outlet.home"
 							: "gui.engineered_computation.teletype.outlet.away").withStyle(ChatFormatting.GRAY),
-					Component.translatable("gui.engineered_computation.teletype.outlet.detail")
+					new TranslatableComponent("gui.engineered_computation.teletype.outlet.detail")
 							.withStyle(ChatFormatting.DARK_GRAY));
 		else if(menu.getFeatures().requests()
 				&&isOver(mouseX, mouseY, TerminalMenu.GRID_X, gaugeY, GRID_WIDTH+SCROLLBAR_WIDTH+4, GAUGE_HEIGHT))
 		{
 			TerminalStats stats = menu.getClientStats();
 			lines = List.of(
-					Component.translatable("gui.engineered_computation.teletype.catalogue").withStyle(ChatFormatting.YELLOW),
-					Component.translatable("gui.engineered_computation.teletype.cards", stats.usedBytes(),
+					new TranslatableComponent("gui.engineered_computation.teletype.catalogue")
+							.withStyle(ChatFormatting.YELLOW),
+					new TranslatableComponent("gui.engineered_computation.teletype.cards", stats.usedBytes(),
 							stats.totalBytes()).withStyle(ChatFormatting.GRAY),
-					Component.translatable("gui.engineered_computation.teletype.kinds", stats.usedTypes())
+					new TranslatableComponent("gui.engineered_computation.teletype.kinds", stats.usedTypes())
 							.withStyle(ChatFormatting.GRAY),
-					Component.translatable("gui.engineered_computation.teletype.stations", stats.totalTypes())
+					new TranslatableComponent("gui.engineered_computation.teletype.stations", stats.totalTypes())
 							.withStyle(ChatFormatting.GRAY));
 		}
 		else if(isOver(mouseX, mouseY, TerminalMenu.GRID_X, gaugeY, GRID_WIDTH+SCROLLBAR_WIDTH+4, GAUGE_HEIGHT))
 		{
 			TerminalStats stats = menu.getClientStats();
 			lines = List.of(
-					Component.translatable("gui.engineered_computation.terminal.capacity").withStyle(ChatFormatting.YELLOW),
-					Component.translatable("gui.engineered_computation.terminal.capacity.bytes",
+					new TranslatableComponent("gui.engineered_computation.terminal.capacity")
+							.withStyle(ChatFormatting.YELLOW),
+					new TranslatableComponent("gui.engineered_computation.terminal.capacity.bytes",
 							ByteSize.format(stats.usedBytes()), ByteSize.format(stats.totalBytes()),
 							(int)Math.floor(stats.byteFraction()*100)).withStyle(ChatFormatting.GRAY),
-					Component.translatable("gui.engineered_computation.terminal.capacity.types",
+					new TranslatableComponent("gui.engineered_computation.terminal.capacity.types",
 							stats.usedTypes(), stats.totalTypes()).withStyle(ChatFormatting.GRAY),
-					Component.translatable("gui.engineered_computation.terminal.capacity.cells",
+					new TranslatableComponent("gui.engineered_computation.terminal.capacity.cells",
 							stats.cells()).withStyle(ChatFormatting.GRAY));
 		}
 		else if(menu.getFeatures().orders()&&isOver(mouseX, mouseY, jobsX(), 4, BUTTON_SIZE, BUTTON_SIZE))
-			lines = List.of(Component.translatable("gui.engineered_computation.jobs").withStyle(ChatFormatting.YELLOW),
-					Component.translatable("gui.engineered_computation.jobs.detail", menu.getClientOrders().size())
+			lines = List.of(new TranslatableComponent("gui.engineered_computation.jobs")
+							.withStyle(ChatFormatting.YELLOW),
+					new TranslatableComponent("gui.engineered_computation.jobs.detail", menu.getClientOrders().size())
 							.withStyle(ChatFormatting.GRAY));
 		else if(!menu.getFeatures().orders()&&menu.getClientStats().processing()
 				&&isOver(mouseX, mouseY, jobsX()-4, 4, BUTTON_SIZE+4, BUTTON_SIZE))
 			lines = List.of(StatusCode.PROCESSING.title().copy().withStyle(ChatFormatting.YELLOW),
-					Component.translatable(menu.getFeatures().requests()? "gui.engineered_computation.teletype.coming"
+					new TranslatableComponent(menu.getFeatures().requests()
+							? "gui.engineered_computation.teletype.coming"
 							: "gui.engineered_computation.terminal.processing").withStyle(ChatFormatting.GRAY));
 		else if(menu.getFeatures().crafting()&&isOverClear(mouseX, mouseY))
-			lines = List.of(Component.translatable("gui.engineered_computation.terminal.clear")
+			lines = List.of(new TranslatableComponent("gui.engineered_computation.terminal.clear")
 					.withStyle(ChatFormatting.YELLOW));
 		else if(menu.getFeatures().crafting()&&isOverLink(mouseX, mouseY))
 		{
 			String key = "gui.engineered_computation.terminal.linked."+(menu.isLinked()? "on": "off");
-			lines = List.of(Component.translatable(key).withStyle(ChatFormatting.YELLOW),
-					Component.translatable(key+".detail").withStyle(ChatFormatting.GRAY));
+			lines = List.of(new TranslatableComponent(key).withStyle(ChatFormatting.YELLOW),
+					new TranslatableComponent(key+".detail").withStyle(ChatFormatting.GRAY));
 		}
 		if(lines==null)
 			return false;
-		graphics.renderTooltip(font, lines.stream().flatMap(line -> font.split(line, TOOLTIP_WIDTH).stream()).toList(),
+		renderTooltip(pose, lines.stream().flatMap(line -> font.split(line, TOOLTIP_WIDTH).stream()).toList(),
 				mouseX, mouseY);
 		return true;
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY)
+	protected void renderBg(PoseStack pose, float partialTick, int mouseX, int mouseY)
 	{
 		int x = leftPos;
 		int y = topPos;
-		ECGui.panel(graphics, x, y, imageWidth, imageHeight);
+		ECGui.panel(pose, x, y, imageWidth, imageHeight);
 
 		if(search!=null)
 		{
 			int searchX = x+TerminalMenu.GRID_X;
-			graphics.fill(searchX, y+SEARCH_Y, searchX+GRID_WIDTH+SCROLLBAR_WIDTH+4, y+SEARCH_Y+13, 0xFFA0A0A0);
-			graphics.fill(searchX+1, y+SEARCH_Y+1, searchX+GRID_WIDTH+SCROLLBAR_WIDTH+3, y+SEARCH_Y+12, 0xFF000000);
+			GuiComponent.fill(pose, searchX, y+SEARCH_Y, searchX+GRID_WIDTH+SCROLLBAR_WIDTH+4, y+SEARCH_Y+13,
+					0xFFA0A0A0);
+			GuiComponent.fill(pose, searchX+1, y+SEARCH_Y+1, searchX+GRID_WIDTH+SCROLLBAR_WIDTH+3, y+SEARCH_Y+12,
+					0xFF000000);
 		}
 
 		if(menu.getFeatures().orders())
 		{
-			ECGui.button(graphics, x+jobsX(), y+4, BUTTON_SIZE, BUTTON_SIZE,
+			ECGui.button(pose, x+jobsX(), y+4, BUTTON_SIZE, BUTTON_SIZE,
 					jobs!=null||isOver(mouseX, mouseY, jobsX(), 4, BUTTON_SIZE, BUTTON_SIZE));
-			ECGui.icon(graphics, x+jobsX()+3, y+7, JOBS_ICON,
+			ECGui.icon(pose, x+jobsX()+3, y+7, JOBS_ICON,
 					menu.getClientOrders().isEmpty()? 0xFFFFFFFF: 0xFF000000|StatusCode.PROCESSING.colour());
 		}
 		else if(menu.getClientStats().processing())
-			graphics.drawString(font, "102", x+jobsX()-4, y+6, StatusCode.PROCESSING.colour(), true);
+			font.drawShadow(pose, "102", x+jobsX()-4, y+6, StatusCode.PROCESSING.colour());
 
 		for(int row = 0; row<layout.rows(); row++)
 			for(int col = 0; col<TerminalMenu.COLUMNS; col++)
-				ECGui.slot(graphics, x+TerminalMenu.GRID_X+col*18, y+layout.gridY()+row*18);
+				ECGui.slot(pose, x+TerminalMenu.GRID_X+col*18, y+layout.gridY()+row*18);
 		int trackX = x+SCROLLBAR_X;
 		int trackY = y+layout.gridY();
-		ECGui.sunken(graphics, trackX, trackY, SCROLLBAR_WIDTH, gridHeight);
-		ECGui.scroller(graphics, trackX+1, trackY+1+thumbOffset(), maxScrollRow()>0);
-		ECGui.gauge(graphics, x+TerminalMenu.GRID_X, y+gaugeY, GRID_WIDTH+SCROLLBAR_WIDTH+4, GAUGE_HEIGHT,
+		ECGui.sunken(pose, trackX, trackY, SCROLLBAR_WIDTH, gridHeight);
+		ECGui.scroller(pose, trackX+1, trackY+1+thumbOffset(), maxScrollRow()>0);
+		ECGui.gauge(pose, x+TerminalMenu.GRID_X, y+gaugeY, GRID_WIDTH+SCROLLBAR_WIDTH+4, GAUGE_HEIGHT,
 				menu.getClientStats().byteFraction());
 
 		for(int i = 0; i<menu.slots.size(); i++)
 		{
 			Slot slot = menu.slots.get(i);
 			if(menu.getFeatures().crafting()&&i==TerminalMenu.RESULT_SLOT)
-				ECGui.sunken(graphics, x+TerminalMenu.RESULT_X, y+slot.y-5, RESULT_SIZE, RESULT_SIZE);
+				ECGui.sunken(pose, x+TerminalMenu.RESULT_X, y+slot.y-5, RESULT_SIZE, RESULT_SIZE);
 			else
-				ECGui.slot(graphics, x+slot.x-1, y+slot.y-1);
+				ECGui.slot(pose, x+slot.x-1, y+slot.y-1);
 		}
 		if(menu.getFeatures().crafting())
-			renderCraftingExtras(graphics, mouseX, mouseY);
+			renderCraftingExtras(pose, mouseX, mouseY);
 		if(menu.getFeatures().requests())
-			renderSlip(graphics, mouseX, mouseY);
+			renderSlip(pose, mouseX, mouseY);
 
-		renderGrid(graphics, mouseX, mouseY);
+		renderGrid(pose, mouseX, mouseY);
 	}
 
-	private void renderSlip(GuiGraphics graphics, int mouseX, int mouseY)
+	private void renderSlip(PoseStack pose, int mouseX, int mouseY)
 	{
 		int slipY = topPos+layout.craftingY();
 		List<RequestSlip.Line> lines = menu.getClientSlip();
@@ -495,19 +512,19 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		for(int i = 0; i<RequestSlip.SIZE; i++)
 		{
 			int sx = leftPos+TerminalMenu.GRID_X+i*18;
-			ECGui.slot(graphics, sx, slipY);
+			ECGui.slot(pose, sx, slipY);
 			if(i<lines.size())
 			{
 				ItemStack stack = lines.get(i).key().displayStack();
-				graphics.renderItem(stack, sx+1, slipY+1);
-				renderCount(graphics, lines.get(i).amount(), sx+1, slipY+1);
+				ECGui.renderItem(pose, stack, sx+1, slipY+1);
+				renderCount(pose, lines.get(i).amount(), sx+1, slipY+1);
 			}
 			if(i==hovered)
-				graphics.fill(sx+1, slipY+1, sx+17, slipY+17, 300, HOVER);
+				ECGui.fill(pose, sx+1, slipY+1, sx+17, slipY+17, 300, HOVER);
 		}
 		int sendX = leftPos+SCROLLBAR_X;
-		ECGui.button(graphics, sendX, slipY, SCROLLBAR_WIDTH, SLIP_HEIGHT, isOverSend(mouseX, mouseY));
-		ECGui.icon(graphics, sendX+(SCROLLBAR_WIDTH-5)/2, slipY+(SLIP_HEIGHT-5)/2, SEND_ICON,
+		ECGui.button(pose, sendX, slipY, SCROLLBAR_WIDTH, SLIP_HEIGHT, isOverSend(mouseX, mouseY));
+		ECGui.icon(pose, sendX+(SCROLLBAR_WIDTH-5)/2, slipY+(SLIP_HEIGHT-5)/2, SEND_ICON,
 				lines.isEmpty()? 0xFF8B8B8B: 0xFFFFFFFF);
 	}
 
@@ -528,7 +545,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 
 	private Component outletLabel()
 	{
-		return Component.translatable("gui.engineered_computation.teletype.to", menu.getClientOutlet());
+		return new TranslatableComponent("gui.engineered_computation.teletype.to", menu.getClientOutlet());
 	}
 
 	private boolean isOverOutlet(double mouseX, double mouseY)
@@ -539,23 +556,23 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		return isOver(mouseX, mouseY, imageWidth-8-width, inventoryLabelY-1, width, font.lineHeight+1);
 	}
 
-	private void renderCraftingExtras(GuiGraphics graphics, int mouseX, int mouseY)
+	private void renderCraftingExtras(PoseStack pose, int mouseX, int mouseY)
 	{
 		int craftingY = topPos+layout.craftingY();
 		int arrowX = leftPos+TerminalMenu.CRAFT_X+3*18+6;
 		int arrowY = craftingY+26;
-		graphics.fill(arrowX, arrowY-2, arrowX+15, arrowY+2, 0xFF8B8B8B);
+		GuiComponent.fill(pose, arrowX, arrowY-2, arrowX+15, arrowY+2, 0xFF8B8B8B);
 		for(int step = 0; step<7; step++)
-			graphics.fill(arrowX+15+step, arrowY-7+step, arrowX+16+step, arrowY+7-step, 0xFF8B8B8B);
+			GuiComponent.fill(pose, arrowX+15+step, arrowY-7+step, arrowX+16+step, arrowY+7-step, 0xFF8B8B8B);
 
 		int clearX = leftPos+TerminalMenu.CLEAR_X;
-		ECGui.button(graphics, clearX, craftingY, CLEAR_SIZE, CLEAR_SIZE, isOverClear(mouseX, mouseY));
-		ECGui.icon(graphics, clearX+3, craftingY+3, CLEAR_ICON, 0xFFFFFFFF);
+		ECGui.button(pose, clearX, craftingY, CLEAR_SIZE, CLEAR_SIZE, isOverClear(mouseX, mouseY));
+		ECGui.icon(pose, clearX+3, craftingY+3, CLEAR_ICON, 0xFFFFFFFF);
 
 		int toggleX = leftPos+TerminalMenu.LINK_X;
 		int toggleY = craftingY+linkY();
-		ECGui.button(graphics, toggleX, toggleY, LINK_SIZE, LINK_SIZE, isOverLink(mouseX, mouseY));
-		ECGui.icon(graphics, toggleX+4, toggleY+4, LINK_ICON, menu.isLinked()? LINK_ON: LINK_OFF);
+		ECGui.button(pose, toggleX, toggleY, LINK_SIZE, LINK_SIZE, isOverLink(mouseX, mouseY));
+		ECGui.icon(pose, toggleX+4, toggleY+4, LINK_ICON, menu.isLinked()? LINK_ON: LINK_OFF);
 	}
 
 	private static int linkY()
@@ -578,12 +595,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		return WIDTH-7-BUTTON_SIZE;
 	}
 
-	private void renderGrid(GuiGraphics graphics, int mouseX, int mouseY)
+	private void renderGrid(PoseStack pose, int mouseX, int mouseY)
 	{
 		StatusCode code = statusCode();
 		if(code!=null)
 		{
-			renderCode(graphics, code);
+			renderCode(pose, code);
 			return;
 		}
 		int hoveredIndex = gridIndexAt(mouseX, mouseY);
@@ -597,27 +614,28 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 				Map.Entry<ItemKey, Long> entry = view.get(first+i);
 				PatternOffer offer = offerEntries.get(entry);
 				ItemStack stack = offer!=null? offer.shown(minecraft.level.getGameTime()): entry.getKey().displayStack();
-				graphics.renderItem(stack, sx, sy);
-				graphics.renderItemDecorations(font, stack, sx, sy, "");
+				ECGui.renderItem(pose, stack, sx, sy);
+				ECGui.renderItemDecorations(pose, font, stack, sx, sy, "");
 				if(entry.getValue()==0)
 				{
-					graphics.fill(RenderType.guiOverlay(), sx, sy, sx+16, sy+16, CRAFTABLE_FADE);
-					renderSmall(graphics, Component.translatable("gui.engineered_computation.terminal.craft").getString(), sx+16,
-							sy+16, StatusCode.PROCESSING.colour());
+					ECGui.overlay(pose, sx, sy, sx+16, sy+16, CRAFTABLE_FADE);
+					renderSmall(pose,
+							new TranslatableComponent("gui.engineered_computation.terminal.craft").getString(),
+							sx+16, sy+16, StatusCode.PROCESSING.colour());
 					if(offer!=null)
-						ECGui.tagBadge(graphics, font, sx, sy);
+						ECGui.tagBadge(pose, font, sx, sy);
 				}
 				else
 				{
-					renderCount(graphics, entry.getValue(), sx, sy);
+					renderCount(pose, entry.getValue(), sx, sy);
 					if(menu.getClientCraftables().contains(entry.getKey()))
-						renderSmall(graphics, "+", sx+5, sy+7, StatusCode.PROCESSING.colour());
+						renderSmall(pose, "+", sx+5, sy+7, StatusCode.PROCESSING.colour());
 					if(menu.isUnreachableOnClient(entry.getKey()))
-						graphics.fill(RenderType.guiOverlay(), sx, sy, sx+16, sy+16, CRAFTABLE_FADE);
+						ECGui.overlay(pose, sx, sy, sx+16, sy+16, CRAFTABLE_FADE);
 				}
 			}
 			if(first+i==hoveredIndex)
-				graphics.fill(sx, sy, sx+16, sy+16, 300, HOVER);
+				ECGui.fill(pose, sx, sy, sx+16, sy+16, 300, HOVER);
 		}
 	}
 
@@ -640,15 +658,15 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		return seenQuery.isBlank()? StatusCode.NO_CONTENT: StatusCode.NOT_FOUND;
 	}
 
-	private void renderCode(GuiGraphics graphics, StatusCode code)
+	private void renderCode(PoseStack pose, StatusCode code)
 	{
 		Component text = code.title();
 		int centreX = leftPos+TerminalMenu.GRID_X+GRID_WIDTH/2;
 		int centreY = topPos+layout.gridY()+gridHeight/2;
 		int halfWidth = font.width(text)/2+6;
-		graphics.fill(centreX-halfWidth-1, centreY-9, centreX+halfWidth+1, centreY+9, 0xFF000000);
-		graphics.fill(centreX-halfWidth, centreY-8, centreX+halfWidth, centreY+8, 0xFF101814);
-		graphics.drawCenteredString(font, text, centreX, centreY-4, code.colour());
+		GuiComponent.fill(pose, centreX-halfWidth-1, centreY-9, centreX+halfWidth+1, centreY+9, 0xFF000000);
+		GuiComponent.fill(pose, centreX-halfWidth, centreY-8, centreX+halfWidth, centreY+8, 0xFF101814);
+		GuiComponent.drawCenteredString(pose, font, text, centreX, centreY-4, code.colour());
 	}
 
 	@Nullable
@@ -669,39 +687,39 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 					minecraft.player);
 	}
 
-	private void renderSmall(GuiGraphics graphics, String text, int right, int bottom, int colour)
+	private void renderSmall(PoseStack pose, String text, int right, int bottom, int colour)
 	{
 		float scale = Math.min(0.666F, 16F/font.width(text));
-		graphics.pose().pushPose();
-		graphics.pose().translate(right, bottom, 250);
-		graphics.pose().scale(scale, scale, 1);
-		graphics.drawString(font, text, -font.width(text), -font.lineHeight+1, colour, true);
-		graphics.pose().popPose();
+		pose.pushPose();
+		pose.translate(right, bottom, 250);
+		pose.scale(scale, scale, 1);
+		font.drawShadow(pose, text, -font.width(text), -font.lineHeight+1, colour);
+		pose.popPose();
 	}
 
-	private void renderCount(GuiGraphics graphics, long count, int x, int y)
+	private void renderCount(PoseStack pose, long count, int x, int y)
 	{
 		String text = formatCount(count);
 		float scale = 0.666F;
-		graphics.pose().pushPose();
-		graphics.pose().translate(x+16, y+16, 250);
-		graphics.pose().scale(scale, scale, 1);
-		graphics.drawString(font, text, -font.width(text), -font.lineHeight+1, 0xFFFFFF, true);
-		graphics.pose().popPose();
+		pose.pushPose();
+		pose.translate(x+16, y+16, 250);
+		pose.scale(scale, scale, 1);
+		font.drawShadow(pose, text, -font.width(text), -font.lineHeight+1, 0xFFFFFF);
+		pose.popPose();
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY)
+	protected void renderLabels(PoseStack pose, int mouseX, int mouseY)
 	{
-		renderMissingSlots(graphics);
-		graphics.drawString(font, title, titleLabelX, titleLabelY, ECGui.LABEL, false);
-		graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, ECGui.LABEL, false);
+		renderMissingSlots(pose);
+		font.draw(pose, title, titleLabelX, titleLabelY, ECGui.LABEL);
+		font.draw(pose, playerInventoryTitle, inventoryLabelX, inventoryLabelY, ECGui.LABEL);
 		TerminalStats stats = menu.getClientStats();
 		Component usage = menu.getFeatures().requests()? outletLabel()
-				: Component.translatable("gui.engineered_computation.terminal.bytes", ByteSize.format(stats.usedBytes()),
-						ByteSize.format(stats.totalBytes()));
-		graphics.drawString(font, usage, imageWidth-8-font.width(usage), inventoryLabelY,
-				isOverOutlet(mouseX, mouseY)? 0x2050A0: ECGui.LABEL, false);
+				: new TranslatableComponent("gui.engineered_computation.terminal.bytes",
+						ByteSize.format(stats.usedBytes()), ByteSize.format(stats.totalBytes()));
+		font.draw(pose, usage, imageWidth-8-font.width(usage), inventoryLabelY,
+				isOverOutlet(mouseX, mouseY)? 0x2050A0: ECGui.LABEL);
 	}
 
 	static String formatCount(long count)
@@ -752,7 +770,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 				||button==GLFW.GLFW_MOUSE_BUTTON_MIDDLE))
 		{
 			if(search!=null)
-				search.setFocused(false);
+				search.setFocus(false);
 			orderPopup = new OrderPopup(menu, font, offer, leftPos+(imageWidth-OrderPopup.WIDTH)/2,
 					topPos+layout.gridY()-8);
 			return true;
@@ -762,13 +780,13 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 				||hasControlDown()&&button==GLFW.GLFW_MOUSE_BUTTON_LEFT||button==GLFW.GLFW_MOUSE_BUTTON_MIDDLE))
 		{
 			if(search!=null)
-				search.setFocused(false);
+				search.setFocus(false);
 			orderPopup = new OrderPopup(menu, font, craftable.getKey(), leftPos+(imageWidth-OrderPopup.WIDTH)/2,
 					topPos+layout.gridY()-8);
 			return true;
 		}
 		if(search!=null&&!search.isMouseOver(mouseX, mouseY))
-			search.setFocused(false);
+			search.setFocus(false);
 		if(menu.getFeatures().crafting()&&button==GLFW.GLFW_MOUSE_BUTTON_LEFT
 				&&(isOverLink(mouseX, mouseY)||isOverClear(mouseX, mouseY)))
 		{
@@ -780,7 +798,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		if(menu.getFeatures().requests()&&button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&isOverOutlet(mouseX, mouseY))
 		{
 			if(search!=null)
-				search.setFocused(false);
+				search.setFocus(false);
 			outletPicker = new OutletPicker(menu, font, leftPos+TerminalMenu.GRID_X, topPos+inventoryLabelY+10);
 			minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1));
 			return true;

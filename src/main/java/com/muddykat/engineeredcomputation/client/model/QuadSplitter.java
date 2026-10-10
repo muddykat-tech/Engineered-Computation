@@ -6,18 +6,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.joml.Vector3f;
-import org.joml.Vector4f;
-
 import com.mojang.math.Transformation;
+import com.mojang.math.Vector3f;
+import com.mojang.math.Vector4f;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
-import net.minecraftforge.client.model.IQuadTransformer;
 
 final class QuadSplitter
 {
+	// Where each vertex's elements sit in a block quad's int data (DefaultVertexFormat.BLOCK).
+	static final int STRIDE = 8;
+	static final int POSITION = 0;
+	static final int COLOR = 3;
+	static final int UV0 = 4;
+	static final int UV2 = 6;
+	static final int NORMAL = 7;
+
 	private static final float EPSILON = 1e-4f;
 	private static final float MIN_AREA = 1e-7f;
 
@@ -96,11 +102,16 @@ final class QuadSplitter
 		for(int axis = 0; axis<3; axis++)
 		{
 			if(allNear(piece, axis, lo[axis]))
-				return normal.get(axis)<0;
+				return component(normal, axis)<0;
 			if(allNear(piece, axis, lo[axis]+1))
-				return normal.get(axis)>0;
+				return component(normal, axis)>0;
 		}
 		return true;
+	}
+
+	private static float component(Vector3f vector, int axis)
+	{
+		return axis==0? vector.x(): axis==1? vector.y(): vector.z();
 	}
 
 	private static boolean allNear(List<Vertex> piece, int axis, float value)
@@ -137,9 +148,10 @@ final class QuadSplitter
 		{
 			polygon.get(i).offsetFrom(origin, a);
 			polygon.get(i+1).offsetFrom(origin, b);
-			sum.add(a.cross(b));
+			a.cross(b);
+			sum.add(a);
 		}
-		return sum.length()/2;
+		return Mth.sqrt(sum.dot(sum))/2;
 	}
 
 	private static Vector3f faceNormal(List<Vertex> quad)
@@ -148,17 +160,19 @@ final class QuadSplitter
 		Vector3f diagonalB = new Vector3f();
 		quad.get(2).offsetFrom(quad.get(0), diagonalA);
 		quad.get(3).offsetFrom(quad.get(1), diagonalB);
-		Vector3f normal = diagonalA.cross(diagonalB);
-		if(normal.lengthSquared()<1e-12f)
-			normal.set(quad.get(0).normal);
-		return normal.normalize();
+		Vector3f normal = diagonalA;
+		normal.cross(diagonalB);
+		if(normal.dot(normal)<1e-12f)
+			normal = quad.get(0).normal.copy();
+		normal.normalize();
+		return normal;
 	}
 
 	private static void emitFan(
 			List<Vertex> polygon, Vec3i offset, BakedQuad template, Vector3f faceNormal, Transformation toCorner,
 			List<BakedQuad> out)
 	{
-		Vector3f rotatedNormal = new Vector3f(faceNormal);
+		Vector3f rotatedNormal = faceNormal.copy();
 		toCorner.transformNormal(rotatedNormal);
 		Direction direction = Direction.getNearest(rotatedNormal.x(), rotatedNormal.y(), rotatedNormal.z());
 
@@ -177,29 +191,28 @@ final class QuadSplitter
 	private static BakedQuad bake(
 			Vertex[] vertices, Vec3i offset, BakedQuad template, Direction direction, Transformation toCorner)
 	{
-		int[] data = new int[4*IQuadTransformer.STRIDE];
+		int[] data = new int[4*STRIDE];
 		for(int i = 0; i<4; i++)
 		{
 			Vertex v = vertices[i];
-			int base = i*IQuadTransformer.STRIDE;
+			int base = i*STRIDE;
 
 			Vector4f pos = new Vector4f(v.pos[0]-offset.getX(), v.pos[1]-offset.getY(), v.pos[2]-offset.getZ(), 1);
 			toCorner.transformPosition(pos);
-			data[base+IQuadTransformer.POSITION] = Float.floatToRawIntBits(snap(pos.x()/pos.w()));
-			data[base+IQuadTransformer.POSITION+1] = Float.floatToRawIntBits(snap(pos.y()/pos.w()));
-			data[base+IQuadTransformer.POSITION+2] = Float.floatToRawIntBits(snap(pos.z()/pos.w()));
+			data[base+POSITION] = Float.floatToRawIntBits(snap(pos.x()/pos.w()));
+			data[base+POSITION+1] = Float.floatToRawIntBits(snap(pos.y()/pos.w()));
+			data[base+POSITION+2] = Float.floatToRawIntBits(snap(pos.z()/pos.w()));
 
-			data[base+IQuadTransformer.COLOR] = v.color;
-			data[base+IQuadTransformer.UV0] = Float.floatToRawIntBits(v.u);
-			data[base+IQuadTransformer.UV0+1] = Float.floatToRawIntBits(v.v);
-			data[base+IQuadTransformer.UV2] = v.light;
+			data[base+COLOR] = v.color;
+			data[base+UV0] = Float.floatToRawIntBits(v.u);
+			data[base+UV0+1] = Float.floatToRawIntBits(v.v);
+			data[base+UV2] = v.light;
 
-			Vector3f normal = new Vector3f(v.normal);
+			Vector3f normal = v.normal.copy();
 			toCorner.transformNormal(normal);
-			data[base+IQuadTransformer.NORMAL] = packNormal(normal);
+			data[base+NORMAL] = packNormal(normal);
 		}
-		return new BakedQuad(data, template.getTintIndex(), direction, template.getSprite(), template.isShade(),
-				template.hasAmbientOcclusion());
+		return new BakedQuad(data, template.getTintIndex(), direction, template.getSprite(), template.isShade());
 	}
 
 	private static float snap(float value)
@@ -221,18 +234,18 @@ final class QuadSplitter
 		List<Vertex> vertices = new ArrayList<>(4);
 		for(int i = 0; i<4; i++)
 		{
-			int base = i*IQuadTransformer.STRIDE;
-			int packedNormal = data[base+IQuadTransformer.NORMAL];
+			int base = i*STRIDE;
+			int packedNormal = data[base+NORMAL];
 			vertices.add(new Vertex(
 					new float[]{
-							Float.intBitsToFloat(data[base+IQuadTransformer.POSITION]),
-							Float.intBitsToFloat(data[base+IQuadTransformer.POSITION+1]),
-							Float.intBitsToFloat(data[base+IQuadTransformer.POSITION+2])
+							Float.intBitsToFloat(data[base+POSITION]),
+							Float.intBitsToFloat(data[base+POSITION+1]),
+							Float.intBitsToFloat(data[base+POSITION+2])
 					},
-					data[base+IQuadTransformer.COLOR],
-					Float.intBitsToFloat(data[base+IQuadTransformer.UV0]),
-					Float.intBitsToFloat(data[base+IQuadTransformer.UV0+1]),
-					data[base+IQuadTransformer.UV2],
+					data[base+COLOR],
+					Float.intBitsToFloat(data[base+UV0]),
+					Float.intBitsToFloat(data[base+UV0+1]),
+					data[base+UV2],
 					new Vector3f((byte)packedNormal/127f, (byte)(packedNormal>>8)/127f, (byte)(packedNormal>>16)/127f)
 			));
 		}
@@ -246,8 +259,9 @@ final class QuadSplitter
 			float[] pos = new float[3];
 			for(int axis = 0; axis<3; axis++)
 				pos[axis] = Mth.lerp(t, a.pos[axis], b.pos[axis]);
-			Vector3f normal = new Vector3f(a.normal).lerp(b.normal, t);
-			if(normal.lengthSquared()>0)
+			Vector3f normal = a.normal.copy();
+			normal.lerp(b.normal, t);
+			if(normal.dot(normal)>0)
 				normal.normalize();
 			return new Vertex(pos, lerpColor(a.color, b.color, t), Mth.lerp(t, a.u, b.u), Mth.lerp(t, a.v, b.v),
 					a.light, normal);

@@ -7,11 +7,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.RegistryObject;
 
+import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
 import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlockEntity;
 import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
@@ -25,13 +27,13 @@ import com.muddykat.engineeredcomputation.pneumatic.WindowedTubeItem;
 
 public final class ECPneumatics
 {
-	private static final BlockBehaviour.Properties TUBE_PROPERTIES = BlockBehaviour.Properties.of()
-			.mapColor(MapColor.COLOR_YELLOW)
+	private static final BlockBehaviour.Properties TUBE_PROPERTIES = BlockBehaviour.Properties
+			.of(Material.METAL, MaterialColor.COLOR_YELLOW)
 			.strength(0.6F)
 			.sound(SoundType.COPPER)
 			.noOcclusion();
-	private static final BlockBehaviour.Properties STATION_PROPERTIES = BlockBehaviour.Properties.of()
-			.mapColor(MapColor.COLOR_YELLOW)
+	private static final BlockBehaviour.Properties STATION_PROPERTIES = BlockBehaviour.Properties
+			.of(Material.METAL, MaterialColor.COLOR_YELLOW)
 			.strength(2.2F, 11.0F)
 			.sound(SoundType.METAL)
 			.requiresCorrectToolForDrops();
@@ -44,17 +46,18 @@ public final class ECPneumatics
 			"receiving_station", () -> new ReceivingStationBlock(STATION_PROPERTIES));
 
 	public static final RegistryObject<CoveredTubeBlock> COVERED_TUBE = ECRegistrationHolder.BLOCKS.register(
-			"covered_pneumatic_tube", () -> new CoveredTubeBlock(false, BlockBehaviour.Properties.of()
-					.mapColor(MapColor.STONE).strength(0.6F).sound(SoundType.COPPER)));
+			"covered_pneumatic_tube", () -> new CoveredTubeBlock(false, BlockBehaviour.Properties
+					.of(Material.METAL, MaterialColor.STONE).strength(0.6F).sound(SoundType.COPPER)));
 	public static final RegistryObject<CoveredTubeBlock> CLEAR_COVERED_TUBE = ECRegistrationHolder.BLOCKS.register(
-			"clear_covered_pneumatic_tube", () -> new CoveredTubeBlock(true, BlockBehaviour.Properties.of()
-					.mapColor(MapColor.NONE).strength(0.6F).sound(SoundType.COPPER).noOcclusion()
+			"clear_covered_pneumatic_tube", () -> new CoveredTubeBlock(true, BlockBehaviour.Properties
+					.of(Material.METAL, MaterialColor.NONE).strength(0.6F).sound(SoundType.COPPER).noOcclusion()
 					.isValidSpawn((state, level, pos, entity) -> false).isRedstoneConductor((state, level, pos) -> false)
 					.isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)));
 
 	private static final RegistryObject<BlockItem> TUBE_ITEM = ECRegistrationHolder.simpleBlockItem(TUBE);
 	public static final RegistryObject<WindowedTubeItem> WINDOWED_TUBE_ITEM = ECRegistrationHolder.ITEMS.register(
-			"windowed_pneumatic_tube", () -> new WindowedTubeItem(TUBE.get(), new Item.Properties()));
+			"windowed_pneumatic_tube", () -> new WindowedTubeItem(TUBE.get(),
+					new Item.Properties().tab(EngineeredComputation.TAB)));
 
 	private static final List<RegistryObject<? extends BlockItem>> ITEMS = List.of(TUBE_ITEM, WINDOWED_TUBE_ITEM,
 			ECRegistrationHolder.simpleBlockItem(TUBE_STATION),

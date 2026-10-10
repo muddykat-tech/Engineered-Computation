@@ -4,10 +4,12 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-import com.mojang.serialization.Codec;
+import org.jetbrains.annotations.Nullable;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -21,7 +23,17 @@ public enum ComputerEra implements StringRepresentable
 	DISK("era4", "disk_pack", "integrated_circuit", true),
 	FLOPPY("era5", "floppy_disk", "microprocessor", true);
 
-	public static final Codec<ComputerEra> CODEC = StringRepresentable.fromEnum(ComputerEra::values);
+	public static final Codec<ComputerEra> CODEC = StringRepresentable.fromEnum(ComputerEra::values,
+			ComputerEra::byName);
+
+	@Nullable
+	public static ComputerEra byName(String name)
+	{
+		for(ComputerEra value : values())
+			if(value.getSerializedName().equals(name))
+				return value;
+		return null;
+	}
 
 	private final String id;
 	private final String memoryName;
@@ -85,12 +97,12 @@ public enum ComputerEra implements StringRepresentable
 
 	public Component displayName()
 	{
-		return Component.translatable("era.engineered_computation."+id);
+		return new TranslatableComponent("era.engineered_computation."+id);
 	}
 
 	public Component memoryDisplayName()
 	{
-		return Component.translatable("era.engineered_computation."+id+".memory");
+		return new TranslatableComponent("era.engineered_computation."+id+".memory");
 	}
 
 	public List<EraDrive> drives()

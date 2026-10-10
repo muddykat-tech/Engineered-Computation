@@ -12,11 +12,12 @@ import com.google.gson.JsonParseException;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.model.geometry.IGeometryLoader;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraftforge.client.model.IModelLoader;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 
-public final class SplitModelLoader implements IGeometryLoader<UnbakedSplitModel>
+public final class SplitModelLoader implements IModelLoader<UnbakedSplitModel>
 {
 	public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "split");
 	public static final SplitModelLoader INSTANCE = new SplitModelLoader();
@@ -26,7 +27,7 @@ public final class SplitModelLoader implements IGeometryLoader<UnbakedSplitModel
 	}
 
 	@Override
-	public UnbakedSplitModel read(JsonObject json, JsonDeserializationContext context) throws JsonParseException
+	public UnbakedSplitModel read(JsonDeserializationContext context, JsonObject json)
 	{
 		if(!json.has("inner_model")||!json.has("split_parts"))
 			throw new JsonParseException("Split model needs both 'inner_model' and 'split_parts'");
@@ -41,5 +42,10 @@ public final class SplitModelLoader implements IGeometryLoader<UnbakedSplitModel
 		if(parts.isEmpty())
 			throw new JsonParseException("Split model has no 'split_parts'");
 		return new UnbakedSplitModel(inner, parts);
+	}
+
+	@Override
+	public void onResourceManagerReload(ResourceManager resourceManager)
+	{
 	}
 }

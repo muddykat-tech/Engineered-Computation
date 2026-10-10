@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
@@ -15,6 +16,7 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
@@ -86,7 +88,7 @@ public class ReceivingStationMenu extends AbstractContainerMenu implements Named
 				return 1;
 			}
 		};
-		NetworkHooks.openScreen(player, new SimpleMenuProvider((id, inventory, p) -> new ReceivingStationMenu(id,
+		NetworkHooks.openGui(player, new SimpleMenuProvider((id, inventory, p) -> new ReceivingStationMenu(id,
 				inventory,
 				receiver.getBlockPos(), receiver, receiver.getTray(), receiver.getName(), data),
 				ReceivingStationBlockEntity.TITLE), buf -> {
@@ -134,7 +136,7 @@ public class ReceivingStationMenu extends AbstractContainerMenu implements Named
 		if(!moveItemStackTo(stack, TRAY_SLOTS, slots.size(), true))
 			return ItemStack.EMPTY;
 		if(stack.isEmpty())
-			slot.setByPlayer(ItemStack.EMPTY);
+			slot.set(ItemStack.EMPTY);
 		else
 			slot.setChanged();
 		slot.onTake(player, stack);
@@ -144,7 +146,7 @@ public class ReceivingStationMenu extends AbstractContainerMenu implements Named
 	@Override
 	public boolean stillValid(Player player)
 	{
-		return player.level().getBlockEntity(pos) instanceof ReceivingStationBlockEntity
-				&&player.canReach(pos, 4.0);
+		return player.level.getBlockEntity(pos) instanceof ReceivingStationBlockEntity
+				&&player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos))<Mth.square(player.getReachDistance()+4.0);
 	}
 }

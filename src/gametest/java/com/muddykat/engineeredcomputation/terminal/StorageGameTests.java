@@ -7,19 +7,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
@@ -163,7 +165,7 @@ public final class StorageGameTests
 		saved.put("cells", old.serializeNBT());
 		EraDriveState loaded = new EraDriveState(EraDrive.FLOPPY_WORKSTATION, MultiblockGameTests.NO_HOST);
 		loaded.load(saved);
-		check(helper, loaded.getCellSlots().getSlots()==2&&ItemStack.isSameItem(loaded.getCellSlots().getStackInSlot(0), first),
+		check(helper, loaded.getCellSlots().getSlots()==2&&loaded.getCellSlots().getStackInSlot(0).sameItem(first),
 				"loading a 4-slot save didn't keep 2 slots with the first cell");
 		helper.succeed();
 	}
@@ -325,7 +327,7 @@ public final class StorageGameTests
 	{
 		ServerLevel level = helper.getLevel();
 		BlockPos origin = helper.absolutePos(ORIGIN);
-		BlockPos block = world(origin, BlockPos.containing(templatePoint), facing);
+		BlockPos block = world(origin, new BlockPos(templatePoint), facing);
 		Vec3 hit = Vec3.atLowerCornerOf(origin).add(worldOffset(templatePoint, facing));
 		player.setPos(hit);
 		player.forgetMenu();
@@ -336,7 +338,7 @@ public final class StorageGameTests
 
 	static Vec3 worldOffset(Vec3 templatePoint, Direction facing)
 	{
-		BlockPos block = BlockPos.containing(templatePoint);
+		BlockPos block = new BlockPos(templatePoint);
 		Vec3 inBlock = templatePoint.subtract(Vec3.atLowerCornerOf(block));
 		Vec3 turned = MultiblockOrientation.rotateShape(Shapes.create(new AABB(inBlock, inBlock).inflate(1e-4)), facing)
 				.bounds().getCenter();
@@ -389,6 +391,13 @@ public final class StorageGameTests
 		return ECTerminals.block(era).get().defaultBlockState();
 	}
 
+	/** Fails the test running now (what 1.19's GameTestHelper.assertTrue does). */
+	public static void require(boolean condition, String failure)
+	{
+		if(!condition)
+			throw new GameTestAssertException(failure);
+	}
+
 	static void check(GameTestHelper helper, boolean condition, String failure)
 	{
 		if(!condition)
@@ -435,7 +444,7 @@ public final class StorageGameTests
 		}
 
 		@Override
-		public void send(Packet<?> packet, @Nullable PacketSendListener listener)
+		public void send(Packet<?> packet, @Nullable GenericFutureListener<? extends Future<? super Void>> listener)
 		{
 			if(!(packet instanceof ClientboundCustomPayloadPacket custom)||!custom.getIdentifier().equals(channel))
 				return;

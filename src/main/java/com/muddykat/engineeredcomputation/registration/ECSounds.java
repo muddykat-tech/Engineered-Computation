@@ -1,6 +1,6 @@
 package com.muddykat.engineeredcomputation.registration;
 
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -16,7 +16,7 @@ import com.muddykat.engineeredcomputation.EngineeredComputation;
 public final class ECSounds
 {
 	public static final DeferredRegister<SoundEvent> REGISTER =
-			DeferredRegister.create(Registries.SOUND_EVENT, EngineeredComputation.MODID);
+			DeferredRegister.create(Registry.SOUND_EVENT_REGISTRY, EngineeredComputation.MODID);
 
 	public static final RegistryObject<SoundEvent> BREEZE_SHOOT = register("entity.breeze.shoot");
 	public static final RegistryObject<SoundEvent> DECORATED_POT_INSERT = register("block.decorated_pot.insert");
@@ -29,7 +29,7 @@ public final class ECSounds
 
 	private static RegistryObject<SoundEvent> register(String name)
 	{
-		return REGISTER.register(name, () -> SoundEvent.createVariableRangeEvent(
+		return REGISTER.register(name, () -> new SoundEvent(
 				ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, name)));
 	}
 

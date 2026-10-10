@@ -23,9 +23,9 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
@@ -148,7 +148,7 @@ public final class CraftingComputerGameTests
 		StorageGameTests.check(helper, setup.order(Items.STONE, 3).isEmpty(), "the abstract order was refused");
 		helper.runAfterDelay(5, () -> {
 			IItemHandler bottom = setup.level.getBlockEntity(rig.bottom())
-				.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP).orElse(null);
+				.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP).orElse(null);
 			StorageGameTests.check(helper, bottom!=null&&bottom.insertItem(0, new ItemStack(Items.STONE, 3), false)
 					.isEmpty(), "the processor's bottom didn't take the pushed-in stone");
 			helper.runAfterDelay(3, () -> {
@@ -190,7 +190,7 @@ public final class CraftingComputerGameTests
 		setup.store(Items.COBBLESTONE, 10);
 		Rig rig = setup.processor(helper, smelting());
 		IItemHandler bottom = setup.level.getBlockEntity(rig.bottom())
-				.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP).orElse(null);
+				.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP).orElse(null);
 		StorageGameTests.check(helper, bottom!=null&&bottom.insertItem(0, new ItemStack(Items.STONE), false).getCount()==1,
 				"the processor took stone in with no order waiting for it");
 		StorageGameTests.check(helper, setup.order(Items.STONE, 3).isEmpty(), "the abstract order was refused");
@@ -378,7 +378,7 @@ public final class CraftingComputerGameTests
 	private static BlockHitResult hitAt(GameTestHelper helper, Vec3 templatePoint)
 	{
 		BlockPos origin = helper.absolutePos(COMPUTER_AT);
-		BlockPos block = StorageGameTests.world(origin, BlockPos.containing(templatePoint), Direction.NORTH);
+		BlockPos block = StorageGameTests.world(origin, new BlockPos(templatePoint), Direction.NORTH);
 		Vec3 hit = Vec3.atLowerCornerOf(origin).add(StorageGameTests.worldOffset(templatePoint, Direction.NORTH));
 		return new BlockHitResult(hit, Direction.SOUTH, block, false);
 	}

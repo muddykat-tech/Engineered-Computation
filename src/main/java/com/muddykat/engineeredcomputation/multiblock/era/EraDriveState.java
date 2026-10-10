@@ -11,7 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
@@ -224,7 +224,7 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 								return EraDriveMenu.isDriveInReach(player, masterPos);
 							}
 						},
-						Component.translatable("container.engineered_computation.storage_bay")));
+						new TranslatableComponent("container.engineered_computation.storage_bay")));
 				return InteractionResult.CONSUME;
 			}
 			EraDriveMenu.openDrive(serverPlayer, drive, cellSlots, masterPos, ctx.definition().partBlock().getName());

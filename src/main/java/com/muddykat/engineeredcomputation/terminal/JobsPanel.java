@@ -3,11 +3,14 @@ package com.muddykat.engineeredcomputation.terminal;
 import java.util.List;
 import java.util.Locale;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 
@@ -51,42 +54,43 @@ final class JobsPanel
 		return height/ROW_HEIGHT;
 	}
 
-	void render(GuiGraphics graphics, int mouseX, int mouseY)
+	void render(PoseStack pose, int mouseX, int mouseY)
 	{
-		graphics.pose().pushPose();
-		graphics.pose().translate(0, 0, 350);
-		graphics.fill(x, y, x+width, y+height, 0xFF101814);
+		pose.pushPose();
+		pose.translate(0, 0, 350);
+		GuiComponent.fill(pose, x, y, x+width, y+height, 0xFF101814);
 		List<OrderSummary> orders = menu.getClientOrders();
 		scroll = Math.max(0, Math.min(scroll, orders.size()-rows()));
 		if(orders.isEmpty())
-			graphics.drawCenteredString(font, Component.translatable("gui.engineered_computation.jobs.none"),
-					x+width/2, y+height/2-4, 0x8C9890);
+			GuiComponent.drawCenteredString(pose, font,
+					new TranslatableComponent("gui.engineered_computation.jobs.none"), x+width/2, y+height/2-4,
+					0x8C9890);
 		for(int i = 0; i<Math.min(rows(), orders.size()-scroll); i++)
 		{
 			OrderSummary order = orders.get(scroll+i);
 			int rowY = y+i*ROW_HEIGHT+1;
 			ItemStack stack = order.target().icon(Minecraft.getInstance().level.getGameTime());
-			graphics.renderItem(stack, x+2, rowY);
+			ECGui.renderItem(pose, stack, x+2, rowY);
 			if(order.target().isTag())
-				ECGui.tagBadge(graphics, font, x+2, rowY);
-			Component name = Component.literal(String.format(Locale.ROOT, "%,d× ", order.amount()))
+				ECGui.tagBadge(pose, font, x+2, rowY);
+			Component name = new TextComponent(String.format(Locale.ROOT, "%,d× ", order.amount()))
 					.append(order.target().name());
 			int textWidth = width-20-BAR_WIDTH-CANCEL_SIZE-12;
-			graphics.drawString(font, ECGui.fit(font, name, textWidth), x+20, rowY+1, 0xE0E0E0, false);
-			graphics.pose().pushPose();
-			graphics.pose().translate(x+20, rowY+10, 0);
-			graphics.pose().scale(0.666F, 0.666F, 1);
-			graphics.drawString(font, order.status().title(), 0, 0, order.status().colour(), false);
-			graphics.pose().popPose();
+			font.draw(pose, ECGui.fit(font, name, textWidth), x+20, rowY+1, 0xE0E0E0);
+			pose.pushPose();
+			pose.translate(x+20, rowY+10, 0);
+			pose.scale(0.666F, 0.666F, 1);
+			font.draw(pose, order.status().title(), 0, 0, order.status().colour());
+			pose.popPose();
 			int barX = x+width-BAR_WIDTH-CANCEL_SIZE-6;
-			graphics.fill(barX, rowY+5, barX+BAR_WIDTH, rowY+10, 0xFF2A332E);
-			graphics.fill(barX, rowY+5, barX+Math.round(BAR_WIDTH*order.progress()), rowY+10, 0xFFFFD24A);
+			GuiComponent.fill(pose, barX, rowY+5, barX+BAR_WIDTH, rowY+10, 0xFF2A332E);
+			GuiComponent.fill(pose, barX, rowY+5, barX+Math.round(BAR_WIDTH*order.progress()), rowY+10, 0xFFFFD24A);
 			int cancelX = x+width-CANCEL_SIZE-2;
-			ECGui.button(graphics, cancelX, rowY+3, CANCEL_SIZE, CANCEL_SIZE,
+			ECGui.button(pose, cancelX, rowY+3, CANCEL_SIZE, CANCEL_SIZE,
 					isOver(mouseX, mouseY, cancelX, rowY+3, CANCEL_SIZE, CANCEL_SIZE));
-			ECGui.icon(graphics, cancelX+2, rowY+5, CANCEL_ICON, 0xFFFF8070);
+			ECGui.icon(pose, cancelX+2, rowY+5, CANCEL_ICON, 0xFFFF8070);
 		}
-		graphics.pose().popPose();
+		pose.popPose();
 	}
 
 	List<Component> tooltip(int mouseX, int mouseY)
@@ -96,10 +100,10 @@ final class JobsPanel
 		{
 			int rowY = y+i*ROW_HEIGHT+1;
 			if(isOver(mouseX, mouseY, x+width-CANCEL_SIZE-2, rowY+3, CANCEL_SIZE, CANCEL_SIZE))
-				return List.of(Component.translatable("gui.engineered_computation.jobs.cancel"));
+				return List.of(new TranslatableComponent("gui.engineered_computation.jobs.cancel"));
 			if(isOver(mouseX, mouseY, x+2, rowY, 16, 16))
 				return List.of(orders.get(scroll+i).target().name(),
-						Component.translatable("gui.engineered_computation.jobs.progress",
+						new TranslatableComponent("gui.engineered_computation.jobs.progress",
 								Math.round(orders.get(scroll+i).progress()*100)));
 		}
 		return List.of();

@@ -98,7 +98,10 @@ public final class ECPayloads
 		CHANNEL.messageBuilder(type, nextId++, NetworkDirection.PLAY_TO_CLIENT)
 				.encoder(encoder)
 				.decoder(decoder)
-				.consumerMainThread((payload, context) -> handler.accept(payload, ClientHooks.player()))
+				.consumer((payload, context) -> {
+					context.get().enqueueWork(() -> handler.accept(payload, ClientHooks.player()));
+					context.get().setPacketHandled(true);
+				})
 				.add();
 	}
 
@@ -108,7 +111,10 @@ public final class ECPayloads
 		CHANNEL.messageBuilder(type, nextId++, NetworkDirection.PLAY_TO_SERVER)
 				.encoder(encoder)
 				.decoder(decoder)
-				.consumerMainThread((payload, context) -> handler.accept(payload, context.get().getSender()))
+				.consumer((payload, context) -> {
+					context.get().enqueueWork(() -> handler.accept(payload, context.get().getSender()));
+					context.get().setPacketHandled(true);
+				})
 				.add();
 	}
 }

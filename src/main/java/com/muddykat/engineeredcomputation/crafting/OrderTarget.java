@@ -3,9 +3,10 @@ package com.muddykat.engineeredcomputation.crafting;
 import java.util.List;
 import java.util.Optional;
 
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +18,7 @@ public record OrderTarget(ItemKey item, Optional<TagKey<Item>> tag)
 	public static OrderTarget read(FriendlyByteBuf buf)
 	{
 		return new OrderTarget(ItemKey.read(buf),
-				buf.readOptional(in -> TagKey.create(Registries.ITEM, in.readResourceLocation())));
+				buf.readOptional(in -> TagKey.create(Registry.ITEM_REGISTRY, in.readResourceLocation())));
 	}
 
 	public void write(FriendlyByteBuf buf)
@@ -28,7 +29,7 @@ public record OrderTarget(ItemKey item, Optional<TagKey<Item>> tag)
 
 	public Component name()
 	{
-		return tag.<Component>map(key -> Component.literal("#"+key.location()))
+		return tag.<Component>map(key -> new TextComponent("#"+key.location()))
 				.orElseGet(() -> item.displayStack().getHoverName());
 	}
 

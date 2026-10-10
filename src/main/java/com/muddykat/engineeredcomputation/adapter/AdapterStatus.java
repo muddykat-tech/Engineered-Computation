@@ -5,6 +5,7 @@ import java.util.Locale;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 
 import com.muddykat.engineeredcomputation.network.StatusCode;
 
@@ -31,7 +32,7 @@ public enum AdapterStatus
 
 	public Component title()
 	{
-		return code==null? Component.translatable(key()+".title"): code.title();
+		return code==null? new TranslatableComponent(key()+".title"): code.title();
 	}
 
 	public int colour()
@@ -41,7 +42,7 @@ public enum AdapterStatus
 
 	public Component detail()
 	{
-		return Component.translatable(key()+".detail");
+		return new TranslatableComponent(key()+".detail");
 	}
 
 	private String key()

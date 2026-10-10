@@ -133,7 +133,7 @@ public class DataAdapterBlock extends DirectionalBlock implements EntityBlock, N
 		if(hand!=InteractionHand.MAIN_HAND)
 			return InteractionResult.PASS;
 		if(!level.isClientSide&&level.getBlockEntity(pos) instanceof DataAdapterBlockEntity adapter)
-			NetworkHooks.openScreen((ServerPlayer)player, adapter, buf -> buf.writeBlockPos(pos));
+			NetworkHooks.openGui((ServerPlayer)player, adapter, buf -> buf.writeBlockPos(pos));
 		return InteractionResult.sidedSuccess(level.isClientSide);
 	}
 

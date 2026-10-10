@@ -11,6 +11,7 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -50,9 +51,9 @@ public class CatalogueCardItem extends Item
 	}
 
 	@Override
-	public int getMaxStackSize(ItemStack stack)
+	public int getItemStackLimit(ItemStack stack)
 	{
-		return card(stack)!=null? 1: super.getMaxStackSize(stack);
+		return card(stack)!=null? 1: super.getItemStackLimit(stack);
 	}
 
 	@Override
@@ -84,7 +85,7 @@ public class CatalogueCardItem extends Item
 		CatalogueCard card = card(stack);
 		if(card==null)
 		{
-			lines.add(Component.translatable("tooltip.engineered_computation.catalogue_card.blank")
+			lines.add(new TranslatableComponent("tooltip.engineered_computation.catalogue_card.blank")
 					.withStyle(ChatFormatting.GRAY));
 			return;
 		}
@@ -95,9 +96,9 @@ public class CatalogueCardItem extends Item
 	{
 		BlockPos pos = card.station().pos();
 		return List.of(card.label().copy().withStyle(ChatFormatting.YELLOW),
-				Component.translatable("tooltip.engineered_computation.catalogue_card.station", pos.getX(), pos.getY(),
-						pos.getZ()).withStyle(ChatFormatting.GRAY),
-				Component.translatable("tooltip.engineered_computation.catalogue_card.tally", card.tally().types(),
+				new TranslatableComponent("tooltip.engineered_computation.catalogue_card.station", pos.getX(),
+						pos.getY(), pos.getZ()).withStyle(ChatFormatting.GRAY),
+				new TranslatableComponent("tooltip.engineered_computation.catalogue_card.tally", card.tally().types(),
 						String.format(Locale.ROOT, "%,d", card.tally().totalCount())).withStyle(ChatFormatting.GRAY));
 	}
 }

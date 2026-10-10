@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -44,7 +44,7 @@ public final class GuideContentsGameTests
 			for(ResourceLocation id : all)
 			{
 				StorageGameTests.check(helper, recipes.byKey(id).isPresent(), era.guideName()+": no recipe "+id);
-				made.add(recipe(recipes, id).getResultItem(helper.getLevel().registryAccess()).getItem());
+				made.add(recipe(recipes, id).getResultItem().getItem());
 			}
 
 			for(ResourceLocation id : all)
@@ -55,11 +55,12 @@ public final class GuideContentsGameTests
 					boolean found = false;
 					for(ItemStack option : options)
 					{
-						modOnly &= BuiltInRegistries.ITEM.getKey(option.getItem()).getNamespace().equals(EngineeredComputation.MODID);
+						modOnly &= Registry.ITEM.getKey(option.getItem())
+								.getNamespace().equals(EngineeredComputation.MODID);
 						found |= made.contains(option.getItem());
 					}
 					if(modOnly&&!found)
-						helper.fail(era.guideName()+": "+id+" needs "+BuiltInRegistries.ITEM.getKey(options[0].getItem())
+						helper.fail(era.guideName()+": "+id+" needs "+Registry.ITEM.getKey(options[0].getItem())
 								+" but the guide has no recipe for it");
 				}
 		}

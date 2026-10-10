@@ -5,19 +5,21 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.RegistryObject;
 
+import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.network.CoveredCableBlock;
 import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
 import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
 
 public final class ECCables
 {
-	private static final BlockBehaviour.Properties PROPERTIES = BlockBehaviour.Properties.of()
-			.mapColor(MapColor.COLOR_ORANGE)
+	private static final BlockBehaviour.Properties PROPERTIES = BlockBehaviour.Properties
+			.of(Material.METAL, MaterialColor.COLOR_ORANGE)
 			.strength(0.6F)
 			.sound(SoundType.COPPER)
 			.noOcclusion();
@@ -25,14 +27,14 @@ public final class ECCables
 	private static final RegistryObject<NetworkCableBlock> BLOCK = ECRegistrationHolder.BLOCKS.register(
 			"network_cable", () -> new NetworkCableBlock(PROPERTIES));
 	private static final RegistryObject<BlockItem> ITEM = ECRegistrationHolder.ITEMS.register(
-			"network_cable", () -> new BlockItem(BLOCK.get(), new Item.Properties()));
+			"network_cable", () -> new BlockItem(BLOCK.get(), new Item.Properties().tab(EngineeredComputation.TAB)));
 
 	private static final RegistryObject<CoveredCableBlock> COVERED = ECRegistrationHolder.BLOCKS.register(
-			"covered_network_cable", () -> new CoveredCableBlock(false, BlockBehaviour.Properties.of()
-					.mapColor(MapColor.STONE).strength(0.6F).sound(SoundType.COPPER)));
+			"covered_network_cable", () -> new CoveredCableBlock(false, BlockBehaviour.Properties
+					.of(Material.METAL, MaterialColor.STONE).strength(0.6F).sound(SoundType.COPPER)));
 	private static final RegistryObject<CoveredCableBlock> CLEAR_COVERED = ECRegistrationHolder.BLOCKS.register(
-			"clear_covered_network_cable", () -> new CoveredCableBlock(true, BlockBehaviour.Properties.of()
-					.mapColor(MapColor.NONE).strength(0.6F).sound(SoundType.COPPER).noOcclusion()
+			"clear_covered_network_cable", () -> new CoveredCableBlock(true, BlockBehaviour.Properties
+					.of(Material.METAL, MaterialColor.NONE).strength(0.6F).sound(SoundType.COPPER).noOcclusion()
 					.isValidSpawn((state, level, pos, entity) -> false).isRedstoneConductor((state, level, pos) -> false)
 					.isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)));
 	public static final RegistryObject<BlockEntityType<CoveredCableBlockEntity>> COVERED_ENTITY =

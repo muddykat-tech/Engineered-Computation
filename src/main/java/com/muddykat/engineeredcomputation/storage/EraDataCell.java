@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -15,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
@@ -98,7 +100,7 @@ public class EraDataCell extends Item
 	public static ItemStack takeFromHand(Player player, InteractionHand hand)
 	{
 		ItemStack held = player.getItemInHand(hand);
-		ItemStack taken = held.copyWithCount(1);
+		ItemStack taken = ItemHandlerHelper.copyStackWithSize(held, 1);
 		held.shrink(1);
 		player.setItemInHand(hand, held.isEmpty()? ItemStack.EMPTY: held.copy());
 		return taken;
@@ -111,15 +113,15 @@ public class EraDataCell extends Item
 		});
 		if(inventory==null)
 			return;
-		lines.add(Component.translatable("tooltip.engineered_computation.cell.bytes",
+		lines.add(new TranslatableComponent("tooltip.engineered_computation.cell.bytes",
 				ByteSize.format(inventory.getUsedBytes()), ByteSize.format(inventory.getTotalBytes()))
 				.withStyle(ChatFormatting.GRAY));
-		lines.add(Component.translatable("tooltip.engineered_computation.cell.types",
+		lines.add(new TranslatableComponent("tooltip.engineered_computation.cell.types",
 				inventory.getContents().types(), inventory.getTotalTypes()).withStyle(ChatFormatting.GRAY));
-		lines.add(Component.translatable("tooltip.engineered_computation.cell.role."
+		lines.add(new TranslatableComponent("tooltip.engineered_computation.cell.role."
 				+inventory.getRole().name().toLowerCase(Locale.ROOT)).withStyle(ChatFormatting.DARK_AQUA));
 		if(inventory.getPriority()!=0)
-			lines.add(Component.translatable("tooltip.engineered_computation.cell.priority",
+			lines.add(new TranslatableComponent("tooltip.engineered_computation.cell.priority",
 					String.format(Locale.ROOT, "%+d", inventory.getPriority())).withStyle(ChatFormatting.GOLD));
 	}
 }

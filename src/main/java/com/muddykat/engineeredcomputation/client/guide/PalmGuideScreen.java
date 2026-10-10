@@ -2,13 +2,17 @@ package com.muddykat.engineeredcomputation.client.guide;
 
 import java.util.List;
 
-import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
+import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 
 final class PalmGuideScreen extends GuideScreen
@@ -95,10 +99,10 @@ final class PalmGuideScreen extends GuideScreen
 	}
 
 	@Override
-	void drawSlot(GuiGraphics graphics, int x, int y, int size)
+	void drawSlot(PoseStack pose, int x, int y, int size)
 	{
-		graphics.fill(x, y, x+size, y+size, 0xFF000000|FADED);
-		graphics.fill(x+1, y+1, x+size-1, y+size-1, SLOT_FACE);
+		GuiComponent.fill(pose, x, y, x+size, y+size, 0xFF000000|FADED);
+		GuiComponent.fill(pose, x+1, y+1, x+size-1, y+size-1, SLOT_FACE);
 	}
 
 	private int left()
@@ -112,32 +116,33 @@ final class PalmGuideScreen extends GuideScreen
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics graphics)
+	public void renderBackground(PoseStack pose)
 	{
-		super.renderBackground(graphics);
-		graphics.blit(TEXTURE, left(), top(), 0, 0, WIDTH, HEIGHT);
+		super.renderBackground(pose);
+		ECGui.blit(pose, TEXTURE, left(), top(), 0, 0, WIDTH, HEIGHT);
 	}
 
 	@Override
-	protected void renderControls(GuiGraphics graphics, int mouseX, int mouseY)
+	protected void renderControls(PoseStack pose, int mouseX, int mouseY)
 	{
 		int x = left()+LCD_X;
 		int y = top()+LCD_Y;
-		Component title = Component.translatable("guide.engineered_computation.palm.tab");
-		graphics.fill(x+2, y+3, x+8+font.width(title), y+14, 0xFF000000|INK);
-		graphics.drawString(font, title, x+5, y+5, 0xA8B498, false);
+		Component title = new TranslatableComponent("guide.engineered_computation.palm.tab");
+		GuiComponent.fill(pose, x+2, y+3, x+8+font.width(title), y+14, 0xFF000000|INK);
+		font.draw(pose, title, x+5, y+5, 0xA8B498);
 		String count = (page+1)+"/"+guide.pages().size();
-		graphics.drawString(font, count, x+LCD_WIDTH-4-font.width(count), y+5, INK, false);
-		graphics.fill(x+2, y+14, x+LCD_WIDTH-2, y+15, 0xFF000000|INK);
+		font.draw(pose, count, x+LCD_WIDTH-4-font.width(count), y+5, INK);
+		GuiComponent.fill(pose, x+2, y+14, x+LCD_WIDTH-2, y+15, 0xFF000000|INK);
 
 		for(Soft button : Soft.values())
-			drawSoftButton(graphics, button, mouseX, mouseY);
+			drawSoftButton(pose, button, mouseX, mouseY);
 		for(Hardware button : Hardware.values())
 			if(isOverHardware(button, mouseX, mouseY))
-				graphics.fill(left()+button.x-6, top()+BUTTON_Y-6, left()+button.x+6, top()+BUTTON_Y+6, 0x30FFFFFF);
+				GuiComponent.fill(pose, left()+button.x-6, top()+BUTTON_Y-6, left()+button.x+6, top()+BUTTON_Y+6,
+						0x30FFFFFF);
 	}
 
-	private void drawSoftButton(GuiGraphics graphics, Soft button, int mouseX, int mouseY)
+	private void drawSoftButton(PoseStack pose, Soft button, int mouseX, int mouseY)
 	{
 		int[] box = softBox(button);
 		boolean usable = softUsable(button);
@@ -145,24 +150,23 @@ final class PalmGuideScreen extends GuideScreen
 		int ink = 0xFF000000|(usable? INK: FADED);
 		int x0 = box[0], y0 = box[1], x1 = box[0]+box[2], y1 = box[1]+box[3];
 		if(hovered)
-			graphics.fill(x0+1, y0+1, x1-1, y1-1, ink);
-		graphics.fill(x0+1, y0, x1-1, y0+1, ink);
-		graphics.fill(x0+1, y1-1, x1-1, y1, ink);
-		graphics.fill(x0, y0+1, x0+1, y1-1, ink);
-		graphics.fill(x1-1, y0+1, x1, y1-1, ink);
+			GuiComponent.fill(pose, x0+1, y0+1, x1-1, y1-1, ink);
+		GuiComponent.fill(pose, x0+1, y0, x1-1, y0+1, ink);
+		GuiComponent.fill(pose, x0+1, y1-1, x1-1, y1, ink);
+		GuiComponent.fill(pose, x0, y0+1, x0+1, y1-1, ink);
+		GuiComponent.fill(pose, x1-1, y0+1, x1, y1-1, ink);
 		Component label = softLabel(button);
-		graphics.drawString(font, label, x0+(box[2]-font.width(label)+1)/2, y0+3, hovered? 0xA8B498: ink&0xFFFFFF,
-				false);
+		font.draw(pose, label, x0+(box[2]-font.width(label)+1)/2, y0+3, hovered? 0xA8B498: ink&0xFFFFFF);
 	}
 
 	private Component softLabel(Soft button)
 	{
 		return switch(button)
 		{
-			case BACK -> Component.translatable("guide.engineered_computation.palm.back");
-			case CONTENTS -> Component.translatable("guide.engineered_computation.nav.contents");
-			case PREVIOUS -> Component.literal("◀");
-			case NEXT -> Component.literal("▶");
+			case BACK -> new TranslatableComponent("guide.engineered_computation.palm.back");
+			case CONTENTS -> new TranslatableComponent("guide.engineered_computation.nav.contents");
+			case PREVIOUS -> new TextComponent("◀");
+			case NEXT -> new TextComponent("▶");
 		};
 	}
 
@@ -217,7 +221,7 @@ final class PalmGuideScreen extends GuideScreen
 	}
 
 	@Override
-	protected void renderControlTooltip(GuiGraphics graphics, int mouseX, int mouseY)
+	protected void renderControlTooltip(PoseStack pose, int mouseX, int mouseY)
 	{
 		String key = null;
 		for(Hardware button : Hardware.values())
@@ -228,7 +232,7 @@ final class PalmGuideScreen extends GuideScreen
 		if(isOverPower(mouseX, mouseY))
 			key = "nav.power";
 		if(key!=null)
-			graphics.renderComponentTooltip(font, List.of(Component.translatable("guide.engineered_computation."+key)),
+			renderComponentTooltip(pose, List.of(new TranslatableComponent("guide.engineered_computation."+key)),
 					mouseX, mouseY);
 	}
 

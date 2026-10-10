@@ -1,6 +1,6 @@
 package com.muddykat.engineeredcomputation.registration;
 
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -22,7 +22,7 @@ import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
 public final class ECMenuTypes
 {
 	public static final DeferredRegister<MenuType<?>> REGISTER =
-			DeferredRegister.create(Registries.MENU, EngineeredComputation.MODID);
+			DeferredRegister.create(Registry.MENU_REGISTRY, EngineeredComputation.MODID);
 
 	public static final RegistryObject<MenuType<EraDriveMenu>> ERA_DRIVE =
 			REGISTER.register("era_drive", () -> IForgeMenuType.create(EraDriveMenu::fromNetwork));

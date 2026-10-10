@@ -15,12 +15,13 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
@@ -103,13 +104,13 @@ public class TubeStationBlockEntity extends BlockEntity
 
 	public Component label()
 	{
-		return name.isEmpty()? inventoryName(): Component.literal(name);
+		return name.isEmpty()? inventoryName(): new TextComponent(name);
 	}
 
 	public Component inventoryName()
 	{
 		if(level==null)
-			return Component.empty();
+			return new TextComponent("");
 		Direction facing = getBlockState().getValue(TubeStationBlock.FACING);
 		BlockPos front = worldPosition.relative(facing);
 		if(level.getBlockEntity(front) instanceof Nameable named&&named.hasCustomName())
@@ -136,7 +137,7 @@ public class TubeStationBlockEntity extends BlockEntity
 			return null;
 		Direction facing = getBlockState().getValue(TubeStationBlock.FACING);
 		BlockEntity target = level.getBlockEntity(worldPosition.relative(facing));
-		return target==null? null: target.getCapability(ForgeCapabilities.ITEM_HANDLER,
+		return target==null? null: target.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY,
 				facing.getOpposite()).orElse(null);
 	}
 

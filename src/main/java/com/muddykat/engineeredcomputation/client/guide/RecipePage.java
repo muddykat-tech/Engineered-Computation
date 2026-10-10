@@ -4,12 +4,12 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.NonNullList;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
@@ -45,27 +45,27 @@ final class RecipePage implements GuidePage
 	{
 		Recipe<?> recipe = lookUp(id);
 		Level level = Minecraft.getInstance().level;
-		return recipe==null||level==null? ItemStack.EMPTY: recipe.getResultItem(level.registryAccess());
+		return recipe==null||level==null? ItemStack.EMPTY: recipe.getResultItem();
 	}
 
 	@Override
-	public void render(GuideScreen screen, GuiGraphics graphics, int x, int y, int mouseX, int mouseY, float partialTick)
+	public void render(GuideScreen screen, PoseStack pose, int x, int y, int mouseX, int mouseY, float partialTick)
 	{
 		Recipe<?> value = lookUp(recipe);
 		Level level = Minecraft.getInstance().level;
 		if(value==null||level==null)
 		{
-			graphics.drawString(screen.font(), Component.translatable("guide.engineered_computation.recipe_missing"),
-					x, y, screen.textColour(), false);
+			screen.font().draw(pose, new TranslatableComponent("guide.engineered_computation.recipe_missing"), x, y,
+					screen.textColour());
 			return;
 		}
-		ItemStack result = value.getResultItem(level.registryAccess());
+		ItemStack result = value.getResultItem();
 
 		List<FormattedCharSequence> title = screen.font().split(result.getHoverName().copy()
 				.withStyle(ChatFormatting.BOLD), WIDTH);
 		for(int i = 0; i<Math.min(2, title.size()); i++)
-			graphics.drawString(screen.font(), title.get(i), x+(WIDTH-screen.font().width(title.get(i)))/2,
-					y+i*TextPage.LINE_HEIGHT, screen.textColour(), false);
+			screen.font().draw(pose, title.get(i), x+(WIDTH-screen.font().width(title.get(i)))/2,
+					y+i*TextPage.LINE_HEIGHT, screen.textColour());
 
 		NonNullList<Ingredient> ingredients = value.getIngredients();
 		int width = value instanceof ShapedRecipe shaped? shaped.getWidth(): 3;
@@ -76,19 +76,19 @@ final class RecipePage implements GuidePage
 			{
 				int slotX = x+col*18;
 				int slotY = gridY+row*18;
-				screen.drawSlot(graphics, slotX, slotY, 18);
+				screen.drawSlot(pose, slotX, slotY, 18);
 				int index = row*width+col;
 				if(col<width&&index<ingredients.size())
-					screen.renderStack(graphics, pick(ingredients.get(index), cycle), slotX+1, slotY+1, mouseX, mouseY);
+					screen.renderStack(pose, pick(ingredients.get(index), cycle), slotX+1, slotY+1, mouseX, mouseY);
 			}
 
-		screen.drawArrow(graphics, x+ARROW_X, gridY+27);
+		screen.drawArrow(pose, x+ARROW_X, gridY+27);
 		int resultY = gridY+27-RESULT_SIZE/2;
-		screen.drawSlot(graphics, x+RESULT_X, resultY, RESULT_SIZE);
-		screen.renderStack(graphics, result, x+RESULT_X+5, resultY+5, mouseX, mouseY);
+		screen.drawSlot(pose, x+RESULT_X, resultY, RESULT_SIZE);
+		screen.renderStack(pose, result, x+RESULT_X+5, resultY+5, mouseX, mouseY);
 
 		if(!(value instanceof ShapedRecipe))
-			screen.drawFitted(graphics, Component.translatable("guide.engineered_computation.recipe.shapeless"),
+			screen.drawFitted(pose, new TranslatableComponent("guide.engineered_computation.recipe.shapeless"),
 					x, gridY+3*18+6, WIDTH, screen.textColour());
 	}
 

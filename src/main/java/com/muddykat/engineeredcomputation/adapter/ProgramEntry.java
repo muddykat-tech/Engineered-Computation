@@ -5,8 +5,7 @@ import java.util.Optional;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -18,26 +17,27 @@ public record ProgramEntry(Optional<Holder<Item>> item, Optional<TagKey<Item>> t
 	public static final ProgramEntry EMPTY = new ProgramEntry(Optional.empty(), Optional.empty());
 
 	public static final Codec<ProgramEntry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-			BuiltInRegistries.ITEM.holderByNameCodec().optionalFieldOf("item").forGetter(ProgramEntry::item),
-			TagKey.codec(Registries.ITEM).optionalFieldOf("tag").forGetter(ProgramEntry::tag)
+			Registry.ITEM.holderByNameCodec().optionalFieldOf("item").forGetter(ProgramEntry::item),
+			TagKey.codec(Registry.ITEM_REGISTRY).optionalFieldOf("tag").forGetter(ProgramEntry::tag)
 	).apply(instance, ProgramEntry::new));
 
 	public static ProgramEntry read(FriendlyByteBuf buf)
 	{
 		return new ProgramEntry(
-				buf.readOptional(in -> BuiltInRegistries.ITEM.wrapAsHolder(in.readById(BuiltInRegistries.ITEM))),
-				buf.readOptional(in -> TagKey.create(Registries.ITEM, in.readResourceLocation())));
+				buf.readOptional(in -> Registry.ITEM.byId(in.readVarInt()).builtInRegistryHolder()),
+				buf.readOptional(in -> TagKey.create(Registry.ITEM_REGISTRY, in.readResourceLocation())));
 	}
 
 	public void write(FriendlyByteBuf buf)
 	{
-		buf.writeOptional(item, (out, holder) -> out.writeId(BuiltInRegistries.ITEM, holder.value()));
+		buf.writeOptional(item, (out, holder) -> out.writeVarInt(Registry.ITEM.getId(holder.value())));
 		buf.writeOptional(tag, (out, value) -> out.writeResourceLocation(value.location()));
 	}
 
 	public static ProgramEntry of(ItemStack stack)
 	{
-		return stack.isEmpty()? EMPTY: new ProgramEntry(Optional.of(stack.getItemHolder()), Optional.empty());
+		return stack.isEmpty()? EMPTY: new ProgramEntry(Optional.of(stack.getItem().builtInRegistryHolder()),
+				Optional.empty());
 	}
 
 	public static ProgramEntry of(TagKey<Item> tag)
@@ -52,6 +52,6 @@ public record ProgramEntry(Optional<Holder<Item>> item, Optional<TagKey<Item>> t
 
 	public boolean matches(ItemStack stack)
 	{
-		return item.map(stack::is).orElse(false)||tag.map(stack::is).orElse(false);
+		return item.map(holder -> stack.is(holder.value())).orElse(false)||tag.map(stack::is).orElse(false);
 	}
 }

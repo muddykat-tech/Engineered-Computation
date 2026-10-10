@@ -20,7 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
@@ -79,11 +79,11 @@ public final class StorageNetwork
 	public static void register()
 	{
 		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ChunkEvent.Load.class, event -> {
-			if(event.getLevel() instanceof Level level)
+			if(event.getWorld() instanceof Level level)
 				changed(level);
 		});
 		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ChunkEvent.Unload.class, event -> {
-			if(event.getLevel() instanceof Level level)
+			if(event.getWorld() instanceof Level level)
 				changed(level);
 		});
 	}

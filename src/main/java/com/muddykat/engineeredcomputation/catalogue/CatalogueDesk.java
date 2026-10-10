@@ -16,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -99,7 +100,7 @@ public final class CatalogueDesk
 	public Component label(BlockPos receiver)
 	{
 		return level.getBlockEntity(receiver) instanceof ReceivingStationBlockEntity station? station.label()
-				: Component.empty();
+				: new TextComponent("");
 	}
 
 	public int request(ItemKey key, int amount)

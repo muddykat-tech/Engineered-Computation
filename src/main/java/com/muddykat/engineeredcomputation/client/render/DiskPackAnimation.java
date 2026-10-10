@@ -4,14 +4,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import org.joml.Matrix4f;
-
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraftforge.client.model.IQuadTransformer;
 
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
 
@@ -59,7 +58,7 @@ final class DiskPackAnimation
 	{
 		if(quad.getTintIndex()!=GLASS_TINT_INDEX)
 			return DriveRenderer.QuadStyle.SOLID;
-		float z = Float.intBitsToFloat(quad.getVertices()[IQuadTransformer.POSITION+2]);
+		float z = Float.intBitsToFloat(quad.getVertices()[DriveRenderer.VERTEX_POSITION+2]);
 		boolean outward = (z-unit.lidMidZ())*quad.getDirection().getStepZ()>0;
 		return outward? DriveRenderer.QuadStyle.SEE_THROUGH: DriveRenderer.QuadStyle.HIDDEN;
 	}
@@ -93,14 +92,17 @@ final class DiskPackAnimation
 		float lidShut = DriveRenderer.ease((state.value-PACK_SHARE)/(1-PACK_SHARE));
 
 		if(loaded||state.value>0)
-			renderer.draw(part, unit.pack(), new Matrix4f().translation(0, -PACK_TRAVEL*packDown, 0)
-					.translate(unit.spindleX(), 0, unit.spindleZ())
-					.rotateY((float)Math.toRadians(state.angle))
-					.translate(-unit.spindleX(), 0, -unit.spindleZ()), pose, buffers, packedOverlay);
-		Matrix4f lid = new Matrix4f()
-				.translate(0, unit.hingeY()+LID_LIFT*lidShut, unit.hingeZ())
-				.rotateX((float)Math.toRadians(LID_SHUT_DEGREES*lidShut))
-				.translate(0, -unit.hingeY(), -unit.hingeZ());
+			renderer.draw(part, unit.pack(), DriveRenderer.transform(local -> {
+				local.translate(0, -PACK_TRAVEL*packDown, 0);
+				local.translate(unit.spindleX(), 0, unit.spindleZ());
+				local.mulPose(Vector3f.YP.rotationDegrees(state.angle));
+				local.translate(-unit.spindleX(), 0, -unit.spindleZ());
+			}), pose, buffers, packedOverlay);
+		Matrix4f lid = DriveRenderer.transform(local -> {
+			local.translate(0, unit.hingeY()+LID_LIFT*lidShut, unit.hingeZ());
+			local.mulPose(Vector3f.XP.rotationDegrees(LID_SHUT_DEGREES*lidShut));
+			local.translate(0, -unit.hingeY(), -unit.hingeZ());
+		});
 		renderer.draw(part, unit.lid(), lid, pose, buffers, packedOverlay, quad -> lidQuadStyle(quad, unit), GLASS_ALPHA);
 	}
 }

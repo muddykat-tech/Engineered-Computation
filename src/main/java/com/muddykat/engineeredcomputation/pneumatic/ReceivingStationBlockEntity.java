@@ -8,7 +8,8 @@ import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.Container;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -17,8 +18,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.wrapper.InvWrapper;
@@ -29,7 +30,8 @@ public class ReceivingStationBlockEntity extends BlockEntity
 {
 	public static final int SLOTS = 9;
 	public static final int EJECT_TICKS = 4;
-	public static final Component TITLE = Component.translatable("container.engineered_computation.receiving_station");
+	public static final Component TITLE =
+			new TranslatableComponent("container.engineered_computation.receiving_station");
 
 	private final SimpleContainer tray = new SimpleContainer(SLOTS)
 	{
@@ -43,7 +45,8 @@ public class ReceivingStationBlockEntity extends BlockEntity
 		@Override
 		public boolean stillValid(Player player)
 		{
-			return Container.stillValidBlockEntity(ReceivingStationBlockEntity.this, player);
+			return level!=null&&level.getBlockEntity(worldPosition)==ReceivingStationBlockEntity.this
+					&&player.distanceToSqr(Vec3.atCenterOf(worldPosition))<=64;
 		}
 	};
 
@@ -84,7 +87,7 @@ public class ReceivingStationBlockEntity extends BlockEntity
 	@Override
 	public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side)
 	{
-		if(capability==ForgeCapabilities.ITEM_HANDLER)
+		if(capability==CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
 		{
 			IItemHandler handler = getOutput();
 			if(handler!=null)
@@ -107,7 +110,7 @@ public class ReceivingStationBlockEntity extends BlockEntity
 
 	public Component label()
 	{
-		return name.isEmpty()? getBlockState().getBlock().getName(): Component.literal(name);
+		return name.isEmpty()? getBlockState().getBlock().getName(): new TextComponent(name);
 	}
 
 	public boolean isEjecting()
@@ -129,7 +132,8 @@ public class ReceivingStationBlockEntity extends BlockEntity
 		Direction front = getBlockState().getValue(ReceivingStationBlock.FACING);
 		BlockEntity inFront = level.getBlockEntity(worldPosition.relative(front));
 		IItemHandler target = inFront==null? null
-				: inFront.getCapability(ForgeCapabilities.ITEM_HANDLER, front.getOpposite()).orElse(null);
+				: inFront.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, front.getOpposite())
+						.orElse(null);
 		for(int slot = 0; slot<tray.getContainerSize(); slot++)
 		{
 			ItemStack stack = tray.getItem(slot);

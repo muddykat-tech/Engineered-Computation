@@ -2,7 +2,7 @@ package com.muddykat.engineeredcomputation.crafting;
 
 import java.util.List;
 
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -13,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
@@ -99,7 +100,7 @@ public class PatternFloppyMenu extends AbstractContainerMenu
 				if(!settable||carried.isEmpty())
 					yield pattern;
 				int count = direct? 1: amount>0? Math.min(amount, carried.getCount()): carried.getCount();
-				yield set(pattern, output, index, carried.copyWithCount(count));
+				yield set(pattern, output, index, ItemHandlerHelper.copyStackWithSize(carried, count));
 			}
 			case ADJUST ->
 			{
@@ -107,20 +108,21 @@ public class PatternFloppyMenu extends AbstractContainerMenu
 				if(!settable||direct||current.isEmpty())
 					yield pattern;
 				int count = Mth.clamp(current.getCount()+amount, 0, current.getMaxStackSize());
-				yield set(pattern, output, index, count==0? ItemStack.EMPTY: current.copyWithCount(count));
+				yield set(pattern, output, index,
+						count==0? ItemStack.EMPTY: ItemHandlerHelper.copyStackWithSize(current, count));
 			}
 			case CLEAR -> settable? set(pattern, output, index, ItemStack.EMPTY): pattern;
 			case SET_TAG ->
 			{
 				ResourceLocation id = ResourceLocation.tryParse(tag.trim().replaceFirst("^#", ""));
 				yield !settable||direct||id==null? pattern:
-						pattern.withTag(output, index, TagKey.create(Registries.ITEM, id));
+						pattern.withTag(output, index, TagKey.create(Registry.ITEM_REGISTRY, id));
 			}
 			case TOGGLE_MODE -> pattern.withMode(direct? Pattern.Mode.ABSTRACT: Pattern.Mode.DIRECT);
 			case CLEAR_ALL -> new Pattern(pattern.mode(), List.of(), List.of());
 		};
 		if(edited.mode()==Pattern.Mode.DIRECT)
-			edited = edited.withCraftedOutput(player.level());
+			edited = edited.withCraftedOutput(player.level);
 		PatternFloppyItem.setPattern(floppy(), edited);
 		broadcastChanges();
 	}

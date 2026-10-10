@@ -8,6 +8,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -45,7 +47,7 @@ public class ProgramFloppyItem extends Item
 	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand)
 	{
 		if(player instanceof ServerPlayer serverPlayer)
-			NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
+			NetworkHooks.openGui(serverPlayer, new SimpleMenuProvider(
 					(id, inventory, p) -> new ProgramFloppyMenu(id, inventory, hand),
 					player.getItemInHand(hand).getHoverName()), buf -> buf.writeEnum(hand));
 		return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
@@ -55,19 +57,19 @@ public class ProgramFloppyItem extends Item
 	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> lines, TooltipFlag flag)
 	{
 		Program program = program(stack);
-		lines.add(Component.translatable("tooltip.engineered_computation.program_floppy.era")
+		lines.add(new TranslatableComponent("tooltip.engineered_computation.program_floppy.era")
 				.withStyle(ChatFormatting.DARK_GRAY));
 		if(program.isEmpty())
 		{
-			lines.add(Component.translatable("tooltip.engineered_computation.program_floppy.blank")
+			lines.add(new TranslatableComponent("tooltip.engineered_computation.program_floppy.blank")
 					.withStyle(ChatFormatting.GRAY));
 			return;
 		}
 		for(ProgramEntry entry : program.entries())
 		{
-			entry.item().ifPresent(item -> lines.add(Component.literal("• ").append(item.value().getDescription())
+			entry.item().ifPresent(item -> lines.add(new TextComponent("• ").append(item.value().getDescription())
 					.withStyle(ChatFormatting.GRAY)));
-			entry.tag().ifPresent(tag -> lines.add(Component.literal("• #"+tag.location())
+			entry.tag().ifPresent(tag -> lines.add(new TextComponent("• #"+tag.location())
 					.withStyle(ChatFormatting.DARK_AQUA)));
 		}
 	}

@@ -6,22 +6,30 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.ConfigScreenHandler;
+import net.minecraftforge.client.ConfigGuiHandler;
+import net.minecraftforge.client.event.ColorHandlerEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.client.event.ModelEvent;
+import net.minecraftforge.client.event.ModelBakeEvent;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.client.model.ForgeModelBakery;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.ForgeRegistries;
 
+import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterScreen;
 import com.muddykat.engineeredcomputation.adapter.ProgramFloppyScreen;
 import com.muddykat.engineeredcomputation.catalogue.CardDeckScreen;
@@ -39,6 +47,7 @@ import com.muddykat.engineeredcomputation.crafting.DataProcessorScreen;
 import com.muddykat.engineeredcomputation.crafting.Pattern;
 import com.muddykat.engineeredcomputation.crafting.PatternFloppyItem;
 import com.muddykat.engineeredcomputation.crafting.PatternFloppyScreen;
+import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlock;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveScreen;
 import com.muddykat.engineeredcomputation.network.CoveredCableBlock;
 import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
@@ -53,6 +62,7 @@ import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
+import com.muddykat.engineeredcomputation.terminal.EraTerminalBlock;
 import com.muddykat.engineeredcomputation.terminal.TerminalScreen;
 
 /** Client-only setup, called from the mod's constructor on the client (Forge 1.20.1 has no client-only @Mod). */
@@ -63,10 +73,11 @@ public final class EngineeredComputationClient {
     private EngineeredComputationClient() {
     }
 
-    public static void init(IEventBus modEventBus, FMLJavaModLoadingContext context) {
-        context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
-                () -> new ConfigScreenHandler.ConfigScreenFactory((minecraft, parent) -> new ECConfigScreen(parent)));
+    public static void init(IEventBus modEventBus) {
+        ModLoadingContext.get().registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class,
+                () -> new ConfigGuiHandler.ConfigGuiFactory((minecraft, parent) -> new ECConfigScreen(parent)));
         modEventBus.addListener(EngineeredComputationClient::registerScreens);
+        modEventBus.addListener(EngineeredComputationClient::setRenderLayers);
         modEventBus.addListener(EngineeredComputationClient::registerItemProperties);
         modEventBus.addListener(EngineeredComputationClient::registerGeometryLoaders);
         modEventBus.addListener(EngineeredComputationClient::registerAdditionalModels);
@@ -92,26 +103,44 @@ public final class EngineeredComputationClient {
         });
     }
 
-    private static void wrapCoveredCableModels(ModelEvent.ModifyBakingResult event) {
+    /**
+     * Chunk layers per block (models can't name theirs before 1.19): era machines, terminals and adapters are cut out,
+     * tubes have glass windows, and covered cables and tubes draw in every layer their cover might need.
+     */
+    private static void setRenderLayers(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            for (Block block : ForgeRegistries.BLOCKS.getValues())
+                if (block instanceof MultiblockPartBlock || block instanceof EraTerminalBlock
+                        || block instanceof DataAdapterBlock)
+                    ItemBlockRenderTypes.setRenderLayer(block, RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ECPneumatics.TUBE.get(), RenderType.translucent());
+            for (Block block : List.of(ECCables.covered().get(), ECCables.clearCovered().get(),
+                    ECPneumatics.COVERED_TUBE.get(), ECPneumatics.CLEAR_COVERED_TUBE.get()))
+                ItemBlockRenderTypes.setRenderLayer(block, layer -> true);
+        });
+    }
+
+    private static void wrapCoveredCableModels(ModelBakeEvent event) {
         for (CoveredCableBlock block : List.of(ECCables.covered().get(), ECCables.clearCovered().get()))
             for (BlockState state : block.getStateDefinition().getPossibleStates())
-                event.getModels().computeIfPresent(BlockModelShaper.stateToModelLocation(state),
-                        (location, model) -> new CoveredCableModel(model, block.isClear()));
+                event.getModelRegistry().computeIfPresent(BlockModelShaper.stateToModelLocation(state),
+                        (location, model) -> new CoveredCableModel(model, block.isClear(), RenderType.solid()));
         for (CoveredTubeBlock block : List.of(ECPneumatics.COVERED_TUBE.get(), ECPneumatics.CLEAR_COVERED_TUBE.get()))
             for (BlockState state : block.getStateDefinition().getPossibleStates())
-                event.getModels().computeIfPresent(BlockModelShaper.stateToModelLocation(state),
+                event.getModelRegistry().computeIfPresent(BlockModelShaper.stateToModelLocation(state),
                         (location, model) -> new CoveredTubeModel(model, block.isClear()));
     }
 
-    private static void registerTubeColours(RegisterColorHandlersEvent.Block event) {
-        event.register((state, level, pos, tintIndex) -> tintIndex == TUBE_GLASS_TINT
+    private static void registerTubeColours(ColorHandlerEvent.Block event) {
+        event.getBlockColors().register((state, level, pos, tintIndex) -> tintIndex == TUBE_GLASS_TINT
                         ? tubeGlass(PneumaticTubeBlock.tintColour(state))
                         : coverColour(level, pos, tintIndex),
                 ECPneumatics.TUBE.get(), ECPneumatics.COVERED_TUBE.get(), ECPneumatics.CLEAR_COVERED_TUBE.get());
     }
 
-    private static void registerTubeItemColours(RegisterColorHandlersEvent.Item event) {
-        event.register((stack, tintIndex) -> tintIndex == TUBE_GLASS_TINT ? 0xFF000000 | tubeGlass(null) : -1,
+    private static void registerTubeItemColours(ColorHandlerEvent.Item event) {
+        event.getItemColors().register(
+                (stack, tintIndex) -> tintIndex == TUBE_GLASS_TINT ? 0xFF000000 | tubeGlass(null) : -1,
                 ECPneumatics.WINDOWED_TUBE_ITEM.get());
     }
 
@@ -132,8 +161,8 @@ public final class EngineeredComputationClient {
         return Math.round(rgb[0] * 255) << 16 | Math.round(rgb[1] * 255) << 8 | Math.round(rgb[2] * 255);
     }
 
-    private static void registerBlockColours(RegisterColorHandlersEvent.Block event) {
-        event.register((state, level, pos, tintIndex) -> coverColour(level, pos, tintIndex),
+    private static void registerBlockColours(ColorHandlerEvent.Block event) {
+        event.getBlockColors().register((state, level, pos, tintIndex) -> coverColour(level, pos, tintIndex),
                 ECCables.covered().get(), ECCables.clearCovered().get());
     }
 
@@ -141,11 +170,11 @@ public final class EngineeredComputationClient {
         event.registerReloadListener(GuideText.RELOAD);
     }
 
-    private static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
-        DriveRenderer.models().forEach(event::register);
-        event.register(CarrierRenderer.MODEL);
-        CoveredTubeModel.models().forEach(event::register);
-        TerminalDiskRenderer.models().forEach(event::register);
+    private static void registerAdditionalModels(ModelRegistryEvent event) {
+        DriveRenderer.models().forEach(ForgeModelBakery::addSpecialModel);
+        ForgeModelBakery.addSpecialModel(CarrierRenderer.MODEL);
+        CoveredTubeModel.models().forEach(ForgeModelBakery::addSpecialModel);
+        TerminalDiskRenderer.models().forEach(ForgeModelBakery::addSpecialModel);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -153,8 +182,8 @@ public final class EngineeredComputationClient {
         event.registerBlockEntityRenderer(ECTerminals.TERMINAL_DISKS.get(), TerminalDiskRenderer::new);
     }
 
-    private static void registerGeometryLoaders(ModelEvent.RegisterGeometryLoaders event) {
-        event.register(SplitModelLoader.ID.getPath(), SplitModelLoader.INSTANCE);
+    private static void registerGeometryLoaders(ModelRegistryEvent event) {
+        ModelLoaderRegistry.registerLoader(SplitModelLoader.ID, SplitModelLoader.INSTANCE);
     }
 
     private static void registerScreens(FMLClientSetupEvent event) {

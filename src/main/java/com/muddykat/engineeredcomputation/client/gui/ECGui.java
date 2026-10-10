@@ -1,12 +1,20 @@
 package com.muddykat.engineeredcomputation.client.gui;
 
+import org.jetbrains.annotations.Nullable;
+
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.ItemStack;
 
 public final class ECGui
 {
@@ -31,50 +39,50 @@ public final class ECGui
 	{
 	}
 
-	public static void panel(GuiGraphics graphics, int x, int y, int width, int height)
+	public static void panel(PoseStack pose, int x, int y, int width, int height)
 	{
 		int right = x+width;
 		int bottom = y+height;
-		graphics.fill(x+1, y+2, right-1, bottom-2, FACE);
-		graphics.fill(x+2, y+1, right-2, bottom-1, FACE);
-		graphics.fill(x+2, y+1, right-3, y+3, HIGHLIGHT);
-		graphics.fill(x+1, y+2, x+3, bottom-3, HIGHLIGHT);
-		graphics.fill(x+3, bottom-3, right-2, bottom-1, SHADOW);
-		graphics.fill(right-3, y+3, right-1, bottom-2, SHADOW);
+		GuiComponent.fill(pose, x+1, y+2, right-1, bottom-2, FACE);
+		GuiComponent.fill(pose, x+2, y+1, right-2, bottom-1, FACE);
+		GuiComponent.fill(pose, x+2, y+1, right-3, y+3, HIGHLIGHT);
+		GuiComponent.fill(pose, x+1, y+2, x+3, bottom-3, HIGHLIGHT);
+		GuiComponent.fill(pose, x+3, bottom-3, right-2, bottom-1, SHADOW);
+		GuiComponent.fill(pose, right-3, y+3, right-1, bottom-2, SHADOW);
 
-		graphics.fill(x+2, y, right-3, y+1, BLACK);
-		graphics.fill(x, y+2, x+1, bottom-3, BLACK);
-		graphics.fill(x+3, bottom-1, right-2, bottom, BLACK);
-		graphics.fill(right-1, y+3, right, bottom-2, BLACK);
-		graphics.fill(x+1, y+1, x+2, y+2, BLACK);
-		graphics.fill(right-3, y+1, right-2, y+2, BLACK);
-		graphics.fill(right-2, y+2, right-1, y+3, BLACK);
-		graphics.fill(x+1, bottom-3, x+2, bottom-2, BLACK);
-		graphics.fill(x+2, bottom-2, x+3, bottom-1, BLACK);
-		graphics.fill(right-2, bottom-2, right-1, bottom-1, BLACK);
+		GuiComponent.fill(pose, x+2, y, right-3, y+1, BLACK);
+		GuiComponent.fill(pose, x, y+2, x+1, bottom-3, BLACK);
+		GuiComponent.fill(pose, x+3, bottom-1, right-2, bottom, BLACK);
+		GuiComponent.fill(pose, right-1, y+3, right, bottom-2, BLACK);
+		GuiComponent.fill(pose, x+1, y+1, x+2, y+2, BLACK);
+		GuiComponent.fill(pose, right-3, y+1, right-2, y+2, BLACK);
+		GuiComponent.fill(pose, right-2, y+2, right-1, y+3, BLACK);
+		GuiComponent.fill(pose, x+1, bottom-3, x+2, bottom-2, BLACK);
+		GuiComponent.fill(pose, x+2, bottom-2, x+3, bottom-1, BLACK);
+		GuiComponent.fill(pose, right-2, bottom-2, right-1, bottom-1, BLACK);
 	}
 
-	public static void sunken(GuiGraphics graphics, int x, int y, int width, int height)
+	public static void sunken(PoseStack pose, int x, int y, int width, int height)
 	{
-		graphics.fill(x, y, x+width, y+height, SUNKEN_FACE);
-		graphics.fill(x, y, x+width-1, y+1, SUNKEN_SHADOW);
-		graphics.fill(x, y, x+1, y+height-1, SUNKEN_SHADOW);
-		graphics.fill(x+1, y+height-1, x+width, y+height, HIGHLIGHT);
-		graphics.fill(x+width-1, y+1, x+width, y+height, HIGHLIGHT);
+		GuiComponent.fill(pose, x, y, x+width, y+height, SUNKEN_FACE);
+		GuiComponent.fill(pose, x, y, x+width-1, y+1, SUNKEN_SHADOW);
+		GuiComponent.fill(pose, x, y, x+1, y+height-1, SUNKEN_SHADOW);
+		GuiComponent.fill(pose, x+1, y+height-1, x+width, y+height, HIGHLIGHT);
+		GuiComponent.fill(pose, x+width-1, y+1, x+width, y+height, HIGHLIGHT);
 	}
 
-	public static void button(GuiGraphics graphics, int x, int y, int width, int height, boolean hovered)
+	public static void button(PoseStack pose, int x, int y, int width, int height, boolean hovered)
 	{
-		graphics.blitNineSliced(WIDGETS, x, y, width, height, 20, 4, 200, 20, 0, hovered? 86: 66);
+		nineSlice(pose, WIDGETS, x, y, width, height, 20, 4, 200, 20, 0, hovered? 86: 66);
 	}
 
 	/** The creative inventory's scroll thumb, 12 by {@link #SCROLLER_HEIGHT}. */
-	public static void scroller(GuiGraphics graphics, int x, int y, boolean enabled)
+	public static void scroller(PoseStack pose, int x, int y, boolean enabled)
 	{
-		graphics.blit(CREATIVE_TABS, x, y, enabled? 232: 244, 0, 12, SCROLLER_HEIGHT);
+		blit(pose, CREATIVE_TABS, x, y, enabled? 232: 244, 0, 12, SCROLLER_HEIGHT);
 	}
 
-	public static void icon(GuiGraphics graphics, int x, int y, String[] rows, int colour)
+	public static void icon(PoseStack pose, int x, int y, String[] rows, int colour)
 	{
 		for(int pass = 0; pass<2; pass++)
 			for(int row = 0; row<rows.length; row++)
@@ -83,7 +91,7 @@ public final class ECGui
 					{
 						int px = x+col+(pass==0? 1: 0);
 						int py = y+row+(pass==0? 1: 0);
-						graphics.fill(px, py, px+1, py+1, pass==0? 0xFF3F3F3F: colour);
+						GuiComponent.fill(pose, px, py, px+1, py+1, pass==0? 0xFF3F3F3F: colour);
 					}
 	}
 
@@ -95,26 +103,26 @@ public final class ECGui
 		return Language.getInstance().getVisualOrder(FormattedText.composite(cut, FormattedText.of("…")));
 	}
 
-	public static void tagBadge(GuiGraphics graphics, Font font, int x, int y)
+	public static void tagBadge(PoseStack pose, Font font, int x, int y)
 	{
-		graphics.pose().pushPose();
-		graphics.pose().translate(0, 0, 200);
-		graphics.drawString(font, "#", x+1, y, 0x55FFFF, true);
-		graphics.pose().popPose();
+		pose.pushPose();
+		pose.translate(0, 0, 200);
+		font.drawShadow(pose, "#", x+1, y, 0x55FFFF);
+		pose.popPose();
 	}
 
-	public static void slot(GuiGraphics graphics, int x, int y)
+	public static void slot(PoseStack pose, int x, int y)
 	{
-		graphics.blit(CONTAINER, x, y, 7, 17, 18, 18);
+		blit(pose, CONTAINER, x, y, 7, 17, 18, 18);
 	}
 
-	public static void gauge(GuiGraphics graphics, int x, int y, int width, int height, double fraction)
+	public static void gauge(PoseStack pose, int x, int y, int width, int height, double fraction)
 	{
-		sunken(graphics, x, y, width, height);
+		sunken(pose, x, y, width, height);
 		double clamped = Math.max(0, Math.min(1, fraction));
 		int filled = (int)Math.round((width-2)*clamped);
 		if(filled>0)
-			graphics.fill(x+1, y+1, x+1+filled, y+height-1, gaugeColour(clamped));
+			GuiComponent.fill(pose, x+1, y+1, x+1+filled, y+height-1, gaugeColour(clamped));
 	}
 
 	private static int gaugeColour(double fraction)
@@ -122,5 +130,118 @@ public final class ECGui
 		int red = fraction<0.7? (int)(255*fraction/0.7): 255;
 		int green = fraction<0.7? 200: (int)(200*(1-(fraction-0.7)/0.3));
 		return 0xFF000000|red<<16|Math.max(0, green)<<8|40;
+	}
+
+	/** A region of a 256x256 texture. */
+	public static void blit(PoseStack pose, ResourceLocation texture, int x, int y, int u, int v, int width, int height)
+	{
+		RenderSystem.setShaderTexture(0, texture);
+		RenderSystem.setShaderColor(1, 1, 1, 1);
+		RenderSystem.enableBlend();
+		RenderSystem.defaultBlendFunc();
+		GuiComponent.blit(pose, x, y, u, v, width, height, 256, 256);
+	}
+
+	/**
+	 * A texture region stretched to any size the way vanilla sizes its widgets: fixed borders, the edges and middle
+	 * tiled. Borders shrink to half the size when it is smaller, and the far ones are then cut from the region's own
+	 * edges, as 1.20's blitNineSliced does.
+	 */
+	public static void nineSlice(PoseStack pose, ResourceLocation texture, int x, int y, int width, int height,
+			int border, int borderHeight, int u0Width, int v0Height, int u, int v)
+	{
+		int left = Math.min(border, width/2), top = Math.min(borderHeight, height/2);
+		int innerU = u0Width-2*left, innerV = v0Height-2*top;
+		for(int row = 0; row<3; row++)
+		{
+			int dy = row==0? 0: row==1? top: height-top;
+			int rowHeight = row==1? height-2*top: top;
+			int sv = row==0? v: row==1? v+top: v+v0Height-top;
+			int tileV = row==1? innerV: top;
+			for(int col = 0; col<3; col++)
+			{
+				int dx = col==0? 0: col==1? left: width-left;
+				int colWidth = col==1? width-2*left: left;
+				int su = col==0? u: col==1? u+left: u+u0Width-left;
+				int tileU = col==1? innerU: left;
+				for(int ty = 0; ty<rowHeight; ty += tileV)
+					for(int tx = 0; tx<colWidth; tx += tileU)
+						blit(pose, texture, x+dx+tx, y+dy+ty, su, sv, Math.min(tileU, colWidth-tx),
+								Math.min(tileV, rowHeight-ty));
+			}
+		}
+	}
+
+	/** A filled rectangle drawn at depth {@code z}, so it lands over (or under) items drawn at their own depth. */
+	public static void fill(PoseStack pose, int x1, int y1, int x2, int y2, int z, int colour)
+	{
+		pose.pushPose();
+		pose.translate(0, 0, z);
+		GuiComponent.fill(pose, x1, y1, x2, y2, colour);
+		pose.popPose();
+	}
+
+	/** A filled rectangle drawn over whatever is already there, items included (1.20's gui overlay layer). */
+	public static void overlay(PoseStack pose, int x1, int y1, int x2, int y2, int colour)
+	{
+		RenderSystem.disableDepthTest();
+		GuiComponent.fill(pose, x1, y1, x2, y2, colour);
+		RenderSystem.enableDepthTest();
+	}
+
+	/** A one-pixel frame. */
+	public static void outline(PoseStack pose, int x, int y, int width, int height, int colour)
+	{
+		GuiComponent.fill(pose, x, y, x+width, y+1, colour);
+		GuiComponent.fill(pose, x, y+height-1, x+width, y+height, colour);
+		GuiComponent.fill(pose, x, y+1, x+1, y+height-1, colour);
+		GuiComponent.fill(pose, x+width-1, y+1, x+width, y+height-1, colour);
+	}
+
+	/** An item, moved by {@code pose}: item rendering only follows the model-view stack. */
+	public static void renderItem(PoseStack pose, ItemStack stack, int x, int y)
+	{
+		withPose(pose, () -> Minecraft.getInstance().getItemRenderer().renderAndDecorateItem(stack, x, y));
+	}
+
+	/** An item's count and durability, moved by {@code pose}; {@code text} replaces the count (null keeps it). */
+	public static void renderItemDecorations(PoseStack pose, Font font, ItemStack stack, int x, int y,
+			@Nullable String text)
+	{
+		withPose(pose, () -> Minecraft.getInstance().getItemRenderer().renderGuiItemDecorations(font, stack, x, y,
+				text));
+	}
+
+	private static void withPose(PoseStack pose, Runnable draw)
+	{
+		PoseStack view = RenderSystem.getModelViewStack();
+		view.pushPose();
+		view.mulPoseMatrix(pose.last().pose());
+		RenderSystem.applyModelViewMatrix();
+		draw.run();
+		view.popPose();
+		RenderSystem.applyModelViewMatrix();
+	}
+
+	/** Clips drawing to a rectangle given in GUI coordinates. */
+	public static void enableScissor(int x1, int y1, int x2, int y2)
+	{
+		Window window = Minecraft.getInstance().getWindow();
+		double scale = window.getGuiScale();
+		RenderSystem.enableScissor((int)(x1*scale), (int)(window.getHeight()-y2*scale), (int)((x2-x1)*scale),
+				(int)((y2-y1)*scale));
+	}
+
+	public static void disableScissor()
+	{
+		RenderSystem.disableScissor();
+	}
+
+	/** Placeholder text shown in an empty, unfocused text box, where its text would be (styled by {@code hint}). */
+	public static void hint(PoseStack pose, Font font, @Nullable EditBox box, Component hint, boolean bordered)
+	{
+		if(box!=null&&box.isVisible()&&box.getValue().isEmpty()&&!box.isFocused())
+			font.drawShadow(pose, fit(font, hint, box.getInnerWidth()), bordered? box.x+4: box.x,
+					bordered? box.y+(box.getHeight()-8)/2: box.y, 0xE0E0E0);
 	}
 }

@@ -44,7 +44,7 @@ public class CardDeckMenu extends AbstractContainerMenu
 		this.cards = new SimpleContainer(capacity);
 		for(int i = 0; i<filed.size()&&i<capacity; i++)
 			cards.setItem(i, CatalogueCardItem.punched(filed.get(i)));
-		if(!player.level().isClientSide)
+		if(!player.level.isClientSide)
 			cards.addListener(container -> writeBack());
 
 		for(int i = 0; i<capacity; i++)
@@ -99,7 +99,7 @@ public class CardDeckMenu extends AbstractContainerMenu
 		ItemStack deck = player.getItemInHand(hand);
 		if(!(deck.getItem() instanceof CardDeckItem item))
 			return;
-		NetworkHooks.openScreen(player, new SimpleMenuProvider((id, inventory, p) -> new CardDeckMenu(id,
+		NetworkHooks.openGui(player, new SimpleMenuProvider((id, inventory, p) -> new CardDeckMenu(id,
 				inventory, hand,
 				item.getCapacity(), CardDeckItem.deck(deck).cards()), deck.getHoverName()), buf -> {
 			buf.writeEnum(hand);
@@ -159,7 +159,7 @@ public class CardDeckMenu extends AbstractContainerMenu
 		if(!moved)
 			return ItemStack.EMPTY;
 		if(stack.isEmpty())
-			slot.setByPlayer(ItemStack.EMPTY);
+			slot.set(ItemStack.EMPTY);
 		else
 			slot.setChanged();
 		slot.onTake(player, stack);

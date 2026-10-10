@@ -2,11 +2,11 @@
   "parent": "minecraft:block/block",
   "loader": "forge:obj",
   "model": "engineered_computation:models/block/multiblocks/era2_data_exporter_active.obj",
-  "flip_v": true,
-  "automatic_culling": false,
-  "emissive_ambient": false,
-  "render_type": "minecraft:cutout",
   "textures": {
     "particle": "engineered_computation:block/era/data_adapters"
-  }
+  },
+  "flip-v": true,
+  "detectCullableFaces": false,
+  "ambientToFullbright": false,
+  "diffuseLighting": true
 }

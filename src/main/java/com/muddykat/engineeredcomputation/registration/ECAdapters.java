@@ -10,10 +10,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.RegistryObject;
 
+import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.adapter.AdapterKind;
 import com.muddykat.engineeredcomputation.adapter.AdapterSpeed;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
@@ -23,8 +25,8 @@ import com.muddykat.engineeredcomputation.era.ComputerEra;
 
 public final class ECAdapters
 {
-	private static final BlockBehaviour.Properties PROPERTIES = BlockBehaviour.Properties.of()
-			.mapColor(MapColor.METAL)
+	private static final BlockBehaviour.Properties PROPERTIES = BlockBehaviour.Properties
+			.of(Material.METAL, MaterialColor.METAL)
 			.strength(2.2F, 11.0F)
 			.sound(SoundType.METAL)
 			.noOcclusion()
@@ -49,7 +51,8 @@ public final class ECAdapters
 				RegistryObject<DataAdapterBlock> block = ECRegistrationHolder.BLOCKS.register(name,
 						() -> new DataAdapterBlock(era, kind, PROPERTIES));
 				kinds.put(kind, block);
-				ITEMS.add(ECRegistrationHolder.ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties())));
+				ITEMS.add(ECRegistrationHolder.ITEMS.register(name, () -> new BlockItem(block.get(),
+						new Item.Properties().tab(EngineeredComputation.TAB))));
 			}
 			BLOCKS.put(era, kinds);
 		}
@@ -61,7 +64,8 @@ public final class ECAdapters
 							.map(RegistryObject::get).toArray(DataAdapterBlock[]::new)).build(null));
 
 	public static final RegistryObject<ProgramFloppyItem> PROGRAM_FLOPPY = ECRegistrationHolder.ITEMS.register(
-			"program_floppy", () -> new ProgramFloppyItem(new Item.Properties().stacksTo(1)));
+			"program_floppy",
+			() -> new ProgramFloppyItem(new Item.Properties().tab(EngineeredComputation.TAB).stacksTo(1)));
 
 	private ECAdapters()
 	{

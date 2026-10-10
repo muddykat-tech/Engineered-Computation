@@ -7,7 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
@@ -40,7 +40,7 @@ public final class CellRecipeGameTests
 		CraftingContainer input = Pattern.craftingGrid(width, height, stacks);
 		Optional<CraftingRecipe> recipe =
 				level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
-		return recipe.isPresent()? recipe.get().assemble(input, level.registryAccess()): ItemStack.EMPTY;
+		return recipe.isPresent()? recipe.get().assemble(input): ItemStack.EMPTY;
 	}
 
 	@GameTest(template = StorageGameTests.TEMPLATE)
@@ -81,7 +81,7 @@ public final class CellRecipeGameTests
 		ItemStack stack1 = new ItemStack(ECCatalogue.decks().get(0).get());
 		ItemStack stack2 = new ItemStack(ECCatalogue.decks().get(0).get());
 		CardDeckItem.setDeck(stack1, CardDeck.EMPTY.with(new CatalogueCard(GlobalPos.of(helper.getLevel().dimension(),
-				BlockPos.ZERO), Component.literal("Chest"), CellContents.EMPTY, CatalogueCard.NEVER)));
+				BlockPos.ZERO), new TextComponent("Chest"), CellContents.EMPTY, CatalogueCard.NEVER)));
 		List<ItemStack> stacks = List.of(stack1, stack2);
 		ItemStack result = craft(level, 2, 1, stacks);
 		StorageGameTests.check(helper, result.isEmpty(),

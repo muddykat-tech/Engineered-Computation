@@ -2,11 +2,13 @@ package com.muddykat.engineeredcomputation.pneumatic;
 
 import org.lwjgl.glfw.GLFW;
 
-import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -37,46 +39,48 @@ public abstract class NamedStationScreen<M extends AbstractContainerMenu&NamedSt
 	{
 		super.init();
 		nameField = new EditBox(font, leftPos+11, topPos+NAME_Y+3, imageWidth-22, 10,
-				Component.translatable("gui.engineered_computation.station.name"));
+				new TranslatableComponent("gui.engineered_computation.station.name"));
 		nameField.setBordered(false);
 		nameField.setMaxLength(TubeStationBlockEntity.MAX_NAME);
 		nameField.setTextColor(0xFFFFFF);
-		nameField.setHint(unnamed().copy().withStyle(style -> style.withColor(0x707070)));
 		nameField.setValue(menu.getName());
 		nameField.setResponder(name -> ECPayloads.sendToServer(new StationNamePayload(menu.containerId, name)));
 		addRenderableWidget(nameField);
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
-		renderBackground(graphics);
-		super.render(graphics, mouseX, mouseY, partialTick);
-		renderTooltip(graphics, mouseX, mouseY);
+		renderBackground(pose);
+		super.render(pose, mouseX, mouseY, partialTick);
+		ECGui.hint(pose, font, nameField, unnamed().copy().withStyle(style -> style.withColor(0x707070)), false);
+		renderTooltip(pose, mouseX, mouseY);
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY)
+	protected void renderBg(PoseStack pose, float partialTick, int mouseX, int mouseY)
 	{
-		ECGui.panel(graphics, leftPos, topPos, imageWidth, imageHeight);
+		ECGui.panel(pose, leftPos, topPos, imageWidth, imageHeight);
 		int x = leftPos+8;
-		graphics.fill(x, topPos+NAME_Y, x+imageWidth-16, topPos+NAME_Y+NAME_HEIGHT, 0xFFA0A0A0);
-		graphics.fill(x+1, topPos+NAME_Y+1, x+imageWidth-17, topPos+NAME_Y+NAME_HEIGHT-1, 0xFF000000);
+		GuiComponent.fill(pose, x, topPos+NAME_Y, x+imageWidth-16, topPos+NAME_Y+NAME_HEIGHT, 0xFFA0A0A0);
+		GuiComponent.fill(pose, x+1, topPos+NAME_Y+1, x+imageWidth-17, topPos+NAME_Y+NAME_HEIGHT-1, 0xFF000000);
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY)
+	protected void renderLabels(PoseStack pose, int mouseX, int mouseY)
 	{
-		graphics.drawString(font, title, titleLabelX, titleLabelY, ECGui.LABEL, false);
+		font.draw(pose, title, titleLabelX, titleLabelY, ECGui.LABEL);
 	}
 
-	protected void renderSwitch(GuiGraphics graphics, int rowY, Component label, boolean on, int mouseX, int mouseY)
+	protected void renderSwitch(PoseStack pose, int rowY, Component label, boolean on, int mouseX, int mouseY)
 	{
-		graphics.drawString(font, label, leftPos+8, topPos+rowY+3, ECGui.LABEL, false);
+		font.draw(pose, label, leftPos+8, topPos+rowY+3, ECGui.LABEL);
 		int x = leftPos+switchX();
-		ECGui.button(graphics, x, topPos+rowY, SWITCH_WIDTH, SWITCH_HEIGHT, isOverSwitch(rowY, mouseX, mouseY));
-		graphics.drawCenteredString(font, Component.translatable(on? "gui.engineered_computation.adapter.on"
-				: "gui.engineered_computation.adapter.off"), x+SWITCH_WIDTH/2+1, topPos+rowY+3, on? 0x6CFF7C: 0xFF6A5A);
+		ECGui.button(pose, x, topPos+rowY, SWITCH_WIDTH, SWITCH_HEIGHT, isOverSwitch(rowY, mouseX, mouseY));
+		GuiComponent.drawCenteredString(pose, font,
+				new TranslatableComponent(on? "gui.engineered_computation.adapter.on"
+						: "gui.engineered_computation.adapter.off"),
+				x+SWITCH_WIDTH/2+1, topPos+rowY+3, on? 0x6CFF7C: 0xFF6A5A);
 	}
 
 	private int switchX()
@@ -105,7 +109,7 @@ public abstract class NamedStationScreen<M extends AbstractContainerMenu&NamedSt
 		if(nameField.isFocused()&&keyCode!=GLFW.GLFW_KEY_ESCAPE)
 		{
 			if(keyCode==GLFW.GLFW_KEY_ENTER||keyCode==GLFW.GLFW_KEY_KP_ENTER)
-				nameField.setFocused(false);
+				nameField.setFocus(false);
 			else
 				nameField.keyPressed(keyCode, scanCode, modifiers);
 			return true;
@@ -117,7 +121,7 @@ public abstract class NamedStationScreen<M extends AbstractContainerMenu&NamedSt
 	public boolean mouseClicked(double mouseX, double mouseY, int button)
 	{
 		if(!nameField.isMouseOver(mouseX, mouseY))
-			nameField.setFocused(false);
+			nameField.setFocus(false);
 		return super.mouseClicked(mouseX, mouseY, button);
 	}
 }

@@ -16,11 +16,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.SimpleMenuProvider;
@@ -38,7 +40,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.network.NetworkHooks;
 
 import com.muddykat.engineeredcomputation.catalogue.CatalogueDesk;
@@ -134,7 +138,7 @@ public class TerminalMenu extends AbstractContainerMenu
 	private TerminalStats clientStats = TerminalStats.EMPTY;
 	private Set<ItemKey> clientUnreachable = Set.of();
 	private List<RequestSlip.Line> clientSlip = List.of();
-	private Component clientOutlet = Component.empty();
+	private Component clientOutlet = new TextComponent("");
 	private boolean clientOutletHome = true;
 	private List<TeletypeSlipPayload.Outlet> clientOutlets = List.of();
 	private int clientVersion;
@@ -163,9 +167,9 @@ public class TerminalMenu extends AbstractContainerMenu
 		this.player = playerInventory.player;
 		this.features = features;
 		this.layout = Layout.of(features);
-		this.teletype = features.requests()&&!player.level().isClientSide
-				&&player.level().getBlockEntity(terminalPos) instanceof TeletypeBlockEntity entity? entity: null;
-		this.desk = features.requests()&&!player.level().isClientSide? new CatalogueDesk(player.level(), terminalPos,
+		this.teletype = features.requests()&&!player.level.isClientSide
+				&&player.level.getBlockEntity(terminalPos) instanceof TeletypeBlockEntity entity? entity: null;
+		this.desk = features.requests()&&!player.level.isClientSide? new CatalogueDesk(player.level, terminalPos,
 				() -> teletype==null? null: teletype.getOutlet()): null;
 
 		for(int row = 0; row<3; row++)
@@ -207,7 +211,7 @@ public class TerminalMenu extends AbstractContainerMenu
 	public static void open(ServerPlayer player, BlockPos terminalPos, Component title, TerminalFeatures features,
 			@Nullable CraftingGrid grid)
 	{
-		NetworkHooks.openScreen(player, new SimpleMenuProvider(
+		NetworkHooks.openGui(player, new SimpleMenuProvider(
 						(id, inventory, p) -> new TerminalMenu(id, inventory, terminalPos, features, grid), title),
 				buf ->
 				{
@@ -245,7 +249,7 @@ public class TerminalMenu extends AbstractContainerMenu
 		for(ItemStack link : grid.slots())
 			if(!link.isEmpty())
 				needed.merge(ItemKey.of(link), 1L, Long::sum);
-		NetworkStorage storage = player.level().isClientSide? null: storage();
+		NetworkStorage storage = player.level.isClientSide? null: storage();
 		for(Map.Entry<ItemKey, Long> entry : needed.entrySet())
 		{
 			long stored = storage==null? clientContents.getOrDefault(entry.getKey(), 0L): storage.getAmount(entry.getKey());
@@ -262,7 +266,7 @@ public class TerminalMenu extends AbstractContainerMenu
 
 	private NetworkStorage storage()
 	{
-		network = StorageNetwork.of(player.level(), terminalPos);
+		network = StorageNetwork.of(player.level, terminalPos);
 		return network.isTooLarge()||!network.getConflictingEras().isEmpty()? NetworkStorage.EMPTY: network.getStorage();
 	}
 
@@ -295,7 +299,7 @@ public class TerminalMenu extends AbstractContainerMenu
 					pos, desk.label(pos), pos.equals(view.outlet()))).toList();
 			TeletypeSlipPayload slip = new TeletypeSlipPayload(containerId,
 					teletype==null? List.of(): List.copyOf(teletype.getSlip().lines()),
-					view.outlet()==null? Component.empty(): desk.label(view.outlet()),
+					view.outlet()==null? new TextComponent(""): desk.label(view.outlet()),
 					view.outlet()==null||view.outlet().equals(view.home()), outlets);
 			if(!slip.equals(sentSlip))
 			{
@@ -341,8 +345,8 @@ public class TerminalMenu extends AbstractContainerMenu
 		if(craftingCountdown-->0)
 			return;
 		craftingCountdown = CRAFTING_INTERVAL;
-		List<ItemKey> craftables = List.copyOf(CraftingNetwork.craftables(player.level(), network));
-		List<PatternOffer> offers = CraftingNetwork.offers(player.level(), network);
+		List<ItemKey> craftables = List.copyOf(CraftingNetwork.craftables(player.level, network));
+		List<PatternOffer> offers = CraftingNetwork.offers(player.level, network);
 		List<OrderSummary> orders = CraftingNetwork.orders(network);
 		if(craftables.equals(sentCraftables)&&offers.equals(sentOffers)&&orders.equals(sentOrders))
 			return;
@@ -360,7 +364,7 @@ public class TerminalMenu extends AbstractContainerMenu
 		if(!features.orders()||!(player instanceof ServerPlayer serverPlayer))
 			return;
 		NetworkStorage storage = storage();
-		Level level = player.level();
+		Level level = player.level;
 		CraftingPlan plan = offer.isPresent()? CraftingNetwork.planOffer(level, network, storage, offer.get(), amount)
 				.orElse(null): CraftingNetwork.plan(level, network, storage, target, amount);
 		if(plan==null)
@@ -483,7 +487,7 @@ public class TerminalMenu extends AbstractContainerMenu
 	{
 		if(id<SEND_SLIP||id>PREVIOUS_OUTLET&&(id<SLIP_REMOVE||id>=SLIP_LOWER+RequestSlip.SIZE))
 			return false;
-		if(player.level().isClientSide||teletype==null)
+		if(player.level.isClientSide||teletype==null)
 			return true;
 		if(id==SEND_SLIP)
 			sendSlip();
@@ -508,7 +512,7 @@ public class TerminalMenu extends AbstractContainerMenu
 				left.add(new RequestSlip.Line(line.key(), line.amount()-asked));
 		}
 		teletype.getSlip().set(left);
-		player.level().playSound(null, terminalPos, SoundEvents.VILLAGER_WORK_LIBRARIAN, SoundSource.BLOCKS, 0.7F, 1.3F);
+		player.level.playSound(null, terminalPos, SoundEvents.VILLAGER_WORK_LIBRARIAN, SoundSource.BLOCKS, 0.7F, 1.3F);
 	}
 
 	public void chooseOutlet(BlockPos pos)
@@ -540,7 +544,7 @@ public class TerminalMenu extends AbstractContainerMenu
 	public ItemStack quickMoveStack(Player player, int index)
 	{
 		Slot slot = slots.get(index);
-		if(player.level().isClientSide||!slot.hasItem())
+		if(player.level.isClientSide||!slot.hasItem())
 			return ItemStack.EMPTY;
 		if(desk!=null)
 		{
@@ -571,7 +575,7 @@ public class TerminalMenu extends AbstractContainerMenu
 		if(isLinked()&&slotId>=CRAFT_GRID_FIRST&&slotId<CRAFT_GRID_FIRST+CraftingGrid.SIZE
 				&&(clickType==ClickType.PICKUP||clickType==ClickType.QUICK_MOVE))
 		{
-			if(!player.level().isClientSide)
+			if(!player.level.isClientSide)
 				clickLinked(slotId-CRAFT_GRID_FIRST, button, clickType);
 			return;
 		}
@@ -588,12 +592,12 @@ public class TerminalMenu extends AbstractContainerMenu
 			return ItemStack.EMPTY;
 		quickCraftBudget -= result.getCount();
 		ItemStack crafted = result.copy();
-		result.getItem().onCraftedBy(result, player.level(), player);
+		result.getItem().onCraftedBy(result, player.level, player);
 		if(!moveItemStackTo(result, 0, INVENTORY_SLOTS, true))
 			return ItemStack.EMPTY;
 		slot.onQuickCraft(result, crafted);
 		if(result.isEmpty())
-			slot.setByPlayer(ItemStack.EMPTY);
+			slot.set(ItemStack.EMPTY);
 		else
 			slot.setChanged();
 		if(result.getCount()==crafted.getCount())
@@ -620,7 +624,7 @@ public class TerminalMenu extends AbstractContainerMenu
 		{
 			case TOGGLE_LINKED ->
 			{
-				if(!player.level().isClientSide)
+				if(!player.level.isClientSide)
 				{
 					if(isLinked())
 						unlink();
@@ -630,7 +634,7 @@ public class TerminalMenu extends AbstractContainerMenu
 			}
 			case CLEAR_GRID ->
 			{
-				if(!player.level().isClientSide)
+				if(!player.level.isClientSide)
 				{
 					if(isLinked())
 						grid.slots().replaceAll(link -> ItemStack.EMPTY);
@@ -658,7 +662,7 @@ public class TerminalMenu extends AbstractContainerMenu
 
 	private void updateCraftResult()
 	{
-		if(!(player.level() instanceof ServerLevel level)||!(player instanceof ServerPlayer serverPlayer))
+		if(!(player.level instanceof ServerLevel level)||!(player instanceof ServerPlayer serverPlayer))
 			return;
 		resultVersion = grid.version();
 		CraftingContainer input = craftGrid;
@@ -667,9 +671,7 @@ public class TerminalMenu extends AbstractContainerMenu
 				level.getServer().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
 		if(recipe.isPresent()&&craftResult.setRecipeUsed(level, serverPlayer, recipe.get()))
 		{
-			ItemStack assembled = recipe.get().assemble(input, level.registryAccess());
-			if(assembled.isItemEnabled(level.enabledFeatures()))
-				result = assembled;
+			result = recipe.get().assemble(input);
 		}
 		craftResult.setItem(0, result);
 		setRemoteSlot(RESULT_SLOT, result);
@@ -680,7 +682,8 @@ public class TerminalMenu extends AbstractContainerMenu
 	private void clickLinked(int slot, int button, ClickType clickType)
 	{
 		ItemStack carried = getCarried();
-		craftGrid.setItem(slot, clickType==ClickType.PICKUP&&!carried.isEmpty()? carried.copyWithCount(1): ItemStack.EMPTY);
+		craftGrid.setItem(slot, clickType==ClickType.PICKUP&&!carried.isEmpty()
+				? ItemHandlerHelper.copyStackWithSize(carried, 1): ItemStack.EMPTY);
 	}
 
 	private void link(Player player)
@@ -691,7 +694,7 @@ public class TerminalMenu extends AbstractContainerMenu
 			ItemStack stack = grid.getItem(i);
 			if(stack.isEmpty())
 				continue;
-			grid.slots().set(i, stack.copyWithCount(1));
+			grid.slots().set(i, ItemHandlerHelper.copyStackWithSize(stack, 1));
 			stack.shrink((int)storage.insert(ItemKey.of(stack), stack.getCount(), false));
 			giveBack(player, stack);
 		}
@@ -706,7 +709,8 @@ public class TerminalMenu extends AbstractContainerMenu
 		{
 			ItemStack link = grid.getItem(i);
 			if(!link.isEmpty())
-				grid.slots().set(i, storage.extract(ItemKey.of(link), 1, false)>0? link.copyWithCount(1): ItemStack.EMPTY);
+				grid.slots().set(i, storage.extract(ItemKey.of(link), 1, false)>0
+						? ItemHandlerHelper.copyStackWithSize(link, 1): ItemStack.EMPTY);
 		}
 		grid.setLinked(false);
 		updateCraftResult();
@@ -717,8 +721,8 @@ public class TerminalMenu extends AbstractContainerMenu
 		NetworkStorage storage = storage();
 		CraftingContainer input = craftGrid;
 		ForgeHooks.setCraftingPlayer(taker);
-		NonNullList<ItemStack> leftovers = taker.level().getRecipeManager()
-				.getRemainingItemsFor(RecipeType.CRAFTING, input, taker.level());
+		NonNullList<ItemStack> leftovers = taker.level.getRecipeManager()
+				.getRemainingItemsFor(RecipeType.CRAFTING, input, taker.level);
 		ForgeHooks.setCraftingPlayer(null);
 		for(ItemStack link : grid.slots())
 			if(!link.isEmpty())
@@ -796,9 +800,9 @@ public class TerminalMenu extends AbstractContainerMenu
 				return;
 			}
 			checkTakeAchievements(stack);
-			if(taker.level().isClientSide)
+			if(taker.level.isClientSide)
 			{
-				craftResult.setItem(0, assemble(taker.level()));
+				craftResult.setItem(0, assemble(taker.level));
 				return;
 			}
 			takeLinkedIngredients(taker);
@@ -810,12 +814,17 @@ public class TerminalMenu extends AbstractContainerMenu
 	{
 		CraftingContainer input = craftGrid;
 		return level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level)
-				.map(recipe -> recipe.assemble(input, level.registryAccess()))
+				.map(recipe -> recipe.assemble(input))
 				.orElse(ItemStack.EMPTY);
 	}
 
-	private final class GridContainer implements CraftingContainer
+	private final class GridContainer extends CraftingContainer
 	{
+		GridContainer()
+		{
+			super(TerminalMenu.this, CraftingGrid.WIDTH, CraftingGrid.WIDTH);
+		}
+
 		@Override
 		public int getWidth()
 		{
@@ -826,12 +835,6 @@ public class TerminalMenu extends AbstractContainerMenu
 		public int getHeight()
 		{
 			return CraftingGrid.WIDTH;
-		}
-
-		@Override
-		public List<ItemStack> getItems()
-		{
-			return List.copyOf(grid.slots());
 		}
 
 		@Override
@@ -910,9 +913,12 @@ public class TerminalMenu extends AbstractContainerMenu
 	@Override
 	public boolean stillValid(Player player)
 	{
-		boolean there = features.requests()? player.level().getBlockState(terminalPos).getBlock() instanceof EraTerminalBlock
-				: NetworkMemberBlock.at(player.level(), terminalPos, null)!=null;
-		return there&&player.canReach(terminalPos, 4.0);
+		boolean there = features.requests()?
+				player.level.getBlockState(terminalPos).getBlock() instanceof EraTerminalBlock
+				: NetworkMemberBlock.at(player.level, terminalPos, null)!=null;
+		return there
+				&&player.getEyePosition().distanceToSqr(Vec3.atCenterOf(terminalPos))
+				<Mth.square(player.getReachDistance()+4.0);
 	}
 
 	void applyUpdate(TerminalContentsPayload payload)

@@ -1,6 +1,6 @@
 package com.muddykat.engineeredcomputation.catalogue;
 
-import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -19,25 +19,25 @@ public class CardDeckScreen extends AbstractContainerScreen<CardDeckMenu>
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
-		renderBackground(graphics);
-		super.render(graphics, mouseX, mouseY, partialTick);
-		renderTooltip(graphics, mouseX, mouseY);
+		renderBackground(pose);
+		super.render(pose, mouseX, mouseY, partialTick);
+		renderTooltip(pose, mouseX, mouseY);
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY)
+	protected void renderBg(PoseStack pose, float partialTick, int mouseX, int mouseY)
 	{
-		ECGui.panel(graphics, leftPos, topPos, imageWidth, imageHeight);
+		ECGui.panel(pose, leftPos, topPos, imageWidth, imageHeight);
 		for(Slot slot : menu.slots)
-			ECGui.slot(graphics, leftPos+slot.x-1, topPos+slot.y-1);
+			ECGui.slot(pose, leftPos+slot.x-1, topPos+slot.y-1);
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY)
+	protected void renderLabels(PoseStack pose, int mouseX, int mouseY)
 	{
-		graphics.drawString(font, title, titleLabelX, titleLabelY, ECGui.LABEL, false);
-		graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, ECGui.LABEL, false);
+		font.draw(pose, title, titleLabelX, titleLabelY, ECGui.LABEL);
+		font.draw(pose, playerInventoryTitle, inventoryLabelX, inventoryLabelY, ECGui.LABEL);
 	}
 }

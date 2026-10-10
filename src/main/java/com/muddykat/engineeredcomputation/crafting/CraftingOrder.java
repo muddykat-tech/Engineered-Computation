@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
@@ -186,7 +185,7 @@ public final class CraftingOrder
 			return false;
 		Optional<CraftingRecipe> recipe = step.resolved.recipe(level);
 		CraftingContainer input = step.resolved.craftingInput();
-		ItemStack result = recipe.map(found -> found.assemble(input, level.registryAccess()))
+		ItemStack result = recipe.map(found -> found.assemble(input))
 				.orElse(ItemStack.EMPTY);
 		if(!ItemStack.isSameItemSameTags(result, step.resolved.primaryOutput())
 				||result.getCount()!=step.resolved.primaryOutput().getCount())
@@ -399,7 +398,7 @@ public final class CraftingOrder
 				stepTag.put("processor", NbtUtils.writeBlockPos(step.processor));
 			CompoundTag choices = new CompoundTag();
 			step.choices.forEach((slot, item) -> choices.putString(slot.toString(),
-					BuiltInRegistries.ITEM.getKey(item).toString()));
+					Registry.ITEM.getKey(item).toString()));
 			stepTag.put("choices", choices);
 			stepTag.putLong("runs", step.runs);
 			stepTag.putLong("done", step.done);
@@ -420,7 +419,7 @@ public final class CraftingOrder
 			Map<Integer, Item> choices = new HashMap<>();
 			CompoundTag choiceTag = stepTag.getCompound("choices");
 			for(String slot : choiceTag.getAllKeys())
-				BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(choiceTag.getString(slot)))
+				Registry.ITEM.getOptional(ResourceLocation.parse(choiceTag.getString(slot)))
 						.ifPresent(item -> choices.put(Integer.parseInt(slot), item));
 			Step step = new Step(decode(Pattern.CODEC, stepTag.get("pattern")),
 					stepTag.contains("processor")? NbtUtils.readBlockPos(stepTag.getCompound("processor")): null,
@@ -431,7 +430,7 @@ public final class CraftingOrder
 			System.arraycopy(received, 0, step.received, 0, Math.min(received.length, step.received.length));
 			steps.add(step);
 		}
-		TagKey<Item> targetTag = tag.contains("target_tag")? TagKey.create(Registries.ITEM,
+		TagKey<Item> targetTag = tag.contains("target_tag")? TagKey.create(Registry.ITEM_REGISTRY,
 				ResourceLocation.parse(tag.getString("target_tag"))): null;
 		CraftingOrder order = new CraftingOrder(tag.getInt("id"), decode(ItemKey.CODEC, tag.get("target")),
 				targetTag, tag.getLong("amount"), steps);

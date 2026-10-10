@@ -22,8 +22,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.network.NetworkHooks;
 
@@ -161,7 +162,7 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	private IItemHandler handlerFacing(BlockPos pos)
 	{
 		BlockEntity facing = level.getBlockEntity(pos.relative(front));
-		return facing==null? null: facing.getCapability(ForgeCapabilities.ITEM_HANDLER,
+		return facing==null? null: facing.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY,
 				front.getOpposite()).orElse(null);
 	}
 
@@ -320,7 +321,7 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 			if(stack.isEmpty())
 				return stack;
 			long taken = receive(ItemKey.of(stack), stack.getCount(), simulate);
-			return taken==0? stack: stack.copyWithCount(stack.getCount()-(int)taken);
+			return taken==0? stack: ItemHandlerHelper.copyStackWithSize(stack, stack.getCount()-(int)taken);
 		}
 
 		@Override
@@ -347,7 +348,7 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	{
 		locate(ctx);
 		if(player instanceof ServerPlayer serverPlayer)
-			NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
+			NetworkHooks.openGui(serverPlayer, new SimpleMenuProvider(
 							(id, inventory, p) -> new DataProcessorMenu(id, inventory, this, ctx.masterPos()),
 							ctx.definition().partBlock().getName()),
 					buf -> buf.writeBlockPos(ctx.masterPos()));

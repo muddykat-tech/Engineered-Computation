@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -47,13 +47,14 @@ public record PatternOffer(BlockPos processor, int slot, Pattern pattern)
 		public static Choice read(FriendlyByteBuf buf)
 		{
 			return new Choice(PatternOffer.read(buf),
-					buf.readMap(HashMap::new, FriendlyByteBuf::readVarInt, in -> in.readById(BuiltInRegistries.ITEM)));
+					buf.readMap(HashMap::new, FriendlyByteBuf::readVarInt, in -> Registry.ITEM.byId(in.readVarInt())));
 		}
 
 		public void write(FriendlyByteBuf buf)
 		{
 			offer.write(buf);
-			buf.writeMap(picks, FriendlyByteBuf::writeVarInt, (out, item) -> out.writeId(BuiltInRegistries.ITEM, item));
+			buf.writeMap(picks, FriendlyByteBuf::writeVarInt,
+					(out, item) -> out.writeVarInt(Registry.ITEM.getId(item)));
 		}
 	}
 }

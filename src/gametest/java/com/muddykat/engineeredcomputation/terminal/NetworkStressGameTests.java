@@ -7,7 +7,7 @@ import java.util.Set;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -65,7 +65,7 @@ public final class NetworkStressGameTests
 	{
 		ServerLevel level = helper.getLevel();
 		BlockPos corner = helper.absolutePos(new BlockPos(1, 1, 1));
-		Item[] items = BuiltInRegistries.ITEM.stream()
+		Item[] items = Registry.ITEM.stream()
 				.filter(item -> item!=Items.AIR&&!(item instanceof EraDataCell)).toArray(Item[]::new);
 		int placed = 0;
 		for(int side : new int[]{4, 6, 8, 10, 12})

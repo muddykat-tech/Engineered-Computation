@@ -3,18 +3,19 @@ package com.muddykat.engineeredcomputation.client.render;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.WeakHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
+import com.mojang.math.Vector4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -28,9 +29,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
-import net.minecraftforge.client.model.IQuadTransformer;
-import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.EmptyModelData;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
@@ -83,6 +82,10 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 	private final DiskPackAnimation diskPack = new DiskPackAnimation();
 	private final TapeReels tapeReels = new TapeReels();
 	private final FloppyBays floppyBays = new FloppyBays();
+	// Where a vertex's position sits in a block quad's int data (DefaultVertexFormat.BLOCK: 8 ints per vertex).
+	static final int VERTEX_STRIDE = 8;
+	static final int VERTEX_POSITION = 0;
+
 	private final Map<BakedModel, Vector3f> centres = new WeakHashMap<>();
 
 	public DriveRenderer(BlockEntityRendererProvider.Context context)
@@ -153,10 +156,10 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 		{
 			float bay = FLOPPY_BAY_STEP*(slot-modelledSlot);
 			if(out[slot]!=FloppyBays.HIDDEN)
-				draw(part, disks.get(Math.min(tiers[slot], disks.size()-1)), new Matrix4f().translation(0, bay, FLOPPY_SLIDE*out[slot]), pose, buffers,
-						packedOverlay);
+				draw(part, disks.get(Math.min(tiers[slot], disks.size()-1)),
+						Matrix4f.createTranslateMatrix(0, bay, FLOPPY_SLIDE*out[slot]), pose, buffers, packedOverlay);
 			CellStatus cell = CellStatus.unpack(status, slot);
-			draw(part, light, new Matrix4f().translation(0, bay, 0), pose, buffers, packedOverlay,
+			draw(part, light, Matrix4f.createTranslateMatrix(0, bay, 0), pose, buffers, packedOverlay,
 					quad -> QuadStyle.SOLID, 1, FloppyBays.lightColour(cell), packedLight -> FloppyBays.lightLevel(cell,
 							packedLight));
 		}
@@ -173,8 +176,9 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 		int[] tiers = floppyBays.tiers(part, seen);
 		for(int slot = 0; slot<drive.slots(); slot++)
 			if(out[slot]!=FloppyBays.HIDDEN)
-				draw(part, CARD_DECKS.get(Mth.clamp(tiers[slot], 0, CARD_DECKS.size()-1)), new Matrix4f().translation(0,
-						DECK_STEP_Y*slot+DECK_DROP*out[slot], -DECK_STEP_Z*slot), pose, buffers, packedOverlay);
+				draw(part, CARD_DECKS.get(Mth.clamp(tiers[slot], 0, CARD_DECKS.size()-1)),
+						Matrix4f.createTranslateMatrix(0, DECK_STEP_Y*slot+DECK_DROP*out[slot], -DECK_STEP_Z*slot),
+						pose, buffers, packedOverlay);
 	}
 
 	private void drawDrums(MultiblockPartBlockEntity part, EraDrive drive, int filled, float partialTick,
@@ -190,10 +194,16 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 		float turn = isNetworked(part, drive)? (float)(now/20*DRUM_TURNS%1*Mth.TWO_PI): 0;
 		for(int slot = 0; slot<drive.slots(); slot++)
 			if(out[slot]!=FloppyBays.HIDDEN)
-				draw(part, BANK_DRUMS.get(Mth.clamp(tiers[slot], 0, BANK_DRUMS.size()-1)), new Matrix4f()
-						.translation(0, DRUM_STEP_Y*slot, DRUM_SLIDE*out[slot])
-						.translate(0, DRUM_AXIS_Y, DRUM_AXIS_Z).rotateX(turn).translate(0, -DRUM_AXIS_Y, -DRUM_AXIS_Z),
+			{
+				float y = DRUM_STEP_Y*slot, z = DRUM_SLIDE*out[slot];
+				draw(part, BANK_DRUMS.get(Mth.clamp(tiers[slot], 0, BANK_DRUMS.size()-1)), transform(local -> {
+							local.translate(0, y, z);
+							local.translate(0, DRUM_AXIS_Y, DRUM_AXIS_Z);
+							local.mulPose(Vector3f.XP.rotation(turn));
+							local.translate(0, -DRUM_AXIS_Y, -DRUM_AXIS_Z);
+						}),
 						pose, buffers, packedOverlay);
+			}
 	}
 
 	private void drawProcessorLamps(MultiblockPartBlockEntity part, PoseStack pose, MultiBufferSource buffers,
@@ -203,7 +213,7 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 		CellStatus lit = CellStatus.SPACE;
 		for(int slot = 0; slot<DataProcessorState.PATTERN_SLOTS; slot++)
 			if((filled&1<<slot)!=0)
-				draw(part, PROCESSOR_LAMP, new Matrix4f().translation(PROCESSOR_LAMP_STEP*(slot%3),
+				draw(part, PROCESSOR_LAMP, Matrix4f.createTranslateMatrix(PROCESSOR_LAMP_STEP*(slot%3),
 						-PROCESSOR_LAMP_STEP*(slot/3), 0), pose, buffers, packedOverlay, quad -> QuadStyle.SOLID, 1,
 						FloppyBays.lightColour(lit), packedLight -> FloppyBays.lightLevel(lit, packedLight));
 	}
@@ -216,11 +226,14 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 		float[] out = floppyBays.slideOut(part, filled, bays, part.getLevel().getGameTime()+partialTick);
 		for(int slot = 0; slot<bays; slot++)
 		{
-			Matrix4f bay = new Matrix4f().translation(slot<COMPUTER_COLUMN_BAYS? 0: COMPUTER_COLUMN_STEP,
+			Matrix4f bay = Matrix4f.createTranslateMatrix(slot<COMPUTER_COLUMN_BAYS? 0: COMPUTER_COLUMN_STEP,
 					-COMPUTER_BAY_STEP*(slot%COMPUTER_COLUMN_BAYS), 0);
 			if(out[slot]!=FloppyBays.HIDDEN)
-				draw(part, COMPUTER_DISK, new Matrix4f(bay).translate(0, 0, FLOPPY_SLIDE*out[slot]), pose, buffers,
-						packedOverlay);
+			{
+				Matrix4f disk = bay.copy();
+				disk.multiplyWithTranslation(0, 0, FLOPPY_SLIDE*out[slot]);
+				draw(part, COMPUTER_DISK, disk, pose, buffers, packedOverlay);
+			}
 			CellStatus light = (filled&1<<slot)!=0? CellStatus.SPACE: CellStatus.EMPTY;
 			draw(part, COMPUTER_LIGHT, bay, pose, buffers, packedOverlay, quad -> QuadStyle.SOLID, 1,
 					FloppyBays.lightColour(light), packedLight -> FloppyBays.lightLevel(light, packedLight));
@@ -256,7 +269,8 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 		Direction facing = part.getFacing();
 
 		Vector3f centre = centres.computeIfAbsent(model, DriveRenderer::centreOf);
-		Vector4f moved = local.transform(new Vector4f(centre, 1));
+		Vector4f moved = new Vector4f(centre);
+		moved.transform(local);
 		int light = lighting.applyAsInt(lightAt(part, new Vector3f(moved.x(), moved.y(), moved.z())));
 
 		pose.pushPose();
@@ -284,7 +298,7 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 
 	static int lightAt(MultiblockPartBlockEntity part, Vector3f point)
 	{
-		BlockPos cell = BlockPos.containing(point.x(), point.y(), point.z());
+		BlockPos cell = new BlockPos(point.x(), point.y(), point.z());
 		return LevelRenderer.getLightColor(part.getLevel(),
 				part.getBlockPos().offset(MultiblockOrientation.toWorldOffset(cell, part.getFacing())));
 	}
@@ -315,10 +329,10 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 
 	static List<BakedQuad> allQuads(BakedModel model)
 	{
-		RandomSource random = RandomSource.create(42);
-		List<BakedQuad> quads = new ArrayList<>(model.getQuads(null, null, random, ModelData.EMPTY, null));
+		Random random = new Random(42);
+		List<BakedQuad> quads = new ArrayList<>(model.getQuads(null, null, random, EmptyModelData.INSTANCE));
 		for(Direction side : Direction.values())
-			quads.addAll(model.getQuads(null, side, random, ModelData.EMPTY, null));
+			quads.addAll(model.getQuads(null, side, random, EmptyModelData.INSTANCE));
 		return quads;
 	}
 
@@ -329,15 +343,25 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 		for(BakedQuad quad : allQuads(model))
 			for(int vertex = 0; vertex<4; vertex++)
 			{
-				int base = vertex*IQuadTransformer.STRIDE+IQuadTransformer.POSITION;
+				int base = vertex*VERTEX_STRIDE+VERTEX_POSITION;
 				int[] data = quad.getVertices();
 				sum.add(Float.intBitsToFloat(data[base]), Float.intBitsToFloat(data[base+1]),
 						Float.intBitsToFloat(data[base+2]));
 				count++;
 			}
-		return count==0? sum: sum.div(count);
+		if(count>0)
+			sum.mul(1F/count);
+		return sum;
 	}
 
+
+	/** A transform built like a PoseStack: each step applies before the ones already there. */
+	static Matrix4f transform(Consumer<PoseStack> steps)
+	{
+		PoseStack local = new PoseStack();
+		steps.accept(local);
+		return local.last().pose();
+	}
 
 	static ResourceLocation id(String path)
 	{

@@ -6,6 +6,7 @@ import java.util.stream.IntStream;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.RegistryObject;
 
+import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.catalogue.CardDeckItem;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCardItem;
 
@@ -15,12 +16,12 @@ public final class ECCatalogue
 	public static final int DECK_TIERS = 4;
 
 	public static final RegistryObject<CatalogueCardItem> CARD = ECRegistrationHolder.ITEMS.register("catalogue_card",
-			() -> new CatalogueCardItem(new Item.Properties()));
+			() -> new CatalogueCardItem(new Item.Properties().tab(EngineeredComputation.TAB)));
 
 	private static final List<RegistryObject<CardDeckItem>> DECKS = IntStream.range(0, DECK_TIERS)
 			.mapToObj(tier -> SMALLEST_DECK<<tier)
 			.map(capacity -> ECRegistrationHolder.ITEMS.register("card_deck_"+capacity,
-					() -> new CardDeckItem(new Item.Properties().stacksTo(1), capacity)))
+					() -> new CardDeckItem(new Item.Properties().tab(EngineeredComputation.TAB).stacksTo(1), capacity)))
 			.toList();
 
 	private ECCatalogue()

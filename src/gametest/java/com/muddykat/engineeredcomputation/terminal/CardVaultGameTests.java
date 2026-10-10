@@ -162,7 +162,7 @@ public final class CardVaultGameTests
 		Vec3 worldEye = Vec3.atLowerCornerOf(origin).add(StorageGameTests.worldOffset(eye, facing));
 		player.setPos(worldEye.subtract(0, player.getEyeHeight(), 0));
 		player.setShiftKeyDown(true);
-		BlockPos block = StorageGameTests.world(origin, BlockPos.containing(target), facing);
+		BlockPos block = StorageGameTests.world(origin, new BlockPos(target), facing);
 		BlockHitResult hit = new BlockHitResult(Vec3.atLowerCornerOf(origin).add(
 				StorageGameTests.worldOffset(target, facing)), Direction.UP, block, false);
 		if(player.getMainHandItem().isEmpty())

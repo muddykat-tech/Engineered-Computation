@@ -9,6 +9,7 @@ import java.util.Map;
 import net.minecraft.world.item.Item.Properties;
 import net.minecraftforge.registries.RegistryObject;
 
+import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
 
@@ -72,7 +73,8 @@ public final class ECDataCells
 	private static void terminalDisk(int totalBytes, int bytesPerType, int totalTypes)
 	{
 		TERMINAL_DISKS.add(ECRegistrationHolder.ITEMS.register("floppy_35_cell_"+(totalBytes/1024)+"k",
-				() -> new EraDataCell(new Properties(), ComputerEra.FLOPPY, totalBytes, bytesPerType, totalTypes, true)));
+				() -> new EraDataCell(new Properties().tab(EngineeredComputation.TAB), ComputerEra.FLOPPY, totalBytes,
+						bytesPerType, totalTypes, true)));
 	}
 
 	private static void tier(ComputerEra era, int totalBytes, int bytesPerType, int totalTypes)
@@ -80,7 +82,8 @@ public final class ECDataCells
 		String size = totalBytes<1024? totalBytes+"b": totalBytes<1024*1024? (totalBytes/1024)+"k": (totalBytes/(1024*1024))+"m";
 		RegistryObject<EraDataCell> item = ECRegistrationHolder.ITEMS.register(
 				era.memoryName()+"_cell_"+size,
-				() -> new EraDataCell(new Properties(), era, totalBytes, bytesPerType, totalTypes)
+				() -> new EraDataCell(new Properties().tab(EngineeredComputation.TAB), era, totalBytes, bytesPerType,
+						totalTypes)
 		);
 		CELLS.computeIfAbsent(era, e -> new ArrayList<>()).add(item);
 	}

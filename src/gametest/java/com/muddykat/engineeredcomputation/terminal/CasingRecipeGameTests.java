@@ -36,7 +36,7 @@ public final class CasingRecipeGameTests
 					era.casingName()+" isn't made from four "+previous.casingName());
 			StorageGameTests.check(helper, uses(recipe, ECContent.component(era).get())==1,
 					era.casingName()+" isn't made round a "+era.componentName());
-			StorageGameTests.check(helper, recipe.getResultItem(helper.getLevel().registryAccess()).getCount()==8,
+			StorageGameTests.check(helper, recipe.getResultItem().getCount()==8,
 					era.casingName()+" doesn't make 8");
 		}
 		helper.succeed();

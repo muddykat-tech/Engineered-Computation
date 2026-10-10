@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -25,17 +25,17 @@ final class TextPage implements GuidePage
 	}
 
 	@Override
-	public void render(GuideScreen screen, GuiGraphics graphics, int x, int y, int mouseX, int mouseY, float partialTick)
+	public void render(GuideScreen screen, PoseStack pose, int x, int y, int mouseX, int mouseY, float partialTick)
 	{
 		int lineY = y;
 		if(title!=null)
 		{
-			screen.drawTitle(graphics, title, x, lineY);
+			screen.drawTitle(pose, title, x, lineY);
 			lineY += TITLE_LINES*LINE_HEIGHT;
 		}
 		for(FormattedCharSequence line : lines)
 		{
-			graphics.drawString(screen.font(), line, x, lineY, screen.textColour(), false);
+			screen.font().draw(pose, line, x, lineY, screen.textColour());
 			lineY += LINE_HEIGHT;
 		}
 	}

@@ -13,20 +13,19 @@ import org.jetbrains.annotations.Nullable;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.CraftingContainer;
-import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
@@ -59,12 +58,12 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 		static final Codec<TagSlot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.BOOL.fieldOf("output").forGetter(TagSlot::output),
 				Codec.INT.fieldOf("index").forGetter(TagSlot::index),
-				TagKey.codec(Registries.ITEM).fieldOf("tag").forGetter(TagSlot::tag)
+				TagKey.codec(Registry.ITEM_REGISTRY).fieldOf("tag").forGetter(TagSlot::tag)
 		).apply(instance, TagSlot::new));
 		static TagSlot read(FriendlyByteBuf buf)
 		{
 			return new TagSlot(buf.readBoolean(), buf.readVarInt(),
-					TagKey.create(Registries.ITEM, buf.readResourceLocation()));
+					TagKey.create(Registry.ITEM_REGISTRY, buf.readResourceLocation()));
 		}
 
 		void write(FriendlyByteBuf buf)
@@ -87,7 +86,16 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 		DIRECT("direct"),
 		ABSTRACT("abstract");
 
-		public static final Codec<Mode> CODEC = StringRepresentable.fromEnum(Mode::values);
+		public static final Codec<Mode> CODEC = StringRepresentable.fromEnum(Mode::values, Mode::byName);
+
+		@Nullable
+		public static Mode byName(String name)
+		{
+			for(Mode value : values())
+				if(value.getSerializedName().equals(name))
+					return value;
+			return null;
+		}
 
 		private final String name;
 
@@ -259,7 +267,7 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 
 	public static List<Item> itemsOf(TagKey<Item> tag)
 	{
-		return BuiltInRegistries.ITEM.getTag(tag).map(set -> set.stream().map(Holder::value).toList()).orElse(List.of());
+		return Registry.ITEM.getTag(tag).map(set -> set.stream().map(Holder::value).toList()).orElse(List.of());
 	}
 
 	@Nullable
@@ -278,7 +286,7 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 	public Pattern withCraftedOutput(Level level)
 	{
 		ItemStack result = recipe(level)
-				.map(recipe -> recipe.assemble(craftingInput(), level.registryAccess()))
+				.map(recipe -> recipe.assemble(craftingInput()))
 				.orElse(ItemStack.EMPTY);
 		return new Pattern(mode, inputs, List.of(result));
 	}
@@ -292,14 +300,14 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 	{
 		List<ItemStack> grid = new ArrayList<>(INPUTS);
 		for(ItemStack stack : inputs)
-			grid.add(stack.isEmpty()? ItemStack.EMPTY: stack.copyWithCount(1));
+			grid.add(stack.isEmpty()? ItemStack.EMPTY: ItemHandlerHelper.copyStackWithSize(stack, 1));
 		return craftingGrid(3, 3, grid);
 	}
 
 	/** A crafting grid outside any menu, to match recipes against. */
 	public static CraftingContainer craftingGrid(int width, int height, List<ItemStack> items)
 	{
-		CraftingContainer grid = new TransientCraftingContainer(NO_MENU, width, height);
+		CraftingContainer grid = new CraftingContainer(NO_MENU, width, height);
 		for(int slot = 0; slot<Math.min(items.size(), width*height); slot++)
 			grid.setItem(slot, items.get(slot));
 		return grid;

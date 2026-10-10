@@ -2,10 +2,6 @@
   "parent": "minecraft:block/block",
   "loader": "forge:obj",
   "model": "engineered_computation:models/block/multiblocks/era2_drum_bank_drum_4_double_sided.obj",
-  "flip_v": true,
-  "automatic_culling": false,
-  "emissive_ambient": false,
-  "render_type": "minecraft:cutout",
   "textures": {
     "particle": "engineered_computation:block/era/era2_drum_bank"
   },
@@ -13,6 +9,10 @@
     "rotation": {
       "y": 180
     },
-    "origin": "corner"
-  }
+    "origin": "center"
+  },
+  "flip-v": true,
+  "detectCullableFaces": false,
+  "ambientToFullbright": false,
+  "diffuseLighting": true
 }

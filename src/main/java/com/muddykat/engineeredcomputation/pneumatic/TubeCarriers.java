@@ -41,21 +41,21 @@ public final class TubeCarriers extends SavedData
 
 	public static void register()
 	{
-		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, TickEvent.LevelTickEvent.class, event -> {
-			if(event.phase==TickEvent.Phase.END&&event.level instanceof ServerLevel level)
+		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, TickEvent.WorldTickEvent.class, event -> {
+			if(event.phase==TickEvent.Phase.END&&event.world instanceof ServerLevel level)
 				of(level).tick(level);
 		});
 		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, PlayerEvent.PlayerLoggedInEvent.class,
-				event -> syncAll(event.getEntity()));
+				event -> syncAll(event.getPlayer()));
 		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, PlayerEvent.PlayerChangedDimensionEvent.class,
-				event -> syncAll(event.getEntity()));
+				event -> syncAll(event.getPlayer()));
 	}
 
 	private static void syncAll(Player player)
 	{
 		if(!(player instanceof ServerPlayer serverPlayer))
 			return;
-		List<CarrierSyncPayload.Flight> flights = of(serverPlayer.serverLevel()).carriers.stream()
+		List<CarrierSyncPayload.Flight> flights = of(serverPlayer.getLevel()).carriers.stream()
 				.map(TubeCarriers::flight).toList();
 		ECPayloads.sendToPlayer(serverPlayer, new CarrierSyncPayload(flights, List.of()));
 	}

@@ -11,16 +11,18 @@ import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -96,11 +98,11 @@ final class OrderPopup
 		this.x = x;
 		this.y = y;
 		amount = new EditBox(font, x+FIELD_X+2, y+25, FIELD_WIDTH-4, 12,
-				Component.translatable("gui.engineered_computation.order.amount"));
+				new TranslatableComponent("gui.engineered_computation.order.amount"));
 		amount.setMaxLength(7);
 		amount.setFilter(text -> text.chars().allMatch(Character::isDigit));
 		amount.setValue("1");
-		amount.setFocused(true);
+		amount.setFocus(true);
 		amount.setResponder(text -> sinceChange = 0);
 		menu.clearClientPlan();
 	}
@@ -254,17 +256,17 @@ final class OrderPopup
 		return openRow>=0&&isOver(mouseX, mouseY, dropX(), dropY(), WIDTH-12, dropLines()*LINE_HEIGHT+2);
 	}
 
-	private void renderList(GuiGraphics graphics, int mouseX, int mouseY)
+	private void renderList(PoseStack pose, int mouseX, int mouseY)
 	{
 		List<Item> items = stocked(openRow);
 		int lines = dropLines();
-		graphics.pose().pushPose();
-		graphics.pose().translate(0, 0, 300);
-		graphics.fill(dropX()-1, dropY()-1, dropX()+WIDTH-11, dropY()+lines*LINE_HEIGHT+3, 0xFFA0A0A0);
-		graphics.fill(dropX(), dropY(), dropX()+WIDTH-12, dropY()+lines*LINE_HEIGHT+2, 0xF0101010);
+		pose.pushPose();
+		pose.translate(0, 0, 300);
+		GuiComponent.fill(pose, dropX()-1, dropY()-1, dropX()+WIDTH-11, dropY()+lines*LINE_HEIGHT+3, 0xFFA0A0A0);
+		GuiComponent.fill(pose, dropX(), dropY(), dropX()+WIDTH-12, dropY()+lines*LINE_HEIGHT+2, 0xF0101010);
 		if(items.isEmpty())
-			graphics.drawString(font, Component.translatable("gui.engineered_computation.order.pick.none"), dropX()+4,
-					dropY()+6, 0xA0A0A0, false);
+			font.draw(pose, new TranslatableComponent("gui.engineered_computation.order.pick.none"), dropX()+4,
+					dropY()+6, 0xA0A0A0);
 		listScroll = Math.max(0, Math.min(listScroll, items.size()-lines));
 		int hovered = listIndexAt(mouseX, mouseY);
 		for(int i = 0; i<Math.min(lines, items.size()-listScroll); i++)
@@ -272,98 +274,98 @@ final class OrderPopup
 			Item item = items.get(listScroll+i);
 			int lineY = dropY()+1+i*LINE_HEIGHT;
 			if(listScroll+i==hovered)
-				graphics.fill(dropX()+1, lineY, dropX()+WIDTH-13, lineY+LINE_HEIGHT, 0x40FFFFFF);
-			graphics.renderItem(new ItemStack(item), dropX()+2, lineY+1);
+				GuiComponent.fill(pose, dropX()+1, lineY, dropX()+WIDTH-13, lineY+LINE_HEIGHT, 0x40FFFFFF);
+			ECGui.renderItem(pose, new ItemStack(item), dropX()+2, lineY+1);
 			boolean picked = item==picks.get(tagSlots.get(openRow));
-			graphics.drawString(font, ECGui.fit(font, new ItemStack(item).getHoverName(), WIDTH-70), dropX()+21,
-					lineY+5, picked? 0xFFD24A: 0xFFFFFF, false);
+			font.draw(pose, ECGui.fit(font, new ItemStack(item).getHoverName(), WIDTH-70), dropX()+21, lineY+5,
+					picked? 0xFFD24A: 0xFFFFFF);
 			String stored = count(stored(item));
-			graphics.drawString(font, stored, dropX()+WIDTH-16-font.width(stored), lineY+5, 0x8CC8FF, false);
+			font.draw(pose, stored, dropX()+WIDTH-16-font.width(stored), lineY+5, 0x8CC8FF);
 		}
-		graphics.pose().popPose();
+		pose.popPose();
 	}
 
-	void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
-		graphics.pose().pushPose();
-		graphics.pose().translate(0, 0, 400);
-		ECGui.panel(graphics, x, y, WIDTH, height());
+		pose.pushPose();
+		pose.translate(0, 0, 400);
+		ECGui.panel(pose, x, y, WIDTH, height());
 		long time = Minecraft.getInstance().level==null? 0: Minecraft.getInstance().level.getGameTime();
 		ItemStack shown = offer!=null? offer.shown(time): target.displayStack();
-		graphics.renderItem(shown, x+7, y+5);
+		ECGui.renderItem(pose, shown, x+7, y+5);
 		if(offer!=null&&offer.outputTag().isPresent())
-			ECGui.tagBadge(graphics, font, x+7, y+5);
-		Component name = offer!=null&&offer.outputTag().isPresent()? Component.literal("#"+offer.outputTag().get()
+			ECGui.tagBadge(pose, font, x+7, y+5);
+		Component name = offer!=null&&offer.outputTag().isPresent()? new TextComponent("#"+offer.outputTag().get()
 				.location()): shown.getHoverName();
-		graphics.drawString(font, ECGui.fit(font, Component.translatable("gui.engineered_computation.order.title",
-				name), WIDTH-36), x+28, y+9, ECGui.LABEL, false);
+		font.draw(pose, ECGui.fit(font, new TranslatableComponent("gui.engineered_computation.order.title",
+				name), WIDTH-36), x+28, y+9, ECGui.LABEL);
 		for(int row = 0; row<tagSlots.size(); row++)
 		{
 			int slot = tagSlots.get(row);
-			Component label = Component.translatable("gui.engineered_computation.order.send",
+			Component label = new TranslatableComponent("gui.engineered_computation.order.send",
 					"#"+offer.pattern().inputTag(slot).map(tag -> tag.location().toString()).orElse(""));
-			graphics.drawString(font, ECGui.fit(font, label, WIDTH-40), x+7, pickY(row)+5, ECGui.LABEL, false);
-			ECGui.slot(graphics, pickX(), pickY(row));
+			font.draw(pose, ECGui.fit(font, label, WIDTH-40), x+7, pickY(row)+5, ECGui.LABEL);
+			ECGui.slot(pose, pickX(), pickY(row));
 			Item pick = picks.get(slot);
 			List<Item> items = tagItems.get(slot);
 			if(pick!=null)
-				graphics.renderItem(new ItemStack(pick), pickX()+1, pickY(row)+1);
+				ECGui.renderItem(pose, new ItemStack(pick), pickX()+1, pickY(row)+1);
 			else if(!items.isEmpty())
 			{
-				graphics.renderItem(new ItemStack(items.get((int)(time/20%items.size()))), pickX()+1, pickY(row)+1);
-				graphics.fill(RenderType.guiOverlay(), pickX()+1, pickY(row)+1, pickX()+17, pickY(row)+17, 0x908B8B8B);
-				graphics.pose().pushPose();
-				graphics.pose().translate(0, 0, 200);
-				graphics.drawCenteredString(font, "?", pickX()+9, pickY(row)+5, 0xFFD24A);
-				graphics.pose().popPose();
+				ECGui.renderItem(pose, new ItemStack(items.get((int)(time/20%items.size()))), pickX()+1, pickY(row)+1);
+				ECGui.overlay(pose, pickX()+1, pickY(row)+1, pickX()+17, pickY(row)+17, 0x908B8B8B);
+				pose.pushPose();
+				pose.translate(0, 0, 200);
+				GuiComponent.drawCenteredString(pose, font, "?", pickX()+9, pickY(row)+5, 0xFFD24A);
+				pose.popPose();
 			}
 			if(isOver(mouseX, mouseY, pickX(), pickY(row), 18, 18))
-				graphics.fill(pickX()+1, pickY(row)+1, pickX()+17, pickY(row)+17, 300, 0x80FFFFFF);
+				ECGui.fill(pose, pickX()+1, pickY(row)+1, pickX()+17, pickY(row)+17, 300, 0x80FFFFFF);
 		}
 
-		graphics.drawString(font, Component.translatable("gui.engineered_computation.order.amount"), x+7, y+27,
-				ECGui.LABEL, false);
-		graphics.fill(x+FIELD_X, y+23, x+FIELD_X+FIELD_WIDTH, y+37, 0xFFA0A0A0);
-		graphics.fill(x+FIELD_X+1, y+24, x+FIELD_X+FIELD_WIDTH-1, y+36, 0xFF000000);
-		amount.render(graphics, mouseX, mouseY, partialTick);
-		button(graphics, mouseX, mouseY, x+LESS_X, y+23, 14, Component.literal("-"));
-		button(graphics, mouseX, mouseY, x+MORE_X, y+23, 14, Component.literal("+"));
+		font.draw(pose, new TranslatableComponent("gui.engineered_computation.order.amount"), x+7, y+27, ECGui.LABEL);
+		GuiComponent.fill(pose, x+FIELD_X, y+23, x+FIELD_X+FIELD_WIDTH, y+37, 0xFFA0A0A0);
+		GuiComponent.fill(pose, x+FIELD_X+1, y+24, x+FIELD_X+FIELD_WIDTH-1, y+36, 0xFF000000);
+		amount.render(pose, mouseX, mouseY, partialTick);
+		button(pose, mouseX, mouseY, x+LESS_X, y+23, 14, new TextComponent("-"));
+		button(pose, mouseX, mouseY, x+MORE_X, y+23, 14, new TextComponent("+"));
 
 		int listY = listY();
 		int visible = visibleLines();
-		ECGui.sunken(graphics, x+6, listY-1, WIDTH-12, visible*LINE_HEIGHT+2);
+		ECGui.sunken(pose, x+6, listY-1, WIDTH-12, visible*LINE_HEIGHT+2);
 		OrderPlanPayload plan = plan();
 		if(plan!=null)
 		{
 			List<OrderPlanPayload.Line> lines = plan.lines();
 			scroll = Math.max(0, Math.min(scroll, lines.size()-visible));
 			for(int i = 0; i<Math.min(visible, lines.size()-scroll); i++)
-				renderLine(graphics, lines.get(scroll+i), x+8, listY+1+i*LINE_HEIGHT);
+				renderLine(pose, lines.get(scroll+i), x+8, listY+1+i*LINE_HEIGHT);
 		}
 		else
-			graphics.drawCenteredString(font, Component.translatable(picked()? "gui.engineered_computation.order.working"
+			GuiComponent.drawCenteredString(pose, font,
+					new TranslatableComponent(picked()? "gui.engineered_computation.order.working"
 					: "gui.engineered_computation.order.pick"), x+WIDTH/2, listY+visible*LINE_HEIGHT/2-4, 0xA0A0A0);
 
 		int statusY = listY+visible*LINE_HEIGHT+4;
 		if(plan!=null)
 		{
 			StatusCode status = plan.status();
-			Component text = status.title().copy().append(" - ").append(Component.translatable(
+			Component text = status.title().copy().append(" - ").append(new TranslatableComponent(
 					"gui.engineered_computation.order.status."+status.code()));
-			graphics.drawString(font, ECGui.fit(font, text, WIDTH-14), x+7, statusY, status.colour(), true);
+			font.drawShadow(pose, ECGui.fit(font, text, WIDTH-14), x+7, statusY, status.colour());
 		}
 		boolean ready = plan!=null&&plan.status()==StatusCode.OK;
 		int buttonsY = y+height()-BUTTON_HEIGHT-6;
-		ECGui.button(graphics, x+WIDTH/2-BUTTON_WIDTH-3, buttonsY, BUTTON_WIDTH, BUTTON_HEIGHT,
+		ECGui.button(pose, x+WIDTH/2-BUTTON_WIDTH-3, buttonsY, BUTTON_WIDTH, BUTTON_HEIGHT,
 				ready&&isOverOrder(mouseX, mouseY));
-		graphics.drawCenteredString(font, Component.translatable("gui.engineered_computation.order.place"),
+		GuiComponent.drawCenteredString(pose, font, new TranslatableComponent("gui.engineered_computation.order.place"),
 				x+WIDTH/2-BUTTON_WIDTH/2-3, buttonsY+3, ready? 0xFFFFFF: 0x808080);
-		ECGui.button(graphics, x+WIDTH/2+3, buttonsY, BUTTON_WIDTH, BUTTON_HEIGHT, isOverCancel(mouseX, mouseY));
-		graphics.drawCenteredString(font, Component.translatable("gui.cancel"), x+WIDTH/2+BUTTON_WIDTH/2+3, buttonsY+3,
-				0xFFFFFF);
+		ECGui.button(pose, x+WIDTH/2+3, buttonsY, BUTTON_WIDTH, BUTTON_HEIGHT, isOverCancel(mouseX, mouseY));
+		GuiComponent.drawCenteredString(pose, font, new TranslatableComponent("gui.cancel"), x+WIDTH/2+BUTTON_WIDTH/2+3,
+				buttonsY+3, 0xFFFFFF);
 		if(openRow>=0)
-			renderList(graphics, mouseX, mouseY);
-		graphics.pose().popPose();
+			renderList(pose, mouseX, mouseY);
+		pose.popPose();
 	}
 
 	private boolean isTagTarget(ItemKey item)
@@ -378,26 +380,26 @@ final class OrderPopup
 		return item.displayStack();
 	}
 
-	private void renderLine(GuiGraphics graphics, OrderPlanPayload.Line line, int lineX, int lineY)
+	private void renderLine(PoseStack pose, OrderPlanPayload.Line line, int lineX, int lineY)
 	{
 		ItemStack stack = shown(line.item());
-		graphics.renderItem(stack, lineX, lineY);
+		ECGui.renderItem(pose, stack, lineX, lineY);
 		if(isTagTarget(line.item()))
-			ECGui.tagBadge(graphics, font, lineX, lineY);
+			ECGui.tagBadge(pose, font, lineX, lineY);
 		List<Component> parts = new ArrayList<>();
 		if(line.missing()>0)
-			parts.add(Component.translatable("gui.engineered_computation.order.missing", count(line.missing()))
+			parts.add(new TranslatableComponent("gui.engineered_computation.order.missing", count(line.missing()))
 					.withStyle(ChatFormatting.RED));
 		if(line.crafted()>0)
-			parts.add(Component.translatable("gui.engineered_computation.order.crafts", count(line.crafted()))
+			parts.add(new TranslatableComponent("gui.engineered_computation.order.crafts", count(line.crafted()))
 					.withStyle(ChatFormatting.GOLD));
 		if(line.fromStorage()>0)
-			parts.add(Component.translatable("gui.engineered_computation.order.uses", count(line.fromStorage()))
+			parts.add(new TranslatableComponent("gui.engineered_computation.order.uses", count(line.fromStorage()))
 					.withStyle(ChatFormatting.DARK_GREEN));
-		MutableComponent text = Component.empty();
+		MutableComponent text = new TextComponent("");
 		for(int i = 0; i<parts.size(); i++)
-			text.append(i==0? Component.empty(): Component.literal(", ")).append(parts.get(i));
-		graphics.drawString(font, ECGui.fit(font, text, WIDTH-36), lineX+19, lineY+4, 0xFFFFFF, false);
+			text.append(i==0? new TextComponent(""): new TextComponent(", ")).append(parts.get(i));
+		font.draw(pose, ECGui.fit(font, text, WIDTH-36), lineX+19, lineY+4, 0xFFFFFF);
 	}
 
 	private static String count(long count)
@@ -405,10 +407,10 @@ final class OrderPopup
 		return String.format(Locale.ROOT, "%,d", count);
 	}
 
-	private void button(GuiGraphics graphics, int mouseX, int mouseY, int buttonX, int buttonY, int size, Component label)
+	private void button(PoseStack pose, int mouseX, int mouseY, int buttonX, int buttonY, int size, Component label)
 	{
-		ECGui.button(graphics, buttonX, buttonY, size, size, isOver(mouseX, mouseY, buttonX, buttonY, size, size));
-		graphics.drawCenteredString(font, label, buttonX+size/2+1, buttonY+3, 0xFFFFFF);
+		ECGui.button(pose, buttonX, buttonY, size, size, isOver(mouseX, mouseY, buttonX, buttonY, size, size));
+		GuiComponent.drawCenteredString(pose, font, label, buttonX+size/2+1, buttonY+3, 0xFFFFFF);
 	}
 
 	List<Component> tooltip(int mouseX, int mouseY)
@@ -417,7 +419,7 @@ final class OrderPopup
 		if(index>=0)
 		{
 			Item item = stocked(openRow).get(index);
-			return List.of(new ItemStack(item).getHoverName(), Component.translatable(
+			return List.of(new ItemStack(item).getHoverName(), new TranslatableComponent(
 					"gui.engineered_computation.terminal.stored", count(stored(item))).withStyle(ChatFormatting.GOLD));
 		}
 		if(isOverList(mouseX, mouseY))
@@ -430,10 +432,10 @@ final class OrderPopup
 			if(pick!=null)
 			{
 				lines.add(new ItemStack(pick).getHoverName());
-				lines.add(Component.translatable("gui.engineered_computation.terminal.stored",
+				lines.add(new TranslatableComponent("gui.engineered_computation.terminal.stored",
 						count(stored(pick))).withStyle(ChatFormatting.GOLD));
 			}
-			lines.add(Component.translatable("gui.engineered_computation.order.pick.help")
+			lines.add(new TranslatableComponent("gui.engineered_computation.order.pick.help")
 					.withStyle(ChatFormatting.GRAY));
 			return lines;
 		}
@@ -444,7 +446,7 @@ final class OrderPopup
 			if(isOver(mouseX, mouseY, x+8, listY()+1+i*LINE_HEIGHT, 16, 16))
 			{
 				ItemKey item = plan.lines().get(scroll+i).item();
-				return List.of(isTagTarget(item)? Component.literal("#"+offer.outputTag().get().location())
+				return List.of(isTagTarget(item)? new TextComponent("#"+offer.outputTag().get().location())
 						: shown(item).getHoverName());
 			}
 		return List.of();
@@ -490,7 +492,7 @@ final class OrderPopup
 		}
 		if(isOverOrder(mouseX, mouseY))
 			place();
-		amount.setFocused(amount.isMouseOver(mouseX, mouseY)||amount.isFocused());
+		amount.setFocus(amount.isMouseOver(mouseX, mouseY)||amount.isFocused());
 		amount.mouseClicked(mouseX, mouseY, button);
 		return true;
 	}

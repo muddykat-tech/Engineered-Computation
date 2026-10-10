@@ -8,6 +8,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -167,12 +169,12 @@ public class CardDeckItem extends Item
 	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> lines, TooltipFlag flag)
 	{
 		CardDeck deck = deck(stack);
-		lines.add(Component.translatable("tooltip.engineered_computation.card_deck.cards", deck.size(), capacity)
+		lines.add(new TranslatableComponent("tooltip.engineered_computation.card_deck.cards", deck.size(), capacity)
 				.withStyle(ChatFormatting.GRAY));
 		for(int i = 0; i<Math.min(LISTED, deck.size()); i++)
-			lines.add(Component.literal(" ").append(deck.cards().get(i).label()).withStyle(ChatFormatting.DARK_AQUA));
+			lines.add(new TextComponent(" ").append(deck.cards().get(i).label()).withStyle(ChatFormatting.DARK_AQUA));
 		if(deck.size()>LISTED)
-			lines.add(Component.translatable("tooltip.engineered_computation.card_deck.more", deck.size()-LISTED)
+			lines.add(new TranslatableComponent("tooltip.engineered_computation.card_deck.more", deck.size()-LISTED)
 					.withStyle(ChatFormatting.DARK_GRAY));
 	}
 }

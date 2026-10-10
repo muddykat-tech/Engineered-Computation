@@ -1,6 +1,5 @@
 {
   "parent": "minecraft:block/block",
-  "render_type": "minecraft:translucent",
   "textures": {
     "particle": "engineered_computation:block/tube/coupling",
     "body": "engineered_computation:block/tube/body",

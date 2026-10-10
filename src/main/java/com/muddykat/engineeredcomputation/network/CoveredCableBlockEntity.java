@@ -1,7 +1,6 @@
 package com.muddykat.engineeredcomputation.network;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.Connection;
@@ -13,7 +12,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
 
 import com.muddykat.engineeredcomputation.registration.ECCables;
@@ -48,9 +48,9 @@ public class CoveredCableBlockEntity extends BlockEntity
 	}
 
 	@Override
-	public ModelData getModelData()
+	public IModelData getModelData()
 	{
-		return ModelData.builder().with(COVER, cover).build();
+		return new ModelDataMap.Builder().withInitial(COVER, cover).build();
 	}
 
 	@Override
@@ -64,8 +64,8 @@ public class CoveredCableBlockEntity extends BlockEntity
 	public void load(CompoundTag tag)
 	{
 		super.load(tag);
-		cover = tag.contains("cover")? NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(),
-				tag.getCompound("cover")): Blocks.AIR.defaultBlockState();
+		cover = tag.contains("cover")?
+				NbtUtils.readBlockState(tag.getCompound("cover")): Blocks.AIR.defaultBlockState();
 	}
 
 	@Override

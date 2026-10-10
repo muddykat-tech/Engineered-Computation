@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
+import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -43,9 +43,9 @@ public final class CarrierRenderer
 	{
 		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, RenderLevelStageEvent.class,
 				CarrierRenderer::render);
-		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ClientPlayerNetworkEvent.LoggingOut.class,
+		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ClientPlayerNetworkEvent.LoggedOutEvent.class,
 				event -> CarrierFlights.clear());
-		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ClientPlayerNetworkEvent.Clone.class,
+		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ClientPlayerNetworkEvent.RespawnEvent.class,
 				event -> CarrierFlights.clear());
 	}
 
@@ -61,7 +61,7 @@ public final class CarrierRenderer
 		Collection<CarrierFlights.Flight> flights = CarrierFlights.all();
 		Minecraft mc = Minecraft.getInstance();
 		ClientLevel level = mc.level;
-		if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES||flights.isEmpty()||level==null)
+		if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS||flights.isEmpty()||level==null)
 			return;
 		double time = level.getGameTime()+event.getPartialTick();
 		Vec3 camera = event.getCamera().getPosition();
@@ -80,17 +80,17 @@ public final class CarrierRenderer
 			Vec3 from = Vec3.atCenterOf(path[step]);
 			Vec3 to = Vec3.atCenterOf(path[step+1]);
 			Vec3 at = from.lerp(to, progress-step);
-			if(at.distanceToSqr(camera)>RANGE*RANGE||!isWindowed(level, BlockPos.containing(at)))
+			if(at.distanceToSqr(camera)>RANGE*RANGE||!isWindowed(level, new BlockPos(at)))
 				continue;
 			Direction heading = Direction.getNearest(to.x-from.x, to.y-from.y, to.z-from.z);
 			pose.pushPose();
 			pose.translate(at.x-camera.x, at.y-camera.y, at.z-camera.z);
 			if(heading.getAxis()==Direction.Axis.X)
-				pose.mulPose(Axis.YP.rotationDegrees(90));
+				pose.mulPose(Vector3f.YP.rotationDegrees(90));
 			else if(heading.getAxis()==Direction.Axis.Y)
-				pose.mulPose(Axis.XP.rotationDegrees(90));
+				pose.mulPose(Vector3f.XP.rotationDegrees(90));
 			pose.translate(-0.5, -0.5, -0.5);
-			int light = LevelRenderer.getLightColor(level, BlockPos.containing(at));
+			int light = LevelRenderer.getLightColor(level, new BlockPos(at));
 			for(BakedQuad quad : quads)
 				consumer.putBulkData(pose.last(), quad, 1, 1, 1, 1, light, OverlayTexture.NO_OVERLAY, false);
 			pose.popPose();

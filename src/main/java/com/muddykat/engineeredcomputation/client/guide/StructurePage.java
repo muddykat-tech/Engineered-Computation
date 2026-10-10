@@ -3,26 +3,32 @@ package com.muddykat.engineeredcomputation.client.guide;
 import java.util.List;
 
 import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
-
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.math.Vector3f;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
+import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.era.EraDrive;
 import com.muddykat.engineeredcomputation.era.EraDriveGeometry;
 import com.muddykat.engineeredcomputation.registration.ECContent;
@@ -59,27 +65,27 @@ final class StructurePage implements GuidePage
 	}
 
 	@Override
-	public void render(GuideScreen screen, GuiGraphics graphics, int x, int y, int mouseX, int mouseY, float partialTick)
+	public void render(GuideScreen screen, PoseStack pose, int x, int y, int mouseX, int mouseY, float partialTick)
 	{
-		screen.drawTitle(graphics, title, x, y);
-		graphics.enableScissor(x, y+TITLE_HEIGHT, x+WIDTH, y+TITLE_HEIGHT+viewHeight);
-		renderStructure(graphics, x+WIDTH/2, y+TITLE_HEIGHT+viewHeight/2);
-		graphics.disableScissor();
+		screen.drawTitle(pose, title, x, y);
+		ECGui.enableScissor(x, y+TITLE_HEIGHT, x+WIDTH, y+TITLE_HEIGHT+viewHeight);
+		renderStructure(pose, x+WIDTH/2, y+TITLE_HEIGHT+viewHeight/2);
+		ECGui.disableScissor();
 
 		int lineY = y+TITLE_HEIGHT+viewHeight;
 		ItemStack casingItem = new ItemStack(casing);
-		screen.renderStack(graphics, casingItem, x, lineY, mouseX, mouseY);
-		screen.drawFitted(graphics, Component.translatable("guide.engineered_computation.structure.casings",
+		screen.renderStack(pose, casingItem, x, lineY, mouseX, mouseY);
+		screen.drawFitted(pose, new TranslatableComponent("guide.engineered_computation.structure.casings",
 				geometry.shapes().size(), casingItem.getHoverName()), x+18, lineY+4, WIDTH-18, screen.textColour());
 		lineY += COUNT_HEIGHT;
 		for(FormattedCharSequence line : caption)
 		{
-			graphics.drawString(screen.font(), line, x, lineY, screen.textColour(), false);
+			screen.font().draw(pose, line, x, lineY, screen.textColour());
 			lineY += TextPage.LINE_HEIGHT;
 		}
 	}
 
-	private void renderStructure(GuiGraphics graphics, int centreX, int centreY)
+	private void renderStructure(PoseStack pose, int centreX, int centreY)
 	{
 		BlockPos size = geometry.size();
 		float diagonal = Mth.sqrt(size.getX()*size.getX()+size.getY()*size.getY()+size.getZ()*size.getZ());
@@ -88,25 +94,32 @@ final class StructurePage implements GuidePage
 		BlockRenderDispatcher blocks = Minecraft.getInstance().getBlockRenderer();
 		float pulse = 0.5F+0.5F*Mth.sin(Util.getMillis()/250F);
 
-		PoseStack pose = graphics.pose();
+		MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
 		pose.pushPose();
 		pose.translate(centreX, centreY, 150);
 		pose.scale(scale, -scale, scale);
-		pose.mulPose(Axis.XP.rotationDegrees(pitch));
-		pose.mulPose(Axis.YP.rotationDegrees(yaw));
+		pose.mulPose(Vector3f.XP.rotationDegrees(pitch));
+		pose.mulPose(Vector3f.YP.rotationDegrees(yaw));
 		pose.translate(-size.getX()/2F, -size.getY()/2F, -size.getZ()/2F);
 		Lighting.setupFor3DItems();
 		for(BlockPos pos : geometry.shapes().keySet())
 		{
 			pose.pushPose();
 			pose.translate(pos.getX(), pos.getY(), pos.getZ());
-			blocks.renderSingleBlock(casingState, pose, graphics.bufferSource(), LightTexture.FULL_BRIGHT,
+			blocks.renderSingleBlock(casingState, pose, buffers, LightTexture.FULL_BRIGHT,
 					OverlayTexture.NO_OVERLAY);
 			pose.popPose();
 		}
 
+		buffers.endBatch();
+
 		BlockPos trigger = geometry.trigger();
-		VertexConsumer quads = graphics.bufferSource().getBuffer(RenderType.debugQuads());
+		RenderSystem.setShader(GameRenderer::getPositionColorShader);
+		RenderSystem.enableBlend();
+		RenderSystem.defaultBlendFunc();
+		RenderSystem.disableCull();
+		BufferBuilder quads = Tesselator.getInstance().getBuilder();
+		quads.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 		PoseStack.Pose face = pose.last();
 		float z = trigger.getZ()+1.02F;
 		float x0 = trigger.getX();
@@ -118,16 +131,18 @@ final class StructurePage implements GuidePage
 		quad(quads, face, x0, y0+1-border, x0+1, y0+1, z+0.001F, 255, 200, 0, 255);
 		quad(quads, face, x0, y0, x0+border, y0+1, z+0.001F, 255, 200, 0, 255);
 		quad(quads, face, x0+1-border, y0, x0+1, y0+1, z+0.001F, 255, 200, 0, 255);
+		Tesselator.getInstance().end();
+		RenderSystem.enableCull();
 
 		pose.pushPose();
 		pose.translate(trigger.getX()+0.5F, trigger.getY()+0.55F+0.1F*pulse, trigger.getZ()+1.6F);
 		pose.scale(1.6F, 1.6F, 1.6F);
 		Minecraft.getInstance().getItemRenderer().renderStatic(new ItemStack(ECContent.ASSEMBLY_WRENCH.get()),
-				ItemDisplayContext.FIXED, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, pose,
-				graphics.bufferSource(), Minecraft.getInstance().level, 0);
+				ItemTransforms.TransformType.FIXED, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, pose,
+				buffers, 0);
 		pose.popPose();
 
-		graphics.flush();
+		buffers.endBatch();
 		pose.popPose();
 	}
 

@@ -12,6 +12,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
@@ -73,7 +75,7 @@ public class PatternFloppyItem extends Item
 	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand)
 	{
 		if(player instanceof ServerPlayer serverPlayer)
-			NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
+			NetworkHooks.openGui(serverPlayer, new SimpleMenuProvider(
 					(id, inventory, p) -> new PatternFloppyMenu(id, inventory, hand),
 					player.getItemInHand(hand).getHoverName()), buf -> buf.writeEnum(hand));
 		return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
@@ -85,19 +87,19 @@ public class PatternFloppyItem extends Item
 		Pattern pattern = pattern(stack);
 		if(pattern.isEmpty())
 		{
-			lines.add(Component.translatable("tooltip.engineered_computation.pattern_floppy.blank")
+			lines.add(new TranslatableComponent("tooltip.engineered_computation.pattern_floppy.blank")
 					.withStyle(ChatFormatting.GRAY));
 			return;
 		}
 		String mode = pattern.mode().getSerializedName();
-		lines.add(Component.translatable("tooltip.engineered_computation.pattern_floppy."+mode)
+		lines.add(new TranslatableComponent("tooltip.engineered_computation.pattern_floppy."+mode)
 				.withStyle(ChatFormatting.AQUA));
 		addSlots(lines, "makes", pattern, true);
 		addSlots(lines, "from", pattern, false);
 		if(!pattern.isValid())
-			lines.add(Component.translatable("tooltip.engineered_computation.pattern_floppy.invalid")
+			lines.add(new TranslatableComponent("tooltip.engineered_computation.pattern_floppy.invalid")
 					.withStyle(ChatFormatting.RED));
-		lines.add(Component.translatable("tooltip.engineered_computation.pattern_floppy."+mode+".where")
+		lines.add(new TranslatableComponent("tooltip.engineered_computation.pattern_floppy."+mode+".where")
 				.withStyle(ChatFormatting.DARK_GRAY));
 	}
 
@@ -110,16 +112,16 @@ public class PatternFloppyItem extends Item
 			ItemStack stack = outputs? pattern.output(index): pattern.input(index);
 			Optional<TagKey<Item>> tag = outputs? pattern.outputTag(index): pattern.inputTag(index);
 			if(tag.isPresent())
-				tags.add(Component.literal("  "+stack.getCount()+" × #"+tag.get().location())
+				tags.add(new TextComponent("  "+stack.getCount()+" × #"+tag.get().location())
 						.withStyle(ChatFormatting.DARK_AQUA));
 			else if(!stack.isEmpty())
 				items.merge(ItemKey.of(stack), (long)stack.getCount(), Long::sum);
 		}
 		if(items.isEmpty()&&tags.isEmpty())
 			return;
-		lines.add(Component.translatable("tooltip.engineered_computation.pattern_floppy."+heading)
+		lines.add(new TranslatableComponent("tooltip.engineered_computation.pattern_floppy."+heading)
 				.withStyle(ChatFormatting.GRAY));
-		items.forEach((key, count) -> lines.add(Component.literal("  "+count+" × ")
+		items.forEach((key, count) -> lines.add(new TextComponent("  "+count+" × ")
 				.append(key.displayStack().getHoverName()).withStyle(ChatFormatting.GRAY)));
 		lines.addAll(tags);
 	}

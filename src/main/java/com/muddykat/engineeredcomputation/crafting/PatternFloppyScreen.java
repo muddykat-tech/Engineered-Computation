@@ -10,14 +10,17 @@ import java.util.Set;
 
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Inventory;
@@ -66,11 +69,10 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 	{
 		super.init();
 		tag = new EditBox(font, leftPos+TAG_X+2, topPos+PatternFloppyMenu.TAG_Y+2, imageWidth-TAG_X-12, 10,
-				Component.translatable("gui.engineered_computation.program.tag"));
+				new TranslatableComponent("gui.engineered_computation.program.tag"));
 		tag.setBordered(false);
 		tag.setMaxLength(128);
 		tag.setTextColor(0xFFFFFF);
-		tag.setHint(Component.translatable("gui.engineered_computation.pattern.tag.hint").withStyle(ChatFormatting.GRAY));
 		tag.setResponder(this::suggest);
 		addRenderableWidget(tag);
 	}
@@ -90,13 +92,13 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 		selected = slot;
 		tag.setValue(tagOf(menu.pattern(), slot).map(key -> key.location().toString()).orElse(""));
 		setFocused(tag);
-		tag.setFocused(true);
+		tag.setFocus(true);
 	}
 
 	private void suggest(String text)
 	{
 		String query = text.trim().replaceFirst("^#", "").toLowerCase(Locale.ROOT);
-		suggestions = query.isEmpty()? List.of(): BuiltInRegistries.ITEM.getTagNames()
+		suggestions = query.isEmpty()? List.of(): Registry.ITEM.getTagNames()
 				.filter(key -> key.location().toString().contains(query))
 				.sorted(Comparator.comparing(key -> key.location().toString()))
 				.limit(SUGGESTIONS).toList();
@@ -107,33 +109,36 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 		if(selected>=0&&!tag.getValue().isBlank())
 			ECPayloads.sendToServer(new PatternEditPayload(menu.containerId, PatternEditPayload.Action.SET_TAG,
 					selected, 0, tag.getValue()));
-		tag.setFocused(false);
+		tag.setFocus(false);
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
 		tag.visible = !isDirect();
 		if(isDirect())
 			selected = -1;
-		renderBackground(graphics);
-		super.render(graphics, mouseX, mouseY, partialTick);
-		renderSuggestions(graphics, mouseX, mouseY);
+		renderBackground(pose);
+		super.render(pose, mouseX, mouseY, partialTick);
+		ECGui.hint(pose, font, tag, new TranslatableComponent("gui.engineered_computation.pattern.tag.hint")
+				.withStyle(ChatFormatting.GRAY), false);
+		renderSuggestions(pose, mouseX, mouseY);
 		int slot = slotAt(mouseX, mouseY);
 		if(slot>=0&&menu.getCarried().isEmpty())
-			graphics.renderComponentTooltip(font, slotTooltip(slot), mouseX, mouseY);
+			renderComponentTooltip(pose, slotTooltip(slot), mouseX, mouseY);
 		else if(isOver(mouseX, mouseY, MODE_X, MODE_Y, MODE_WIDTH, BUTTON_HEIGHT))
-			graphics.renderComponentTooltip(font, List.of(
-					Component.translatable("gui.engineered_computation.pattern."+mode()).withStyle(ChatFormatting.YELLOW),
-					Component.translatable("gui.engineered_computation.pattern."+mode()+".detail")
+			renderComponentTooltip(pose, List.of(
+					new TranslatableComponent("gui.engineered_computation.pattern."+mode())
+							.withStyle(ChatFormatting.YELLOW),
+					new TranslatableComponent("gui.engineered_computation.pattern."+mode()+".detail")
 							.withStyle(ChatFormatting.GRAY),
-					Component.translatable("gui.engineered_computation.pattern.switch").withStyle(ChatFormatting.DARK_GRAY)),
-					mouseX, mouseY);
+					new TranslatableComponent("gui.engineered_computation.pattern.switch")
+							.withStyle(ChatFormatting.DARK_GRAY)), mouseX, mouseY);
 		else if(isOver(mouseX, mouseY, CLEAR_X, clearY(), CLEAR_SIZE, CLEAR_SIZE))
-			graphics.renderComponentTooltip(font, List.of(Component.translatable("gui.engineered_computation.pattern.clear")),
+			renderComponentTooltip(pose, List.of(new TranslatableComponent("gui.engineered_computation.pattern.clear")),
 					mouseX, mouseY);
 		else
-			renderTooltip(graphics, mouseX, mouseY);
+			renderTooltip(pose, mouseX, mouseY);
 	}
 
 	private String mode()
@@ -142,61 +147,63 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY)
+	protected void renderBg(PoseStack pose, float partialTick, int mouseX, int mouseY)
 	{
 		int x = leftPos, y = topPos;
-		ECGui.panel(graphics, x, y, imageWidth, imageHeight);
+		ECGui.panel(pose, x, y, imageWidth, imageHeight);
 		for(Slot slot : menu.slots)
 			if(slot.isActive())
-				ECGui.slot(graphics, x+slot.x-1, y+slot.y-1);
+				ECGui.slot(pose, x+slot.x-1, y+slot.y-1);
 		Pattern pattern = menu.pattern();
 		int hovered = slotAt(mouseX, mouseY);
 		for(int i = 0; i<Pattern.INPUTS+outputsShown(); i++)
 		{
 			int slotX = x+slotX(i), slotY = y+slotY(i);
-			ECGui.slot(graphics, slotX, slotY);
+			ECGui.slot(pose, slotX, slotY);
 			ItemStack stack = shown(pattern, i);
-			graphics.renderItem(stack, slotX+1, slotY+1);
-			graphics.renderItemDecorations(font, stack, slotX+1, slotY+1);
+			ECGui.renderItem(pose, stack, slotX+1, slotY+1);
+			ECGui.renderItemDecorations(pose, font, stack, slotX+1, slotY+1, null);
 			if(tagOf(pattern, i).isPresent())
 			{
-				ECGui.tagBadge(graphics, font, slotX+1, slotY+1);
+				ECGui.tagBadge(pose, font, slotX+1, slotY+1);
 				if(i<Pattern.INPUTS&&pattern.warnsAt(i))
 				{
-					graphics.pose().pushPose();
-					graphics.pose().translate(0, 0, 200);
-					graphics.drawString(font, "!", slotX+13, slotY+1, 0xFF5A4A, true);
-					graphics.pose().popPose();
+					pose.pushPose();
+					pose.translate(0, 0, 200);
+					font.drawShadow(pose, "!", slotX+13, slotY+1, 0xFF5A4A);
+					pose.popPose();
 				}
 			}
 			if(i==selected)
-				graphics.renderOutline(slotX, slotY, 18, 18, 0xFFFFD24A);
+				ECGui.outline(pose, slotX, slotY, 18, 18, 0xFFFFD24A);
 			if(i==hovered)
-				graphics.fill(slotX+1, slotY+1, slotX+17, slotY+17, 0x80FFFFFF);
+				GuiComponent.fill(pose, slotX+1, slotY+1, slotX+17, slotY+17, 0x80FFFFFF);
 		}
 		if(!isDirect())
 		{
-			graphics.drawString(font, Component.translatable("gui.engineered_computation.program.tag"), x+8,
-					y+PatternFloppyMenu.TAG_Y+2, ECGui.LABEL, false);
-			graphics.fill(x+TAG_X, y+PatternFloppyMenu.TAG_Y, x+imageWidth-8, y+PatternFloppyMenu.TAG_Y+13, 0xFFA0A0A0);
-			graphics.fill(x+TAG_X+1, y+PatternFloppyMenu.TAG_Y+1, x+imageWidth-9, y+PatternFloppyMenu.TAG_Y+12,
-					0xFF000000);
+			font.draw(pose, new TranslatableComponent("gui.engineered_computation.program.tag"), x+8,
+					y+PatternFloppyMenu.TAG_Y+2, ECGui.LABEL);
+			GuiComponent.fill(pose, x+TAG_X, y+PatternFloppyMenu.TAG_Y, x+imageWidth-8, y+PatternFloppyMenu.TAG_Y+13,
+					0xFFA0A0A0);
+			GuiComponent.fill(pose, x+TAG_X+1, y+PatternFloppyMenu.TAG_Y+1, x+imageWidth-9,
+					y+PatternFloppyMenu.TAG_Y+12, 0xFF000000);
 			tag.setTextColor(tagExists(tag.getValue())? 0xFFFFFF: 0xFF7060);
 		}
 		int arrowX = x+PatternFloppyMenu.INPUTS_X+3*18+8, arrowY = y+PatternFloppyMenu.INPUTS_Y+27;
-		graphics.fill(arrowX, arrowY-2, arrowX+12, arrowY+2, 0xFF8B8B8B);
+		GuiComponent.fill(pose, arrowX, arrowY-2, arrowX+12, arrowY+2, 0xFF8B8B8B);
 		for(int step = 0; step<6; step++)
-			graphics.fill(arrowX+12+step, arrowY-6+step, arrowX+13+step, arrowY+6-step, 0xFF8B8B8B);
+			GuiComponent.fill(pose, arrowX+12+step, arrowY-6+step, arrowX+13+step, arrowY+6-step, 0xFF8B8B8B);
 		if(isDirect()&&pattern.output(0).isEmpty()&&!pattern.isEmpty())
-			graphics.drawString(font, Component.translatable("gui.engineered_computation.pattern.no_recipe"),
-					x+slotX(Pattern.INPUTS)-8, y+PatternFloppyMenu.INPUTS_Y+3*18+3, 0xFF7060, false);
-		ECGui.button(graphics, x+MODE_X, y+MODE_Y, MODE_WIDTH, BUTTON_HEIGHT,
+			font.draw(pose, new TranslatableComponent("gui.engineered_computation.pattern.no_recipe"),
+					x+slotX(Pattern.INPUTS)-8, y+PatternFloppyMenu.INPUTS_Y+3*18+3, 0xFF7060);
+		ECGui.button(pose, x+MODE_X, y+MODE_Y, MODE_WIDTH, BUTTON_HEIGHT,
 				isOver(mouseX, mouseY, MODE_X, MODE_Y, MODE_WIDTH, BUTTON_HEIGHT));
-		graphics.drawCenteredString(font, Component.translatable("gui.engineered_computation.pattern."+mode()+".short"),
+		GuiComponent.drawCenteredString(pose, font,
+				new TranslatableComponent("gui.engineered_computation.pattern."+mode()+".short"),
 				x+MODE_X+MODE_WIDTH/2+1, y+MODE_Y+2, isDirect()? 0x8CC8FF: 0xFFB050);
-		ECGui.button(graphics, x+CLEAR_X, y+clearY(), CLEAR_SIZE, CLEAR_SIZE,
+		ECGui.button(pose, x+CLEAR_X, y+clearY(), CLEAR_SIZE, CLEAR_SIZE,
 				isOver(mouseX, mouseY, CLEAR_X, clearY(), CLEAR_SIZE, CLEAR_SIZE));
-		ECGui.icon(graphics, x+CLEAR_X+3, y+clearY()+3, CLEAR_ICON, 0xFFFFFFFF);
+		ECGui.icon(pose, x+CLEAR_X+3, y+clearY()+3, CLEAR_ICON, 0xFFFFFFFF);
 	}
 
 	private static int clearY()
@@ -223,22 +230,22 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 	private static boolean tagExists(String text)
 	{
 		String id = text.trim().replaceFirst("^#", "");
-		return id.isEmpty()||BuiltInRegistries.ITEM.getTagNames().anyMatch(key -> key.location().toString().equals(id));
+		return id.isEmpty()||Registry.ITEM.getTagNames().anyMatch(key -> key.location().toString().equals(id));
 	}
 
-	private void renderSuggestions(GuiGraphics graphics, int mouseX, int mouseY)
+	private void renderSuggestions(PoseStack pose, int mouseX, int mouseY)
 	{
 		if(!tag.isFocused()||suggestions.isEmpty())
 			return;
 		int x = leftPos+TAG_X, y = topPos+PatternFloppyMenu.TAG_Y+13;
 		int width = imageWidth-TAG_X-8;
-		graphics.pose().pushPose();
-		graphics.pose().translate(0, 0, 400);
-		graphics.fill(x, y, x+width, y+suggestions.size()*11+2, 0xF0101010);
+		pose.pushPose();
+		pose.translate(0, 0, 400);
+		GuiComponent.fill(pose, x, y, x+width, y+suggestions.size()*11+2, 0xF0101010);
 		for(int i = 0; i<suggestions.size(); i++)
-			graphics.drawString(font, "#"+suggestions.get(i).location(), x+3, y+2+i*11,
-					suggestionAt(mouseX, mouseY)==i? 0xFFFF80: 0xC0C0C0, false);
-		graphics.pose().popPose();
+			font.draw(pose, "#"+suggestions.get(i).location(), x+3, y+2+i*11,
+					suggestionAt(mouseX, mouseY)==i? 0xFFFF80: 0xC0C0C0);
+		pose.popPose();
 	}
 
 	private int suggestionAt(double mouseX, double mouseY)
@@ -290,21 +297,22 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 		Optional<TagKey<Item>> tag = tagOf(pattern, slot);
 		if(tag.isPresent())
 		{
-			lines.add(Component.literal(stack.getCount()+" x #"+tag.get().location()).withStyle(ChatFormatting.AQUA));
-			lines.add(Component.translatable("gui.engineered_computation.program.matches",
+			lines.add(new TextComponent(stack.getCount()+" x #"+tag.get().location()).withStyle(ChatFormatting.AQUA));
+			lines.add(new TranslatableComponent("gui.engineered_computation.program.matches",
 					Pattern.itemsOf(tag.get()).size()).withStyle(ChatFormatting.GRAY));
 			if(!output&&pattern.warnsAt(slot))
-				lines.add(Component.translatable("gui.engineered_computation.pattern.tag.warning",
+				lines.add(new TranslatableComponent("gui.engineered_computation.pattern.tag.warning",
 						Pattern.TAG_WARNING_SIZE).withStyle(ChatFormatting.RED));
 		}
 		else if(!stack.isEmpty())
-			lines.addAll(getTooltipFromContainerItem(stack));
+			lines.addAll(getTooltipFromItem(stack));
 		else
-			lines.add(Component.translatable("gui.engineered_computation.program.empty").withStyle(ChatFormatting.GRAY));
+			lines.add(new TranslatableComponent("gui.engineered_computation.program.empty")
+					.withStyle(ChatFormatting.GRAY));
 		List<String> help = isDirect()? output? List.of("crafted"): List.of("set", "clear")
 				: List.of("set", "more", "less", "tag");
 		for(String key : help)
-			lines.add(Component.translatable("gui.engineered_computation.pattern.help."+key)
+			lines.add(new TranslatableComponent("gui.engineered_computation.pattern.help."+key)
 					.withStyle(ChatFormatting.DARK_GRAY));
 		return lines;
 	}
@@ -347,7 +355,7 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 			return true;
 		}
 		if(!tag.isMouseOver(mouseX, mouseY))
-			tag.setFocused(false);
+			tag.setFocus(false);
 		return super.mouseClicked(mouseX, mouseY, button);
 	}
 

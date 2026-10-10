@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -13,6 +14,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
@@ -68,7 +70,7 @@ public class TubeStationMenu extends AbstractContainerMenu implements NamedStati
 			}
 		};
 		Component inventoryName = station.inventoryName();
-		NetworkHooks.openScreen(player, new SimpleMenuProvider((id, inventory, p) -> new TubeStationMenu(id,
+		NetworkHooks.openGui(player, new SimpleMenuProvider((id, inventory, p) -> new TubeStationMenu(id,
 				station.getBlockPos(),
 				station, station.getName(), inventoryName, data), station.getBlockState().getBlock().getName()), buf -> {
 			buf.writeBlockPos(station.getBlockPos());
@@ -124,7 +126,7 @@ public class TubeStationMenu extends AbstractContainerMenu implements NamedStati
 	@Override
 	public boolean stillValid(Player player)
 	{
-		return player.level().getBlockEntity(pos) instanceof TubeStationBlockEntity
-				&&player.canReach(pos, 4.0);
+		return player.level.getBlockEntity(pos) instanceof TubeStationBlockEntity
+				&&player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos))<Mth.square(player.getReachDistance()+4.0);
 	}
 }

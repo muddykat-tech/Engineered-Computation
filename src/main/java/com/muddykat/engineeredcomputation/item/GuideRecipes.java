@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -121,7 +121,7 @@ public final class GuideRecipes
 	{
 		Set<Item> made = new HashSet<>();
 		for(ResourceLocation id : shown)
-			recipes.byKey(id).ifPresent(recipe -> made.add(recipe.getResultItem(registries).getItem()));
+			recipes.byKey(id).ifPresent(recipe -> made.add(recipe.getResultItem().getItem()));
 		Map<Item, ResourceLocation> needed = new LinkedHashMap<>();
 		Deque<ResourceLocation> queue = new ArrayDeque<>(shown);
 		while(!queue.isEmpty())
@@ -169,18 +169,18 @@ public final class GuideRecipes
 		if(options.length==0)
 			return null;
 		for(ItemStack option : options)
-			if(!BuiltInRegistries.ITEM.getKey(option.getItem()).getNamespace().equals(EngineeredComputation.MODID))
+			if(!Registry.ITEM.getKey(option.getItem()).getNamespace().equals(EngineeredComputation.MODID))
 				return null;
 		return options[0].getItem();
 	}
 
 	private static Optional<ResourceLocation> recipeFor(Item item, RecipeManager recipes, RegistryAccess registries)
 	{
-		ResourceLocation named = BuiltInRegistries.ITEM.getKey(item);
+		ResourceLocation named = Registry.ITEM.getKey(item);
 		Optional<ResourceLocation> any = Optional.empty();
 		for(CraftingRecipe recipe : recipes.getAllRecipesFor(RecipeType.CRAFTING))
 		{
-			if(recipe.getResultItem(registries).is(item))
+			if(recipe.getResultItem().is(item))
 			{
 				if(recipe.getId().equals(named))
 					return Optional.of(recipe.getId());

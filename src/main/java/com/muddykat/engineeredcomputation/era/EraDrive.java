@@ -3,8 +3,9 @@ package com.muddykat.engineeredcomputation.era;
 import java.util.Arrays;
 import java.util.List;
 
-import com.mojang.serialization.Codec;
+import org.jetbrains.annotations.Nullable;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.util.StringRepresentable;
 
 public enum EraDrive implements StringRepresentable
@@ -18,7 +19,16 @@ public enum EraDrive implements StringRepresentable
 	FLOPPY_WORKSTATION(ComputerEra.FLOPPY, "era5_drive", 2, true),
 	FLOPPY_BANK(ComputerEra.FLOPPY, "era5_floppy_bank", 4, false);
 
-	public static final Codec<EraDrive> CODEC = StringRepresentable.fromEnum(EraDrive::values);
+	public static final Codec<EraDrive> CODEC = StringRepresentable.fromEnum(EraDrive::values, EraDrive::byName);
+
+	@Nullable
+	public static EraDrive byName(String name)
+	{
+		for(EraDrive value : values())
+			if(value.getSerializedName().equals(name))
+				return value;
+		return null;
+	}
 
 	private final ComputerEra era;
 	private final String name;

@@ -44,11 +44,11 @@ repositories {
 }
 
 base {
-    // The Minecraft version in the name keeps this build apart from the 1.21.1 one (main branch).
+    // The Minecraft version in the name keeps this build apart from the other branches' (1.21.1, 1.20.1).
     archivesName = "${mod_id}-${minecraft_version}"
 }
 
-// Mojang ships Java 17 to end users in 1.20.1, so mods should target Java 17.
+// Mojang ships Java 17 to end users in 1.18.2, so mods should target Java 17.
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 legacyForge {

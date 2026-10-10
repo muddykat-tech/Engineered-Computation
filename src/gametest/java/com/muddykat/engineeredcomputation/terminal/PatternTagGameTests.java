@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.crafting.CraftingPlan;
@@ -51,7 +52,7 @@ public final class PatternTagGameTests
 	{
 		Pattern p = abstractOf(List.of(new ItemStack(Items.COBBLESTONE, 4)), List.of())
 				.withTag(false, 0, tag("minecraft:logs"));
-		Pattern more = p.withInput(0, p.input(0).copyWithCount(6));
+		Pattern more = p.withInput(0, ItemHandlerHelper.copyStackWithSize(p.input(0), 6));
 		StorageGameTests.check(helper, more.input(0).getCount()==6, "Input count should be 6");
 		StorageGameTests.check(helper, more.inputTag(0).isPresent(), "Input tag should still be present");
 

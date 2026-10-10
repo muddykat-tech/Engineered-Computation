@@ -6,7 +6,6 @@ import java.util.List;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.ItemStack;
 
 
@@ -15,10 +14,10 @@ public record Program(List<ProgramEntry> entries)
 	public static final int SIZE = 9;
 	public static final Program EMPTY = new Program(List.of());
 
-	public static final Codec<Program> CODEC = ExtraCodecs.validate(ProgramEntry.CODEC.listOf(),
-			entries -> entries.size()<=SIZE? DataResult.success(entries)
-					: DataResult.error(() -> "A program has at most "+SIZE+" entries, not "+entries.size()))
-			.xmap(Program::new, Program::entries);
+	public static final Codec<Program> CODEC = ProgramEntry.CODEC.listOf().comapFlatMap(
+			entries -> entries.size()<=SIZE? DataResult.success(new Program(entries))
+					: DataResult.error("A program has at most "+SIZE+" entries, not "+entries.size()),
+			Program::entries);
 
 	public Program
 	{

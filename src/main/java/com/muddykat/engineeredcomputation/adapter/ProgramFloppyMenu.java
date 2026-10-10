@@ -1,6 +1,6 @@
 package com.muddykat.engineeredcomputation.adapter;
 
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -80,7 +80,7 @@ public class ProgramFloppyMenu extends AbstractContainerMenu
 			case SET_TAG ->
 			{
 				ResourceLocation id = ResourceLocation.tryParse(tag.trim().replaceFirst("^#", ""));
-				yield id==null? null: ProgramEntry.of(TagKey.create(Registries.ITEM, id));
+				yield id==null? null: ProgramEntry.of(TagKey.create(Registry.ITEM_REGISTRY, id));
 			}
 			case CLEAR -> ProgramEntry.EMPTY;
 		};

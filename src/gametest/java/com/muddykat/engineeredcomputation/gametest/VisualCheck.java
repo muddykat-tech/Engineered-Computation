@@ -19,9 +19,9 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,18 +32,21 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.DataPackConfig;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
-import net.minecraft.world.level.WorldDataConfiguration;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.WorldOptions;
-import net.minecraft.world.level.levelgen.presets.WorldPresets;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.levelgen.FlatLevelSource;
+import net.minecraft.world.level.levelgen.WorldGenSettings;
+import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -51,6 +54,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.adapter.AdapterKind;
@@ -146,6 +150,8 @@ public final class VisualCheck
 			{
 				worldRequested = true;
 				mc.options.pauseOnLostFocus = false;
+				// A hidden window can be held to ~1 FPS by the compositor while it waits on vsync, so shots would be stale.
+				mc.getWindow().updateVsync(false);
 				createWorld(mc);
 			}
 			return;
@@ -188,10 +194,14 @@ public final class VisualCheck
 		rules.getRule(GameRules.RULE_WEATHER_CYCLE).set(false, null);
 		rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);
 		LevelSettings settings = new LevelSettings(WORLD, GameType.CREATIVE, false, Difficulty.PEACEFUL, true, rules,
-				WorldDataConfiguration.DEFAULT);
-		mc.createWorldOpenFlows().createFreshLevel(WORLD, settings, new WorldOptions(1L, false, false),
-				registries -> registries.registryOrThrow(Registries.WORLD_PRESET)
-						.getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions());
+				DataPackConfig.DEFAULT);
+		RegistryAccess.Writable registries = RegistryAccess.builtinCopy();
+		Registry<StructureSet> structures = registries.registryOrThrow(Registry.STRUCTURE_SET_REGISTRY);
+		FlatLevelSource flat = new FlatLevelSource(structures,
+				FlatLevelGeneratorSettings.getDefault(registries.registryOrThrow(Registry.BIOME_REGISTRY), structures));
+		mc.createLevel(WORLD, settings, registries, new WorldGenSettings(1L, false, false,
+				WorldGenSettings.withOverworld(registries.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY),
+						DimensionType.defaultDimensions(registries, 1L), flat)));
 	}
 
 	private static void queueSteps(Minecraft mc)
@@ -559,7 +569,7 @@ public final class VisualCheck
 		onServer(mc, (level, player) -> {
 			ItemStack deck = new ItemStack(ECCatalogue.decks().get(1).get());
 			CatalogueCard card = new CatalogueCard(GlobalPos.of(level.dimension(), pneumaticsPos().east()),
-					Component.literal("Quarry Chest"), CellContents.EMPTY, level.getGameTime());
+					new TextComponent("Quarry Chest"), CellContents.EMPTY, level.getGameTime());
 			CardDeckItem.setDeck(deck, CardDeck.EMPTY.with(card).with(card));
 			player.setItemInHand(InteractionHand.MAIN_HAND, deck);
 			CardDeckMenu.open(player, InteractionHand.MAIN_HAND);
@@ -617,7 +627,7 @@ public final class VisualCheck
 					.withTag(false, 0, ItemTags.LOGS).withTag(true, 0, ItemTags.PLANKS);
 			ItemStack sawmill = new ItemStack(ECCrafting.PATTERN_FLOPPY.get());
 			PatternFloppyItem.setPattern(sawmill, logsToPlanks.withOutput(0,
-					logsToPlanks.output(0).copyWithCount(4)));
+					ItemHandlerHelper.copyStackWithSize(logsToPlanks.output(0), 4)));
 			DataProcessorState processor = DataProcessorState.at(level, bottom);
 			processor.getPatternSlots().setStackInSlot(0, smelting);
 			processor.getPatternSlots().setStackInSlot(1, sawmill);
@@ -831,8 +841,10 @@ public final class VisualCheck
 			ItemStack floppy = new ItemStack(ECAdapters.PROGRAM_FLOPPY.get());
 			ProgramFloppyItem.setProgram(floppy, Program.EMPTY
 					.with(0, ProgramEntry.of(new ItemStack(Items.REDSTONE)))
-					.with(1, ProgramEntry.of(TagKey.create(Registries.ITEM, ResourceLocation.parse("forge:ingots"))))
-					.with(2, ProgramEntry.of(TagKey.create(Registries.ITEM, ResourceLocation.parse("minecraft:logs")))));
+					.with(1, ProgramEntry.of(TagKey.create(Registry.ITEM_REGISTRY,
+							ResourceLocation.parse("forge:ingots"))))
+					.with(2, ProgramEntry.of(TagKey.create(Registry.ITEM_REGISTRY,
+							ResourceLocation.parse("minecraft:logs")))));
 			player.setItemInHand(InteractionHand.MAIN_HAND, floppy);
 			floppy.use(level, player, InteractionHand.MAIN_HAND);
 		}, 20);
@@ -1087,7 +1099,7 @@ public final class VisualCheck
 		CellInventory inventory = CellInventory.of(cell, () -> {
 		});
 		inventory.insert(ItemKey.of(new ItemStack(Items.STONE)), 1, false);
-		for(var item : BuiltInRegistries.ITEM)
+		for(var item : Registry.ITEM)
 			if(inventory.isTypesFull())
 				break;
 			else if(item!=Items.AIR&&!(item instanceof EraDataCell))
@@ -1164,7 +1176,7 @@ public final class VisualCheck
 		List<CellInventory> cells = disk.getCells();
 		int[] amounts = {1, 7, 64, 250, 999, 1000, 4321, 12345, 64000};
 		int i = 0;
-		for(var item : BuiltInRegistries.ITEM)
+		for(var item : Registry.ITEM)
 		{
 			if(i>=80||item==Items.AIR||item instanceof EraDataCell)
 				continue;
@@ -1261,7 +1273,7 @@ public final class VisualCheck
 
 	private static void overview(ServerPlayer player)
 	{
-		player.teleportTo((ServerLevel)player.level(), base.getX()+24.5, base.getY()+3, base.getZ()+22, 180, 14);
+		player.teleportTo((ServerLevel)player.level, base.getX()+24.5, base.getY()+3, base.getZ()+22, 180, 14);
 	}
 
 	private static void placeLights(ServerLevel level)
@@ -1321,7 +1333,7 @@ public final class VisualCheck
 	{
 		STEPS.add(new Step(waitAfter, () -> {
 			ServerPlayer player = mc.getSingleplayerServer().getPlayerList().getPlayer(mc.player.getUUID());
-			ServerLevel level = (ServerLevel)player.level();
+			ServerLevel level = (ServerLevel)player.level;
 			mc.getSingleplayerServer().execute(() -> action.run(level, player));
 		}));
 	}

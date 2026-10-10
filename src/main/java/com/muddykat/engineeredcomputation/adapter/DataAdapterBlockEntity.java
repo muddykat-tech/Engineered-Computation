@@ -18,7 +18,7 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
@@ -163,7 +163,8 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 			return AdapterStatus.SERVICE_UNAVAILABLE;
 		BlockEntity facingEntity = level.getBlockEntity(worldPosition.relative(facing));
 		IItemHandler target = facingEntity==null? null
-				: facingEntity.getCapability(ForgeCapabilities.ITEM_HANDLER, facing.getOpposite()).orElse(null);
+				: facingEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, facing.getOpposite())
+						.orElse(null);
 		if(target==null)
 			return AdapterStatus.SERVICE_UNAVAILABLE;
 		StorageNetwork network = StorageNetwork.of(level, worldPosition);

@@ -24,7 +24,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -99,6 +99,8 @@ public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest,
 			FluidState fluid)
 	{
+		// What Forge's default does first: the break sound and particles (and anything else vanilla does on a break).
+		playerWillDestroy(level, pos, state, player);
 		if(!level.isClientSide)
 		{
 			ItemStack cover = uncover(level, pos);
@@ -109,7 +111,7 @@ public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 	}
 
 	@Override
-	public List<ItemStack> getDrops(BlockState state, LootParams.Builder params)
+	public List<ItemStack> getDrops(BlockState state, LootContext.Builder params)
 	{
 		List<ItemStack> drops = new ArrayList<>(super.getDrops(state, params));
 		if(params.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof CoveredCableBlockEntity covered
@@ -160,9 +162,9 @@ public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 
 	public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event)
 	{
-		Player player = event.getEntity();
+		Player player = event.getPlayer();
 		ItemStack stack = event.getItemStack();
-		Level level = event.getLevel();
+		Level level = event.getWorld();
 		BlockPos pos = event.getPos();
 		if(!player.isSecondaryUseActive()||!(stack.getItem() instanceof BlockItem item)
 				||!level.getBlockState(pos).is(ECPneumatics.TUBE.get()))

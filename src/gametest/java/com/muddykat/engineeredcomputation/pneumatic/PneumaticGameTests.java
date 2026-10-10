@@ -36,6 +36,7 @@ import com.muddykat.engineeredcomputation.registration.ECBridges;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
+import com.muddykat.engineeredcomputation.terminal.StorageGameTests;
 
 @TestCategory("pneumatic")
 @GameTestHolder(EngineeredComputation.MODID)
@@ -91,9 +92,9 @@ public final class PneumaticGameTests
 			check(helper, line.receiverEntity(level).getTray().isEmpty(), "carrier shouldn't have landed yet");
 			check(helper, carriersTo(level, line.receiver()).size()==1, "one carrier should be in flight");
 			helper.succeedWhen(() -> {
-				helper.assertTrue(line.receiverEntity(level).getTray().countItem(Items.COBBLESTONE)==10,
+				StorageGameTests.require(line.receiverEntity(level).getTray().countItem(Items.COBBLESTONE)==10,
 						"tray should hold the 10 cobblestone");
-				helper.assertTrue(carriersTo(level, line.receiver()).isEmpty(), "carrier should be done");
+				StorageGameTests.require(carriersTo(level, line.receiver()).isEmpty(), "carrier should be done");
 			});
 		});
 	}
@@ -110,9 +111,9 @@ public final class PneumaticGameTests
 					"a carrier should take one stack at a time");
 		});
 		helper.succeedWhen(() -> {
-			helper.assertTrue(line.receiverEntity(level).getTray().countItem(Items.COBBLESTONE)==100,
+			StorageGameTests.require(line.receiverEntity(level).getTray().countItem(Items.COBBLESTONE)==100,
 					"tray should hold all 100 cobblestone");
-			helper.assertTrue(line.stationEntity(level).getPendingRequests()==0, "request should be met");
+			StorageGameTests.require(line.stationEntity(level).getPendingRequests()==0, "request should be met");
 		});
 	}
 
@@ -123,9 +124,9 @@ public final class PneumaticGameTests
 		Line line = line(helper, 5);
 		check(helper, line.stationEntity(level).request(COBBLESTONE, 20, line.receiver()), "request should be taken");
 		helper.succeedWhen(() -> {
-			helper.assertTrue(line.receiverEntity(level).getTray().countItem(Items.COBBLESTONE)==5,
+			StorageGameTests.require(line.receiverEntity(level).getTray().countItem(Items.COBBLESTONE)==5,
 					"tray should hold the 5 there were");
-			helper.assertTrue(line.stationEntity(level).getPendingRequests()==0, "request should be dropped");
+			StorageGameTests.require(line.stationEntity(level).getPendingRequests()==0, "request should be dropped");
 		});
 	}
 
@@ -174,8 +175,8 @@ public final class PneumaticGameTests
 			helper.setBlock(5, 1, 1, Blocks.AIR);
 			helper.succeedWhen(() -> {
 				helper.assertItemEntityPresent(Items.COBBLESTONE, new BlockPos(5, 1, 1), 2);
-				helper.assertTrue(line.receiverEntity(level).getTray().isEmpty(), "nothing should land");
-				helper.assertTrue(carriersTo(level, line.receiver()).isEmpty(), "carrier should be gone");
+				StorageGameTests.require(line.receiverEntity(level).getTray().isEmpty(), "nothing should land");
+				StorageGameTests.require(carriersTo(level, line.receiver()).isEmpty(), "carrier should be gone");
 			});
 		});
 	}
@@ -194,9 +195,9 @@ public final class PneumaticGameTests
 					"carrier should wait at the full tray with all it carries");
 			line.receiverEntity(level).getTray().setItem(0, ItemStack.EMPTY);
 			helper.succeedWhen(() -> {
-				helper.assertTrue(line.receiverEntity(level).getTray().countItem(Items.COBBLESTONE)==10,
+				StorageGameTests.require(line.receiverEntity(level).getTray().countItem(Items.COBBLESTONE)==10,
 						"carrier should land once there's room");
-				helper.assertTrue(carriersTo(level, line.receiver()).isEmpty(), "carrier should be done");
+				StorageGameTests.require(carriersTo(level, line.receiver()).isEmpty(), "carrier should be done");
 			});
 		});
 	}
@@ -218,9 +219,9 @@ public final class PneumaticGameTests
 			level.setChunkForced(chunk.x, chunk.z, true);
 			level.setBlockAndUpdate(far, receiver());
 			helper.succeedWhen(() -> {
-				helper.assertTrue(level.getBlockEntity(far) instanceof ReceivingStationBlockEntity receiver
+				StorageGameTests.require(level.getBlockEntity(far) instanceof ReceivingStationBlockEntity receiver
 						&&receiver.getTray().countItem(Items.COBBLESTONE)==7, "carrier should land once loaded");
-				helper.assertTrue(carriersTo(level, far).isEmpty(), "carrier should be done");
+				StorageGameTests.require(carriersTo(level, far).isEmpty(), "carrier should be done");
 				level.removeBlock(far, false);
 				level.setChunkForced(chunk.x, chunk.z, false);
 			});
@@ -329,10 +330,11 @@ public final class PneumaticGameTests
 		receiver.accept(new ItemStack(Items.COBBLESTONE, 20));
 		receiver.setEjecting(true);
 		helper.succeedWhen(() -> {
-			helper.assertTrue(((ChestBlockEntity)level.getBlockEntity(chestPos)).countItem(Items.COBBLESTONE)==20,
+			StorageGameTests.require(((ChestBlockEntity)level.getBlockEntity(chestPos))
+					.countItem(Items.COBBLESTONE)==20,
 					"the cobblestone should go into the chest in front");
-			helper.assertTrue(receiver.getTray().isEmpty(), "the tray should be empty");
-			helper.assertItemEntityNotPresent(Items.COBBLESTONE, new BlockPos(4, 1, 3), 2);
+			StorageGameTests.require(receiver.getTray().isEmpty(), "the tray should be empty");
+			helper.assertItemEntityCountIs(Items.COBBLESTONE, new BlockPos(4, 1, 3), 2, 0);
 		});
 	}
 
@@ -418,7 +420,8 @@ public final class PneumaticGameTests
 		check(helper, covered.getValue(PneumaticTubeBlock.STRAIGHT)==PneumaticTubeBlock.Straight.X,
 				"the covered tube should keep its connections");
 		check(helper, line.stationEntity(level).request(COBBLESTONE, 10, line.receiver()), "request should be taken");
-		helper.succeedWhen(() -> helper.assertTrue(line.receiverEntity(level).getTray().countItem(Items.COBBLESTONE)==10,
+		helper.succeedWhen(() -> StorageGameTests.require(line.receiverEntity(level).getTray()
+				.countItem(Items.COBBLESTONE)==10,
 				"carriers should pass through the covered tube"));
 	}
 
@@ -457,7 +460,7 @@ public final class PneumaticGameTests
 	{
 		CraftingContainer input = Pattern.craftingGrid(1, 1, List.of(stack));
 		return level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level)
-				.map(recipe -> recipe.assemble(input, level.registryAccess())).orElse(ItemStack.EMPTY);
+				.map(recipe -> recipe.assemble(input)).orElse(ItemStack.EMPTY);
 	}
 
 	private static List<Carrier> carriersTo(ServerLevel level, BlockPos destination)

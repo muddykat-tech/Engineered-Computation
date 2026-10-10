@@ -6,7 +6,7 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
@@ -29,7 +29,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -42,7 +42,7 @@ import com.muddykat.engineeredcomputation.registration.ECCables;
 
 public class CoveredCableBlock extends NetworkCableBlock implements EntityBlock
 {
-	public static final TagKey<Block> CANNOT_COVER = TagKey.create(Registries.BLOCK,
+	public static final TagKey<Block> CANNOT_COVER = TagKey.create(Registry.BLOCK_REGISTRY,
 			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "cannot_cover"));
 
 	private final boolean clear;
@@ -107,6 +107,8 @@ public class CoveredCableBlock extends NetworkCableBlock implements EntityBlock
 	public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest,
 			FluidState fluid)
 	{
+		// What Forge's default does first: the break sound and particles (and anything else vanilla does on a break).
+		playerWillDestroy(level, pos, state, player);
 		if(!level.isClientSide)
 		{
 			ItemStack cover = uncover(level, pos);
@@ -117,7 +119,7 @@ public class CoveredCableBlock extends NetworkCableBlock implements EntityBlock
 	}
 
 	@Override
-	public List<ItemStack> getDrops(BlockState state, LootParams.Builder params)
+	public List<ItemStack> getDrops(BlockState state, LootContext.Builder params)
 	{
 		List<ItemStack> drops = new ArrayList<>(super.getDrops(state, params));
 		if(params.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof CoveredCableBlockEntity covered
@@ -171,9 +173,9 @@ public class CoveredCableBlock extends NetworkCableBlock implements EntityBlock
 
 	public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event)
 	{
-		Player player = event.getEntity();
+		Player player = event.getPlayer();
 		ItemStack stack = event.getItemStack();
-		Level level = event.getLevel();
+		Level level = event.getWorld();
 		BlockPos pos = event.getPos();
 		if(!player.isSecondaryUseActive()||!(stack.getItem() instanceof BlockItem item)
 				||!level.getBlockState(pos).is(ECCables.block().get()))

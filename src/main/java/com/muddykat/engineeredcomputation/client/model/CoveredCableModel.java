@@ -2,31 +2,38 @@ package com.muddykat.engineeredcomputation.client.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.ChunkRenderTypeSet;
+import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.BakedModelWrapper;
-import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.EmptyModelData;
+import net.minecraftforge.client.model.data.IModelData;
 
 import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
 
 public class CoveredCableModel extends BakedModelWrapper<BakedModel>
 {
 	private final boolean showsCable;
+	/** The chunk layer the cable's own quads draw in; the block draws in every layer, for whatever its cover needs. */
+	private final RenderType ownLayer;
 
-	public CoveredCableModel(BakedModel cable, boolean showsCable)
+	public CoveredCableModel(BakedModel cable, boolean showsCable, RenderType ownLayer)
 	{
 		super(cable);
 		this.showsCable = showsCable;
+		this.ownLayer = ownLayer;
 	}
 
 	@Nullable
@@ -35,37 +42,47 @@ public class CoveredCableModel extends BakedModelWrapper<BakedModel>
 		return cover==null||cover.isAir()? null: Minecraft.getInstance().getBlockRenderer().getBlockModel(cover);
 	}
 
-	@Override
-	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand,
-			ModelData data, @Nullable RenderType renderType)
+	/** The layer being drawn, or null outside chunk rendering (all layers at once). */
+	@Nullable
+	static RenderType layer()
 	{
-		BlockState cover = data.get(CoveredCableBlockEntity.COVER);
+		return MinecraftForgeClient.getRenderType();
+	}
+
+	/**
+	 * The block entity's data when the caller passes none: 1.18.2 draws the breaking overlay without model data, so
+	 * the cracks would otherwise land only on the cable hidden inside the cover.
+	 */
+	@Override
+	public IModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, IModelData data)
+	{
+		if(data.getData(CoveredCableBlockEntity.COVER)==null
+				&&level.getBlockEntity(pos) instanceof CoveredCableBlockEntity covered)
+			return covered.getModelData();
+		return super.getModelData(level, pos, state, data);
+	}
+
+	@Override
+	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand,
+			IModelData data)
+	{
+		RenderType layer = layer();
+		BlockState cover = data.getData(CoveredCableBlockEntity.COVER);
 		BakedModel coverModel = coverModel(cover);
 		if(coverModel==null)
-			return super.getQuads(state, side, rand, data, renderType);
+			return layer==null||layer==ownLayer? super.getQuads(state, side, rand, data): List.of();
 		List<BakedQuad> quads = new ArrayList<>();
-		if(renderType==null||coverModel.getRenderTypes(cover, rand, ModelData.EMPTY).contains(renderType))
-			quads.addAll(coverModel.getQuads(cover, side, rand, ModelData.EMPTY, renderType));
-		if(showsCable&&(renderType==null||super.getRenderTypes(state, rand, data).contains(renderType)))
-			quads.addAll(super.getQuads(state, side, rand, data, renderType));
+		if(layer==null||ItemBlockRenderTypes.canRenderInLayer(cover, layer))
+			quads.addAll(coverModel.getQuads(cover, side, rand, EmptyModelData.INSTANCE));
+		if(showsCable&&(layer==null||layer==ownLayer))
+			quads.addAll(super.getQuads(state, side, rand, data));
 		return quads;
 	}
 
 	@Override
-	public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData data)
+	public TextureAtlasSprite getParticleIcon(IModelData data)
 	{
-		BlockState cover = data.get(CoveredCableBlockEntity.COVER);
-		BakedModel coverModel = coverModel(cover);
-		if(coverModel==null)
-			return super.getRenderTypes(state, rand, data);
-		ChunkRenderTypeSet covers = coverModel.getRenderTypes(cover, rand, ModelData.EMPTY);
-		return showsCable? ChunkRenderTypeSet.union(covers, super.getRenderTypes(state, rand, data)): covers;
-	}
-
-	@Override
-	public TextureAtlasSprite getParticleIcon(ModelData data)
-	{
-		BakedModel coverModel = coverModel(data.get(CoveredCableBlockEntity.COVER));
-		return coverModel==null? super.getParticleIcon(data): coverModel.getParticleIcon(ModelData.EMPTY);
+		BakedModel coverModel = coverModel(data.getData(CoveredCableBlockEntity.COVER));
+		return coverModel==null? super.getParticleIcon(data): coverModel.getParticleIcon(EmptyModelData.INSTANCE);
 	}
 }

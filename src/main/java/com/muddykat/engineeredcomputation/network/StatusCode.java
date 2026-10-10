@@ -1,6 +1,8 @@
 package com.muddykat.engineeredcomputation.network;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 
 public enum StatusCode
 {
@@ -35,11 +37,11 @@ public enum StatusCode
 
 	public Component label()
 	{
-		return Component.translatable("gui.engineered_computation.code."+code);
+		return new TranslatableComponent("gui.engineered_computation.code."+code);
 	}
 
 	public Component title()
 	{
-		return Component.literal(code+" ").append(label());
+		return new TextComponent(code+" ").append(label());
 	}
 }

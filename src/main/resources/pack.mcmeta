@@ -3,6 +3,8 @@
     "description": {
       "text": "Engineered Computation resources"
     },
-    "pack_format": 15
+    "pack_format": 8,
+    "forge:resource_pack_format": 8,
+    "forge:data_pack_format": 9
   }
 }

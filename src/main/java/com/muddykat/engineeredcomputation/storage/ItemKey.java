@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 
 public final class ItemKey
@@ -33,7 +34,7 @@ public final class ItemKey
 	{
 		if(stack.isEmpty())
 			throw new IllegalArgumentException("Empty stacks have no item key");
-		return new ItemKey(stack.copyWithCount(1));
+		return new ItemKey(ItemHandlerHelper.copyStackWithSize(stack, 1));
 	}
 
 	public Item getItem()
@@ -48,7 +49,7 @@ public final class ItemKey
 
 	public ItemStack toStack(int count)
 	{
-		return stack.copyWithCount(count);
+		return ItemHandlerHelper.copyStackWithSize(stack, count);
 	}
 
 	public ItemStack displayStack()

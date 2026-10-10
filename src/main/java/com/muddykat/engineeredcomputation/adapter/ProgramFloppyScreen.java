@@ -7,14 +7,17 @@ import java.util.Optional;
 
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.HolderSet;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -49,11 +52,10 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 	{
 		super.init();
 		tag = new EditBox(font, leftPos+TAG_X+2, topPos+TAG_Y+2, imageWidth-TAG_X-12, 10,
-				Component.translatable("gui.engineered_computation.program.tag"));
+				new TranslatableComponent("gui.engineered_computation.program.tag"));
 		tag.setBordered(false);
 		tag.setMaxLength(128);
 		tag.setTextColor(0xFFFFFF);
-		tag.setHint(Component.translatable("gui.engineered_computation.program.tag.hint").withStyle(ChatFormatting.GRAY));
 		tag.setResponder(this::suggest);
 		addRenderableWidget(tag);
 		select(selected);
@@ -68,7 +70,7 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 	private void suggest(String text)
 	{
 		String query = text.trim().replaceFirst("^#", "").toLowerCase(Locale.ROOT);
-		suggestions = query.isEmpty()? List.of(): BuiltInRegistries.ITEM.getTagNames()
+		suggestions = query.isEmpty()? List.of(): Registry.ITEM.getTagNames()
 				.filter(key -> key.location().toString().contains(query))
 				.sorted((a, b) -> a.location().toString().compareTo(b.location().toString()))
 				.limit(SUGGESTIONS).toList();
@@ -80,44 +82,46 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
-		renderBackground(graphics);
-		super.render(graphics, mouseX, mouseY, partialTick);
-		renderSuggestions(graphics, mouseX, mouseY);
+		renderBackground(pose);
+		super.render(pose, mouseX, mouseY, partialTick);
+		ECGui.hint(pose, font, tag, new TranslatableComponent("gui.engineered_computation.program.tag.hint")
+				.withStyle(ChatFormatting.GRAY), false);
+		renderSuggestions(pose, mouseX, mouseY);
 		int entry = entryAt(mouseX, mouseY);
 		if(entry>=0&&menu.getCarried().isEmpty())
-			graphics.renderComponentTooltip(font, entryTooltip(menu.program().get(entry)), mouseX, mouseY);
+			renderComponentTooltip(pose, entryTooltip(menu.program().get(entry)), mouseX, mouseY);
 		else
-			renderTooltip(graphics, mouseX, mouseY);
+			renderTooltip(pose, mouseX, mouseY);
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY)
+	protected void renderBg(PoseStack pose, float partialTick, int mouseX, int mouseY)
 	{
 		int x = leftPos, y = topPos;
-		ECGui.panel(graphics, x, y, imageWidth, imageHeight);
+		ECGui.panel(pose, x, y, imageWidth, imageHeight);
 		for(Slot slot : menu.slots)
 			if(slot.isActive())
-				ECGui.slot(graphics, x+slot.x-1, y+slot.y-1);
+				ECGui.slot(pose, x+slot.x-1, y+slot.y-1);
 		Program program = menu.program();
 		for(int i = 0; i<Program.SIZE; i++)
 		{
 			int entryX = x+ProgramFloppyMenu.ENTRIES_X+i*18, entryY = y+ProgramFloppyMenu.ENTRIES_Y;
-			ECGui.slot(graphics, entryX, entryY);
+			ECGui.slot(pose, entryX, entryY);
 			ItemStack shown = shown(program.get(i));
-			graphics.renderItem(shown, entryX+1, entryY+1);
+			ECGui.renderItem(pose, shown, entryX+1, entryY+1);
 			if(program.get(i).tag().isPresent())
-				graphics.drawString(font, "#", entryX+12, entryY+10, 0x55FFFF, true);
+				font.drawShadow(pose, "#", entryX+12, entryY+10, 0x55FFFF);
 			if(i==selected)
-				graphics.renderOutline(entryX, entryY, 18, 18, 0xFFFFFFFF);
+				ECGui.outline(pose, entryX, entryY, 18, 18, 0xFFFFFFFF);
 			if(i==entryAt(mouseX, mouseY))
-				graphics.fill(entryX+1, entryY+1, entryX+17, entryY+17, 0x80FFFFFF);
+				GuiComponent.fill(pose, entryX+1, entryY+1, entryX+17, entryY+17, 0x80FFFFFF);
 		}
-		graphics.drawString(font, Component.translatable("gui.engineered_computation.program.tag"), x+8, y+TAG_Y+2,
-				ECGui.LABEL, false);
-		graphics.fill(x+TAG_X, y+TAG_Y, x+imageWidth-8, y+TAG_Y+13, 0xFFA0A0A0);
-		graphics.fill(x+TAG_X+1, y+TAG_Y+1, x+imageWidth-9, y+TAG_Y+12, 0xFF000000);
+		font.draw(pose, new TranslatableComponent("gui.engineered_computation.program.tag"), x+8, y+TAG_Y+2,
+				ECGui.LABEL);
+		GuiComponent.fill(pose, x+TAG_X, y+TAG_Y, x+imageWidth-8, y+TAG_Y+13, 0xFFA0A0A0);
+		GuiComponent.fill(pose, x+TAG_X+1, y+TAG_Y+1, x+imageWidth-9, y+TAG_Y+12, 0xFF000000);
 		tag.setTextColor(tagExists(tag.getValue())? 0xFFFFFF: 0xFF7060);
 	}
 
@@ -125,7 +129,7 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 	{
 		if(entry.item().isPresent())
 			return new ItemStack(entry.item().get());
-		Optional<HolderSet.Named<Item>> items = entry.tag().flatMap(BuiltInRegistries.ITEM::getTag);
+		Optional<HolderSet.Named<Item>> items = entry.tag().flatMap(Registry.ITEM::getTag);
 		if(items.isEmpty()||items.get().size()==0)
 			return entry.tag().isPresent()? new ItemStack(Items.BARRIER): ItemStack.EMPTY;
 		long cycle = Util.getMillis()/CYCLE_MILLIS;
@@ -135,7 +139,7 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 	private static boolean tagExists(String text)
 	{
 		String id = text.trim().replaceFirst("^#", "");
-		return id.isEmpty()||BuiltInRegistries.ITEM.getTagNames().anyMatch(key -> key.location().toString().equals(id));
+		return id.isEmpty()||Registry.ITEM.getTagNames().anyMatch(key -> key.location().toString().equals(id));
 	}
 
 	private List<Component> entryTooltip(ProgramEntry entry)
@@ -146,35 +150,35 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 		else if(entry.tag().isPresent())
 		{
 			TagKey<Item> key = entry.tag().get();
-			lines.add(Component.literal("#"+key.location()).withStyle(ChatFormatting.AQUA));
-			int count = BuiltInRegistries.ITEM.getTag(key).map(HolderSet::size).orElse(0);
-			lines.add(Component.translatable("gui.engineered_computation.program.matches", count)
+			lines.add(new TextComponent("#"+key.location()).withStyle(ChatFormatting.AQUA));
+			int count = Registry.ITEM.getTag(key).map(HolderSet::size).orElse(0);
+			lines.add(new TranslatableComponent("gui.engineered_computation.program.matches", count)
 					.withStyle(ChatFormatting.GRAY));
 		}
 		else
-			lines.add(Component.translatable("gui.engineered_computation.program.empty").withStyle(ChatFormatting.GRAY));
+			lines.add(new TranslatableComponent("gui.engineered_computation.program.empty")
+					.withStyle(ChatFormatting.GRAY));
 		for(String key : List.of("set_item", "select", "clear"))
-			lines.add(Component.translatable("gui.engineered_computation.program.help."+key)
+			lines.add(new TranslatableComponent("gui.engineered_computation.program.help."+key)
 					.withStyle(ChatFormatting.DARK_GRAY));
 		return lines;
 	}
 
-	private void renderSuggestions(GuiGraphics graphics, int mouseX, int mouseY)
+	private void renderSuggestions(PoseStack pose, int mouseX, int mouseY)
 	{
 		if(!tag.isFocused()||suggestions.isEmpty())
 			return;
 		int x = leftPos+TAG_X, y = topPos+TAG_Y+13;
 		int width = imageWidth-TAG_X-8;
-		graphics.pose().pushPose();
-		graphics.pose().translate(0, 0, 400);
-		graphics.fill(x, y, x+width, y+suggestions.size()*11+2, 0xF0101010);
+		pose.pushPose();
+		pose.translate(0, 0, 400);
+		GuiComponent.fill(pose, x, y, x+width, y+suggestions.size()*11+2, 0xF0101010);
 		for(int i = 0; i<suggestions.size(); i++)
 		{
 			boolean hovered = suggestionAt(mouseX, mouseY)==i;
-			graphics.drawString(font, "#"+suggestions.get(i).location(), x+3, y+2+i*11, hovered? 0xFFFF80: 0xC0C0C0,
-					false);
+			font.draw(pose, "#"+suggestions.get(i).location(), x+3, y+2+i*11, hovered? 0xFFFF80: 0xC0C0C0);
 		}
-		graphics.pose().popPose();
+		pose.popPose();
 	}
 
 	private int suggestionAt(double mouseX, double mouseY)
@@ -202,7 +206,7 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 		{
 			tag.setValue(suggestions.get(suggestion).location().toString());
 			send(ProgramEditPayload.Action.SET_TAG, tag.getValue());
-			tag.setFocused(false);
+			tag.setFocus(false);
 			return true;
 		}
 		int entry = entryAt(mouseX, mouseY);
@@ -223,12 +227,12 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 			{
 				select(entry);
 				setFocused(tag);
-				tag.setFocused(true);
+				tag.setFocus(true);
 			}
 			return true;
 		}
 		if(!tag.isMouseOver(mouseX, mouseY))
-			tag.setFocused(false);
+			tag.setFocus(false);
 		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
@@ -241,7 +245,7 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 			{
 				if(!tag.getValue().isBlank())
 					send(ProgramEditPayload.Action.SET_TAG, tag.getValue());
-				tag.setFocused(false);
+				tag.setFocus(false);
 				return true;
 			}
 			if(keyCode!=GLFW.GLFW_KEY_ESCAPE)

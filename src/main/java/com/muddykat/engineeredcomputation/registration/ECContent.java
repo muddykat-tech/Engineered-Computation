@@ -8,17 +8,19 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.registries.RegistryObject;
 
+import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.item.AssemblyWrenchItem;
 import com.muddykat.engineeredcomputation.item.GuideItem;
 
 public final class ECContent
 {
-	private static final BlockBehaviour.Properties CASING_PROPERTIES = BlockBehaviour.Properties.of()
-			.mapColor(MapColor.METAL)
+	private static final BlockBehaviour.Properties CASING_PROPERTIES = BlockBehaviour.Properties
+			.of(Material.METAL, MaterialColor.METAL)
 			.strength(5.0F, 6.0F)
 			.sound(SoundType.METAL)
 			.requiresCorrectToolForDrops();
@@ -38,7 +40,8 @@ public final class ECContent
 			CASING_ITEMS.put(era, ECRegistrationHolder.simpleBlockItem(casing));
 			COMPONENTS.put(era, ECRegistrationHolder.simpleItem(era.componentName()));
 			GUIDES.put(era, ECRegistrationHolder.ITEMS.register(
-					era.guideName(), () -> new GuideItem(era, new Item.Properties().stacksTo(1))));
+					era.guideName(), () -> new GuideItem(era,
+							new Item.Properties().tab(EngineeredComputation.TAB).stacksTo(1))));
 		}
 	}
 
@@ -48,7 +51,8 @@ public final class ECContent
 			ECRegistrationHolder.simpleBlockItem(PROCESSOR_CASING);
 
 	public static final RegistryObject<AssemblyWrenchItem> ASSEMBLY_WRENCH = ECRegistrationHolder.ITEMS.register(
-			"assembly_wrench", () -> new AssemblyWrenchItem(new Item.Properties().stacksTo(1)));
+			"assembly_wrench",
+			() -> new AssemblyWrenchItem(new Item.Properties().tab(EngineeredComputation.TAB).stacksTo(1)));
 
 	private ECContent()
 	{

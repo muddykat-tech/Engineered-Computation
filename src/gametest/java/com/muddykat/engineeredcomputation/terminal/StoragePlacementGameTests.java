@@ -2,7 +2,7 @@ package com.muddykat.engineeredcomputation.terminal;
 
 import java.util.List;
 
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Item;
@@ -197,7 +197,7 @@ public final class StoragePlacementGameTests
 
 	private static List<Item> items(int count)
 	{
-		return BuiltInRegistries.ITEM.stream().filter(item -> item!=Items.AIR&&!(item instanceof EraDataCell))
+		return Registry.ITEM.stream().filter(item -> item!=Items.AIR&&!(item instanceof EraDataCell))
 				.limit(count).toList();
 	}
 }

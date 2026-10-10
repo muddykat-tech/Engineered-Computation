@@ -10,11 +10,13 @@ import java.util.Optional;
 
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -52,20 +54,20 @@ public abstract class GuideScreen extends Screen
 
 	abstract int linkColour(boolean hovered);
 
-	void drawSlot(GuiGraphics graphics, int x, int y, int size)
+	void drawSlot(PoseStack pose, int x, int y, int size)
 	{
 		if(size==18)
-			ECGui.slot(graphics, x, y);
+			ECGui.slot(pose, x, y);
 		else
-			ECGui.sunken(graphics, x, y, size, size);
+			ECGui.sunken(pose, x, y, size, size);
 	}
 
-	void drawArrow(GuiGraphics graphics, int x, int y)
+	void drawArrow(PoseStack pose, int x, int y)
 	{
 		int colour = 0xFF000000|textColour();
-		graphics.fill(x, y-1, x+11, y+1, colour);
+		GuiComponent.fill(pose, x, y-1, x+11, y+1, colour);
 		for(int step = 0; step<5; step++)
-			graphics.fill(x+11+step, y-5+step, x+12+step, y+5-step, colour);
+			GuiComponent.fill(pose, x+11+step, y-5+step, x+12+step, y+5-step, colour);
 	}
 
 	@Override
@@ -128,49 +130,48 @@ public abstract class GuideScreen extends Screen
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
-		renderBackground(graphics);
-		super.render(graphics, mouseX, mouseY, partialTick);
+		renderBackground(pose);
+		super.render(pose, mouseX, mouseY, partialTick);
 		hoveredStack = ItemStack.EMPTY;
 		for(int i = 0; i<pagesShown()&&page+i<guide.pages().size(); i++)
-			guide.pages().get(page+i).render(this, graphics, contentX(i), contentY(), mouseX, mouseY, partialTick);
-		renderControls(graphics, mouseX, mouseY);
+			guide.pages().get(page+i).render(this, pose, contentX(i), contentY(), mouseX, mouseY, partialTick);
+		renderControls(pose, mouseX, mouseY);
 		if(!hoveredStack.isEmpty())
-			graphics.renderTooltip(font, tooltip(hoveredStack), hoveredStack.getTooltipImage(), hoveredStack, mouseX,
-					mouseY);
+			renderTooltip(pose, tooltip(hoveredStack), hoveredStack.getTooltipImage(), mouseX, mouseY, hoveredStack);
 		else
-			renderControlTooltip(graphics, mouseX, mouseY);
+			renderControlTooltip(pose, mouseX, mouseY);
 	}
 
-	protected abstract void renderControls(GuiGraphics graphics, int mouseX, int mouseY);
+	protected abstract void renderControls(PoseStack pose, int mouseX, int mouseY);
 
-	protected void renderControlTooltip(GuiGraphics graphics, int mouseX, int mouseY)
+	protected void renderControlTooltip(PoseStack pose, int mouseX, int mouseY)
 	{
 	}
 
-	void renderStack(GuiGraphics graphics, ItemStack stack, int x, int y, int mouseX, int mouseY)
+	void renderStack(PoseStack pose, ItemStack stack, int x, int y, int mouseX, int mouseY)
 	{
 		if(stack.isEmpty())
 			return;
-		graphics.renderItem(stack, x, y);
-		graphics.renderItemDecorations(font, stack, x, y);
+		ECGui.renderItem(pose, stack, x, y);
+		ECGui.renderItemDecorations(pose, font, stack, x, y, null);
 		if(mouseX>=x-1&&mouseX<x+17&&mouseY>=y-1&&mouseY<y+17)
 			hoveredStack = stack;
 	}
 
 	private List<Component> tooltip(ItemStack stack)
 	{
-		List<Component> lines = new ArrayList<>(getTooltipFromItem(minecraft, stack));
+		List<Component> lines = new ArrayList<>(getTooltipFromItem(stack));
 		Integer target = guide.recipePages().get(stack.getItem());
 		if(target!=null)
 		{
 			if(!isShown(target))
-				lines.add(Component.translatable("guide.engineered_computation.link.recipe")
+				lines.add(new TranslatableComponent("guide.engineered_computation.link.recipe")
 						.withStyle(ChatFormatting.DARK_AQUA));
 		}
 		else
-			coveringEra(stack.getItem()).ifPresent(other -> lines.add(Component.translatable(
+			coveringEra(stack.getItem()).ifPresent(other -> lines.add(new TranslatableComponent(
 					"guide.engineered_computation.link.elsewhere", ECContent.guide(other).get().getDescription())
 					.withStyle(ChatFormatting.GRAY)));
 		return lines;
@@ -186,27 +187,27 @@ public abstract class GuideScreen extends Screen
 		});
 	}
 
-	void drawTitle(GuiGraphics graphics, Component title, int x, int y)
+	void drawTitle(PoseStack pose, Component title, int x, int y)
 	{
 		Component bold = title.copy().withStyle(ChatFormatting.BOLD);
 		int width = Math.min(font.width(bold), GuidePage.WIDTH);
-		drawFitted(graphics, bold, x+(GuidePage.WIDTH-width)/2, y, GuidePage.WIDTH, textColour());
+		drawFitted(pose, bold, x+(GuidePage.WIDTH-width)/2, y, GuidePage.WIDTH, textColour());
 	}
 
-	void drawFitted(GuiGraphics graphics, Component text, int x, int y, int maxWidth, int colour)
+	void drawFitted(PoseStack pose, Component text, int x, int y, int maxWidth, int colour)
 	{
 		int width = font.width(text);
 		if(width<=maxWidth)
 		{
-			graphics.drawString(font, text, x, y, colour, false);
+			font.draw(pose, text, x, y, colour);
 			return;
 		}
 		float scale = (float)maxWidth/width;
-		graphics.pose().pushPose();
-		graphics.pose().translate(x, y+(font.lineHeight-1)*(1-scale)/2, 0);
-		graphics.pose().scale(scale, scale, 1);
-		graphics.drawString(font, text, 0, 0, colour, false);
-		graphics.pose().popPose();
+		pose.pushPose();
+		pose.translate(x, y+(font.lineHeight-1)*(1-scale)/2, 0);
+		pose.scale(scale, scale, 1);
+		font.draw(pose, text, 0, 0, colour);
+		pose.popPose();
 	}
 
 	@Override

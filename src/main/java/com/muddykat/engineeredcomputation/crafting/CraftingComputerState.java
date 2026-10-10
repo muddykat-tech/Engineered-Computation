@@ -241,7 +241,7 @@ public class CraftingComputerState implements MultiblockState, NetworkMember
 			return InteractionResult.CONSUME;
 		}
 		if(player instanceof ServerPlayer serverPlayer)
-			NetworkHooks.openScreen(serverPlayer, new SimpleMenuProvider(
+			NetworkHooks.openGui(serverPlayer, new SimpleMenuProvider(
 							(id, inventory, p) -> new CraftingComputerMenu(id, inventory, this, ctx.masterPos()),
 							ctx.definition().partBlock().getName()),
 					buf -> buf.writeBlockPos(ctx.masterPos()));

@@ -9,10 +9,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.RegistryObject;
 
+import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.terminal.CraftingTerminalBlock;
 import com.muddykat.engineeredcomputation.terminal.CraftingTerminalBlockEntity;
@@ -25,8 +27,8 @@ import com.muddykat.engineeredcomputation.terminal.TerminalFeatures;
 
 public final class ECTerminals
 {
-	private static final BlockBehaviour.Properties PROPERTIES = BlockBehaviour.Properties.of()
-			.mapColor(MapColor.METAL)
+	private static final BlockBehaviour.Properties PROPERTIES = BlockBehaviour.Properties
+			.of(Material.METAL, MaterialColor.METAL)
 			.strength(2.2F, 11.0F)
 			.sound(SoundType.METAL)
 			.noOcclusion()
@@ -48,7 +50,8 @@ public final class ECTerminals
 							: new EraTerminalBlock(era, PROPERTIES));
 			BLOCKS.put(era, block);
 			ITEMS.put(era, ECRegistrationHolder.ITEMS.register(
-					era.terminalName(), () -> new BlockItem(block.get(), new Item.Properties())));
+					era.terminalName(), () -> new BlockItem(block.get(),
+							new Item.Properties().tab(EngineeredComputation.TAB))));
 		}
 	}
 

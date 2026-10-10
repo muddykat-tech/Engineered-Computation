@@ -17,8 +17,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
@@ -130,7 +130,7 @@ public final class MultiblockGameTests
 				.filter(p -> !p.equals(geometry.master())).findFirst().orElseThrow();
 		BlockPos cellPart = templatePositions.stream().filter(p -> !geometry.hasStorageAt(p)).findFirst().orElseThrow();
 		IItemHandler handler = level.getBlockEntity(world(origin, cellPart, facing))
-				.getCapability(ForgeCapabilities.ITEM_HANDLER, null).orElse(null);
+				.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).orElse(null);
 		check(helper, handler!=null, "no item handler on a part");
 		ItemStack cell = firstBayItem(era);
 		ItemStack foreignCell = firstBayItem(otherEra(era));
@@ -141,7 +141,7 @@ public final class MultiblockGameTests
 		CompoundTag saved = master.saveWithoutMetadata();
 		EraDriveState reloaded = new EraDriveState(drive, NO_HOST);
 		reloaded.load(saved.getCompound("state"));
-		check(helper, ItemStack.isSameItem(reloaded.getCellSlots().getStackInSlot(0), cell), "cell lost on reload");
+		check(helper, reloaded.getCellSlots().getStackInSlot(0).sameItem(cell), "cell lost on reload");
 
 		BlockPos victimWorld = world(origin, victim, facing);
 		level.destroyBlock(victimWorld, true);

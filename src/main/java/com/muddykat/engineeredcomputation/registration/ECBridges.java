@@ -4,16 +4,18 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.RegistryObject;
 
+import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.network.StorageBridgeBlock;
 
 public final class ECBridges
 {
-	private static final BlockBehaviour.Properties PROPERTIES = BlockBehaviour.Properties.of()
-			.mapColor(MapColor.METAL)
+	private static final BlockBehaviour.Properties PROPERTIES = BlockBehaviour.Properties
+			.of(Material.METAL, MaterialColor.METAL)
 			.strength(2.2F, 11.0F)
 			.sound(SoundType.METAL)
 			.requiresCorrectToolForDrops();
@@ -21,7 +23,7 @@ public final class ECBridges
 	private static final RegistryObject<StorageBridgeBlock> BLOCK = ECRegistrationHolder.BLOCKS.register(
 			"storage_bridge", () -> new StorageBridgeBlock(PROPERTIES));
 	private static final RegistryObject<BlockItem> ITEM = ECRegistrationHolder.ITEMS.register(
-			"storage_bridge", () -> new BlockItem(BLOCK.get(), new Item.Properties()));
+			"storage_bridge", () -> new BlockItem(BLOCK.get(), new Item.Properties().tab(EngineeredComputation.TAB)));
 
 	private ECBridges()
 	{

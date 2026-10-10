@@ -2,9 +2,10 @@ package com.muddykat.engineeredcomputation.pneumatic;
 
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 
@@ -29,28 +30,28 @@ public class ReceivingStationScreen extends NamedStationScreen<ReceivingStationM
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY)
+	protected void renderBg(PoseStack pose, float partialTick, int mouseX, int mouseY)
 	{
-		super.renderBg(graphics, partialTick, mouseX, mouseY);
-		renderSwitch(graphics, EJECT_Y, Component.translatable("gui.engineered_computation.receiver.eject"),
+		super.renderBg(pose, partialTick, mouseX, mouseY);
+		renderSwitch(pose, EJECT_Y, new TranslatableComponent("gui.engineered_computation.receiver.eject"),
 				menu.isEjecting(), mouseX, mouseY);
 		for(Slot slot : menu.slots)
-			ECGui.slot(graphics, leftPos+slot.x-1, topPos+slot.y-1);
+			ECGui.slot(pose, leftPos+slot.x-1, topPos+slot.y-1);
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY)
+	protected void renderLabels(PoseStack pose, int mouseX, int mouseY)
 	{
-		super.renderLabels(graphics, mouseX, mouseY);
-		graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, ECGui.LABEL, false);
+		super.renderLabels(pose, mouseX, mouseY);
+		font.draw(pose, playerInventoryTitle, inventoryLabelX, inventoryLabelY, ECGui.LABEL);
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+	public void render(PoseStack pose, int mouseX, int mouseY, float partialTick)
 	{
-		super.render(graphics, mouseX, mouseY, partialTick);
+		super.render(pose, mouseX, mouseY, partialTick);
 		if(isOverSwitch(EJECT_Y, mouseX, mouseY))
-			graphics.renderTooltip(font, font.split(Component.translatable(
+			renderTooltip(pose, font.split(new TranslatableComponent(
 					"gui.engineered_computation.receiver.eject.detail").withStyle(ChatFormatting.GRAY), TOOLTIP_WIDTH),
 					mouseX, mouseY);
 	}

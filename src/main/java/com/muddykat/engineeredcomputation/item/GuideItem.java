@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -43,7 +44,7 @@ public class GuideItem extends Item
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> lines, TooltipFlag flag)
 	{
-		lines.add(Component.translatable("tooltip.engineered_computation.guide.covers", era.displayName())
+		lines.add(new TranslatableComponent("tooltip.engineered_computation.guide.covers", era.displayName())
 				.withStyle(ChatFormatting.GRAY));
 	}
 }

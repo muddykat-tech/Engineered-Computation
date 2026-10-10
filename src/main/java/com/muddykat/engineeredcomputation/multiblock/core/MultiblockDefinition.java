@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderGetter;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
@@ -106,8 +104,8 @@ public final class MultiblockDefinition<S extends MultiblockState>
 		BlockPos origin = clicked.subtract(MultiblockOrientation.toWorldOffset(triggerPos, facing));
 		for(StructureBlockInfo info : template.blocks())
 		{
-			BlockPos here = origin.offset(MultiblockOrientation.toWorldOffset(info.pos(), facing));
-			if(!level.getBlockState(here).is(info.state().getBlock()))
+			BlockPos here = origin.offset(MultiblockOrientation.toWorldOffset(info.pos, facing));
+			if(!level.getBlockState(here).is(info.state.getBlock()))
 				return false;
 		}
 
@@ -116,11 +114,11 @@ public final class MultiblockDefinition<S extends MultiblockState>
 		List<BlockState> replaced = new ArrayList<>();
 		for(StructureBlockInfo info : template.blocks())
 		{
-			BlockPos here = origin.offset(MultiblockOrientation.toWorldOffset(info.pos(), facing));
+			BlockPos here = origin.offset(MultiblockOrientation.toWorldOffset(info.pos, facing));
 			replaced.add(level.getBlockState(here));
 			level.setBlock(here, partState, Block.UPDATE_NONE);
 			if(level.getBlockEntity(here) instanceof MultiblockPartBlockEntity part)
-				part.initialize(info.pos());
+				part.initialize(info.pos);
 			placed.add(here);
 		}
 		for(int i = 0; i<placed.size(); i++)
@@ -142,7 +140,7 @@ public final class MultiblockDefinition<S extends MultiblockState>
 		BlockPos origin = masterWorldPos.subtract(MultiblockOrientation.toWorldOffset(masterPos, facing));
 		List<BlockPos> positions = new ArrayList<>(template.blocks().size());
 		for(StructureBlockInfo info : template.blocks())
-			positions.add(origin.offset(MultiblockOrientation.toWorldOffset(info.pos(), facing)));
+			positions.add(origin.offset(MultiblockOrientation.toWorldOffset(info.pos, facing)));
 
 		broken.markDisassembling();
 		for(BlockPos pos : positions)
@@ -159,7 +157,7 @@ public final class MultiblockDefinition<S extends MultiblockState>
 			BlockPos pos = positions.get(i);
 			if(pos.equals(broken.getBlockPos())||!level.getBlockState(pos).is(partBlock()))
 				continue;
-			level.setBlockAndUpdate(pos, template.blocks().get(i).state().rotate(rotation));
+			level.setBlockAndUpdate(pos, template.blocks().get(i).state.rotate(rotation));
 		}
 	}
 
@@ -169,8 +167,8 @@ public final class MultiblockDefinition<S extends MultiblockState>
 		LoadedTemplate template = getTemplate(level);
 		if(template!=null)
 			for(StructureBlockInfo info : template.blocks())
-				if(info.pos().equals(posInMultiblock))
-					return info.state().rotate(MultiblockOrientation.rotationFor(facing));
+				if(info.pos.equals(posInMultiblock))
+					return info.state.rotate(MultiblockOrientation.rotationFor(facing));
 		return null;
 	}
 
@@ -187,11 +185,11 @@ public final class MultiblockDefinition<S extends MultiblockState>
 		if(current!=null&&current.source()==source)
 			return current;
 
-		List<StructureBlockInfo> blocks = readBlocks(source, level.holderLookup(Registries.BLOCK));
+		List<StructureBlockInfo> blocks = readBlocks(source);
 		BlockState trigger = null;
 		for(StructureBlockInfo info : blocks)
-			if(info.pos().equals(triggerPos))
-				trigger = info.state();
+			if(info.pos.equals(triggerPos))
+				trigger = info.state;
 		if(trigger==null)
 		{
 			EngineeredComputation.LOGGER.error("Multiblock template {} has no block at its trigger position {}",
@@ -203,7 +201,7 @@ public final class MultiblockDefinition<S extends MultiblockState>
 		return current;
 	}
 
-	private static List<StructureBlockInfo> readBlocks(StructureTemplate template, HolderGetter<Block> blockLookup)
+	private static List<StructureBlockInfo> readBlocks(StructureTemplate template)
 	{
 		CompoundTag tag = template.save(new CompoundTag());
 		ListTag paletteTag = tag.contains("palettes", Tag.TAG_LIST)
@@ -211,7 +209,7 @@ public final class MultiblockDefinition<S extends MultiblockState>
 				: tag.getList("palette", Tag.TAG_COMPOUND);
 		List<BlockState> palette = new ArrayList<>(paletteTag.size());
 		for(int i = 0; i<paletteTag.size(); i++)
-			palette.add(NbtUtils.readBlockState(blockLookup, paletteTag.getCompound(i)));
+			palette.add(NbtUtils.readBlockState(paletteTag.getCompound(i)));
 
 		ListTag blocksTag = tag.getList("blocks", Tag.TAG_COMPOUND);
 		List<StructureBlockInfo> blocks = new ArrayList<>(blocksTag.size());

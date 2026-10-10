@@ -1,13 +1,13 @@
 package com.muddykat.engineeredcomputation.client.guide;
 
-import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.vertex.PoseStack;
 
 interface GuidePage
 {
 	int WIDTH = 114;
 	int HEIGHT = 117;
 
-	void render(GuideScreen screen, GuiGraphics graphics, int x, int y, int mouseX, int mouseY, float partialTick);
+	void render(GuideScreen screen, PoseStack pose, int x, int y, int mouseX, int mouseY, float partialTick);
 
 	default boolean mouseClicked(GuideScreen screen, int x, int y, double mouseX, double mouseY)
 	{

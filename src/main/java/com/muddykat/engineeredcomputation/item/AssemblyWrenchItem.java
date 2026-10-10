@@ -3,7 +3,7 @@ package com.muddykat.engineeredcomputation.item;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -56,7 +56,7 @@ public class AssemblyWrenchItem extends Item
 
 		if(context.getPlayer()!=null)
 			context.getPlayer().displayClientMessage(
-					Component.translatable("message.engineered_computation.structure_incomplete"), true);
+					new TranslatableComponent("message.engineered_computation.structure_incomplete"), true);
 		return InteractionResult.CONSUME;
 	}
 

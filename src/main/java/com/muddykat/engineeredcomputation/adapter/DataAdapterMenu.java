@@ -2,6 +2,7 @@ package com.muddykat.engineeredcomputation.adapter;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -13,6 +14,8 @@ import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
@@ -81,7 +84,7 @@ public class DataAdapterMenu extends AbstractContainerMenu
 
 	public DataAdapterBlock block()
 	{
-		BlockState state = player.level().getBlockState(pos);
+		BlockState state = player.level.getBlockState(pos);
 		return state.getBlock() instanceof DataAdapterBlock block? block: null;
 	}
 
@@ -164,7 +167,7 @@ public class DataAdapterMenu extends AbstractContainerMenu
 			}
 		}
 		else if(!holdsProgram)
-			filter.setItem(0, carried.copyWithCount(1));
+			filter.setItem(0, ItemHandlerHelper.copyStackWithSize(carried, 1));
 	}
 
 	@Override
@@ -184,7 +187,7 @@ public class DataAdapterMenu extends AbstractContainerMenu
 			slot.setChanged();
 		}
 		else
-			filter.setItem(0, stack.copyWithCount(1));
+			filter.setItem(0, ItemHandlerHelper.copyStackWithSize(stack, 1));
 		return ItemStack.EMPTY;
 	}
 
@@ -216,7 +219,7 @@ public class DataAdapterMenu extends AbstractContainerMenu
 	@Override
 	public boolean stillValid(Player player)
 	{
-		return player.level().getBlockState(pos).getBlock() instanceof DataAdapterBlock
-				&&player.canReach(pos, 4.0);
+		return player.level.getBlockState(pos).getBlock() instanceof DataAdapterBlock
+				&&player.getEyePosition().distanceToSqr(Vec3.atCenterOf(pos))<Mth.square(player.getReachDistance()+4.0);
 	}
 }
