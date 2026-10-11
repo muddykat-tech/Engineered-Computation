@@ -24,6 +24,7 @@
     "engineered_computation:processor_casing",
     "engineered_computation:network_cable",
     "engineered_computation:storage_bridge",
+    "engineered_computation:energy_accepter",
     "engineered_computation:pneumatic_tube",
     "engineered_computation:tube_station",
     "engineered_computation:advanced_tube_station",

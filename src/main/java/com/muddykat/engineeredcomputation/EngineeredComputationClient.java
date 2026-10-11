@@ -52,6 +52,7 @@ import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
 import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
 import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationScreen;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationScreen;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterScreen;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECCrafting;
@@ -162,6 +163,7 @@ public class EngineeredComputationClient {
         event.register(ECMenuTypes.ERA_DRIVE.get(), EraDriveScreen::new);
         event.register(ECMenuTypes.TERMINAL.get(), TerminalScreen::new);
         event.register(ECMenuTypes.DATA_ADAPTER.get(), DataAdapterScreen::new);
+        event.register(ECMenuTypes.ENERGY_ACCEPTER.get(), EnergyAccepterScreen::new);
         event.register(ECMenuTypes.PROGRAM_FLOPPY.get(), ProgramFloppyScreen::new);
         event.register(ECMenuTypes.PATTERN_FLOPPY.get(), PatternFloppyScreen::new);
         event.register(ECMenuTypes.CRAFTING_COMPUTER.get(), CraftingComputerScreen::new);

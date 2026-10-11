@@ -17,6 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.network.NetworkMember;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
@@ -107,6 +108,12 @@ public class TerminalDiskBlockEntity extends CraftingTerminalBlockEntity impleme
 	public ComputerEra getEra()
 	{
 		return hasDisk()? ComputerEra.FLOPPY: null;
+	}
+
+	@Override
+	public int powerCost(Level level, BlockPos pos)
+	{
+		return ECConfig.cost(ECConfig.terminalKey(ComputerEra.FLOPPY));
 	}
 
 	private boolean hasDisk()

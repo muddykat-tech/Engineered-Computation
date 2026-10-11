@@ -35,6 +35,7 @@ public final class GuideRecipes
 	public static final ResourceLocation WRENCH = id("assembly_wrench");
 	public static final ResourceLocation CABLE = id("network_cable");
 	public static final ResourceLocation BRIDGE = id("storage_bridge");
+	public static final ResourceLocation ENERGY_ACCEPTER = id("energy_accepter");
 	public static final ResourceLocation PROCESSOR_CASING = id("processor_casing");
 
 	private GuideRecipes()
@@ -114,7 +115,7 @@ public final class GuideRecipes
 	{
 		List<ResourceLocation> recipes = new ArrayList<>(List.of(WRENCH));
 		if(era.onDataNetwork())
-			recipes.addAll(List.of(CABLE, BRIDGE));
+			recipes.addAll(List.of(CABLE, BRIDGE, ENERGY_ACCEPTER));
 		recipes.addAll(List.of(component(era), casing(era)));
 		terminal(era).ifPresent(recipes::add);
 		recipes.addAll(terminalDisks(era));

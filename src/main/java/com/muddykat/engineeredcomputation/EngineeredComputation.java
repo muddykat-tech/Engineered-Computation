@@ -28,6 +28,7 @@ import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
+import com.muddykat.engineeredcomputation.registration.ECPower;
 import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
 import com.muddykat.engineeredcomputation.storage.ECDataCells;
@@ -49,6 +50,7 @@ public class EngineeredComputation {
                 output.accept(ECContent.ASSEMBLY_WRENCH.get());
                 output.accept(ECCables.item().get());
                 output.accept(ECBridges.item().get());
+                output.accept(ECPower.ITEM.get());
                 for (ComputerEra era : ComputerEra.values()) {
                     output.accept(ECContent.guide(era).get());
                     output.accept(ECContent.casingItem(era).get());
@@ -86,6 +88,7 @@ public class EngineeredComputation {
         ECTerminals.init();
         ECCables.init();
         ECBridges.init();
+        ECPower.init();
         ECAdapters.init();
         ECCrafting.init();
         ECPneumatics.init();
@@ -97,6 +100,7 @@ public class EngineeredComputation {
         ECTerminals.register(modEventBus);
         ECCables.register(modEventBus);
         ECBridges.register(modEventBus);
+        ECPower.register(modEventBus);
         ECAdapters.register(modEventBus);
         ECCrafting.register(modEventBus);
         ECPneumatics.register(modEventBus);

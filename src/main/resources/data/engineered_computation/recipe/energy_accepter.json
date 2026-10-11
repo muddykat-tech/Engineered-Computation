@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ICI",
+    "VRV",
+    "ICI"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "C": {
+      "item": "engineered_computation:network_cable"
+    },
+    "V": {
+      "item": "engineered_computation:vacuum_tube"
+    },
+    "R": {
+      "tag": "c:storage_blocks/redstone"
+    }
+  },
+  "result": {
+    "id": "engineered_computation:energy_accepter",
+    "count": 1
+  }
+}

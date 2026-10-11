@@ -23,6 +23,7 @@ public final class GuideTexts
 	public static final String TERMINAL = "terminal";
 	public static final String CABLES = "cables";
 	public static final String BRIDGE = "bridge";
+	public static final String ENERGY_ACCEPTER = "energy_accepter";
 	public static final String CELLS = "cells";
 	public static final String PLACEMENT = "placement";
 	public static final String BUILTIN_TERMINAL = "builtin_terminal";
@@ -71,7 +72,8 @@ public final class GuideTexts
 	{
 		Map<String, Set<String>> pages = new LinkedHashMap<>();
 		pages.put(INTRO, Set.of(ERA));
-		for(String page : List.of(WRENCH, COMPONENTS, NETWORK, TERMINAL, CABLES, BRIDGE, CELLS, PLACEMENT))
+		for(String page : List.of(WRENCH, COMPONENTS, NETWORK, TERMINAL, CABLES, BRIDGE, ENERGY_ACCEPTER, CELLS,
+				PLACEMENT))
 			pages.put(page, Set.of());
 		for(ComputerEra era : ComputerEra.values())
 		{

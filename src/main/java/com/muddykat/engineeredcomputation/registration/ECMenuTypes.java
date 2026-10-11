@@ -10,13 +10,14 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterMenu;
 import com.muddykat.engineeredcomputation.adapter.ProgramFloppyMenu;
+import com.muddykat.engineeredcomputation.catalogue.CardDeckMenu;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerMenu;
 import com.muddykat.engineeredcomputation.crafting.DataProcessorMenu;
 import com.muddykat.engineeredcomputation.crafting.PatternFloppyMenu;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveMenu;
-import com.muddykat.engineeredcomputation.catalogue.CardDeckMenu;
 import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationMenu;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationMenu;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterMenu;
 import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
 
 public final class ECMenuTypes
@@ -30,6 +31,8 @@ public final class ECMenuTypes
 	public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL =
 			REGISTER.register("terminal", () -> IMenuTypeExtension.create(TerminalMenu::new));
 
+	public static final DeferredHolder<MenuType<?>, MenuType<EnergyAccepterMenu>> ENERGY_ACCEPTER =
+			REGISTER.register("energy_accepter", () -> IMenuTypeExtension.create(EnergyAccepterMenu::new));
 	public static final DeferredHolder<MenuType<?>, MenuType<DataAdapterMenu>> DATA_ADAPTER =
 			REGISTER.register("data_adapter", () -> IMenuTypeExtension.create(DataAdapterMenu::new));
 

@@ -22,9 +22,11 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
 import com.muddykat.engineeredcomputation.crafting.DataProcessorState;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterBlockEntity;
 import com.muddykat.engineeredcomputation.storage.CellInventory;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
 import com.muddykat.engineeredcomputation.storage.StorageHost;
@@ -42,10 +44,18 @@ public final class StorageNetwork
 	private final Set<BlockPos> blocks;
 	private final List<CraftingComputerState> craftingComputers;
 	private final List<DataProcessorState> dataProcessors;
+	/** What its machines cost: one per block, or one per multiblock (see NetworkMember.chargedPerBlock). */
+	private final List<Charge> charges;
+	/** Its Energy Accepters, lowest first: the first pays for the network. */
+	private final List<BlockPos> accepters;
+
+	private record Charge(NetworkMember member, BlockPos pos)
+	{
+	}
 
 	private StorageNetwork(List<StorageHost> hosts, Set<ComputerEra> eras, Set<ComputerEra> conflictingEras,
 			boolean tooLarge, Set<BlockPos> blocks, List<CraftingComputerState> craftingComputers,
-			List<DataProcessorState> dataProcessors)
+			List<DataProcessorState> dataProcessors, List<Charge> charges, List<BlockPos> accepters)
 	{
 		this.hosts = hosts;
 		this.processor = hosts.stream().filter(StorageHost::isProcessor).map(StorageHost::getEra)
@@ -56,6 +66,8 @@ public final class StorageNetwork
 		this.blocks = blocks;
 		this.craftingComputers = craftingComputers;
 		this.dataProcessors = dataProcessors;
+		this.charges = charges;
+		this.accepters = accepters;
 	}
 
 	private static final Map<Level, Map<BlockPos, StorageNetwork>> KNOWN = new WeakHashMap<>();
@@ -101,6 +113,9 @@ public final class StorageNetwork
 		List<StorageHost> ordered = new ArrayList<>();
 		Set<CraftingComputerState> computers = Collections.newSetFromMap(new IdentityHashMap<>());
 		Set<DataProcessorState> processors = Collections.newSetFromMap(new IdentityHashMap<>());
+		Set<NetworkMember> charged = Collections.newSetFromMap(new IdentityHashMap<>());
+		List<Charge> charges = new ArrayList<>();
+		List<BlockPos> accepters = new ArrayList<>();
 		Map<BlockPos, ComputerEra> eraAt = new HashMap<>();
 		Set<BlockPos> bridges = new HashSet<>();
 		Map<BlockPos, List<BlockPos>> links = new HashMap<>();
@@ -133,6 +148,10 @@ public final class StorageNetwork
 				computers.add(member.getCraftingComputer());
 			if(member!=null&&member.getDataProcessor()!=null)
 				processors.add(member.getDataProcessor());
+			if(member!=null&&(member.chargedPerBlock()||charged.add(member)))
+				charges.add(new Charge(member, pos));
+			if(member!=null&&member.isEnergyAccepter())
+				accepters.add(pos);
 			for(Direction direction : Direction.values())
 			{
 				BlockPos next = pos.relative(direction);
@@ -150,7 +169,8 @@ public final class StorageNetwork
 		}
 		Set<ComputerEra> conflicting = eras.size()<=1? Set.of(): conflicting(eraAt, bridges, links);
 		return new StorageNetwork(List.copyOf(ordered), Collections.unmodifiableSet(eras), conflicting, tooLarge,
-				Collections.unmodifiableSet(visited), List.copyOf(computers), List.copyOf(processors));
+				Collections.unmodifiableSet(visited), List.copyOf(computers), List.copyOf(processors),
+				List.copyOf(charges), accepters.stream().sorted().toList());
 	}
 
 	private static Set<ComputerEra> conflicting(Map<BlockPos, ComputerEra> eraAt, Set<BlockPos> bridges,
@@ -221,6 +241,48 @@ public final class StorageNetwork
 	public Set<ComputerEra> getConflictingEras()
 	{
 		return conflictingEras;
+	}
+
+	/** RF per tick its machines cost while power is enabled, from the config as it is now. */
+	public long getPowerCost(Level level)
+	{
+		long cost = 0;
+		for(Charge charge : charges)
+			cost += charge.member().powerCost(level, charge.pos());
+		return cost;
+	}
+
+	public List<BlockPos> getAccepters()
+	{
+		return accepters;
+	}
+
+	/** The Energy Accepter that pays for the network each tick (the lowest, so they all agree), if it has any. */
+	@Nullable
+	public BlockPos getPayingAccepter()
+	{
+		return accepters.isEmpty()? null: accepters.get(0);
+	}
+
+	/**
+	 * Whether its machines can run as far as power goes: power is disabled, the network costs nothing, or its paying
+	 * accepter paid this tick or the last.
+	 */
+	public boolean isPowered(Level level)
+	{
+		if(!ECConfig.powerEnabled())
+			return true;
+		BlockPos paying = getPayingAccepter();
+		if(paying==null)
+			return getPowerCost(level)==0;
+		return level.getBlockEntity(paying) instanceof EnergyAccepterBlockEntity accepter
+				&&accepter.paidRecently(level.getGameTime());
+	}
+
+	/** Its storage, or none while the network can't run: too large, mixed eras, or not paid for. */
+	public NetworkStorage getUsableStorage(Level level)
+	{
+		return tooLarge||!conflictingEras.isEmpty()||!isPowered(level)? NetworkStorage.EMPTY: getStorage();
 	}
 
 	public NetworkStorage getStorage()

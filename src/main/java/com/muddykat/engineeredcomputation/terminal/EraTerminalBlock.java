@@ -21,9 +21,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import com.muddykat.engineeredcomputation.network.StorageNetwork;
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.network.NetworkMember;
+import com.muddykat.engineeredcomputation.network.StorageNetwork;
 
 public class EraTerminalBlock extends HorizontalDirectionalBlock
 {
@@ -34,6 +35,12 @@ public class EraTerminalBlock extends HorizontalDirectionalBlock
 
 	public static final NetworkMember NETWORK_MEMBER = new NetworkMember()
 	{
+		@Override
+		public int powerCost(Level level, BlockPos pos)
+		{
+			return level.getBlockState(pos).getBlock() instanceof EraTerminalBlock terminal
+					? ECConfig.cost(ECConfig.terminalKey(terminal.getEra())): 0;
+		}
 	};
 
 	private final ComputerEra era;

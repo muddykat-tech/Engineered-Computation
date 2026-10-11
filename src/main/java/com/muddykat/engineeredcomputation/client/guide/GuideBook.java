@@ -108,6 +108,10 @@ final class GuideBook
 		text(GuideTexts.BRIDGE);
 		recipe(GuideRecipes.BRIDGE);
 
+		chapter(GuideTexts.ENERGY_ACCEPTER);
+		text(GuideTexts.ENERGY_ACCEPTER);
+		recipe(GuideRecipes.ENERGY_ACCEPTER);
+
 		chapter(GuideTexts.CELLS);
 		text(GuideTexts.CELLS);
 		section(GuideTexts.PLACEMENT);

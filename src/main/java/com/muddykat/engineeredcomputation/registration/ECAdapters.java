@@ -5,9 +5,11 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -18,6 +20,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.adapter.AdapterKind;
 import com.muddykat.engineeredcomputation.adapter.AdapterSpeed;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
@@ -40,6 +43,12 @@ public final class ECAdapters
 
 	private static final NetworkMember NETWORK_MEMBER = new NetworkMember()
 	{
+		@Override
+		public int powerCost(Level level, BlockPos pos)
+		{
+			return level.getBlockState(pos).getBlock() instanceof DataAdapterBlock adapter
+					? ECConfig.cost(ECConfig.adapterKey(adapter.getEra(), adapter.getKind())): 0;
+		}
 	};
 
 	private static final Map<ComputerEra, Map<AdapterKind, DeferredBlock<DataAdapterBlock>>> BLOCKS =

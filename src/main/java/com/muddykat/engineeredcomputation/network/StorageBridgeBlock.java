@@ -13,6 +13,8 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 
+import com.muddykat.engineeredcomputation.ECConfig;
+
 public class StorageBridgeBlock extends HorizontalDirectionalBlock
 {
 	public static final MapCodec<StorageBridgeBlock> CODEC = simpleCodec(StorageBridgeBlock::new);
@@ -23,6 +25,12 @@ public class StorageBridgeBlock extends HorizontalDirectionalBlock
 		public boolean isBridge()
 		{
 			return true;
+		}
+
+		@Override
+		public int powerCost(Level level, BlockPos pos)
+		{
+			return ECConfig.cost("storageBridge");
 		}
 	};
 

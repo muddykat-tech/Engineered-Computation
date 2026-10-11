@@ -189,6 +189,8 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 			return AdapterStatus.CONTENT_TOO_LARGE;
 		if(!network.getConflictingEras().isEmpty())
 			return AdapterStatus.CONFLICT;
+		if(!network.isPowered(level))
+			return AdapterStatus.PAYMENT_REQUIRED;
 		NetworkStorage storage = network.getStorage();
 		if(storage.getCells().isEmpty())
 			return network.getErasWithoutProcessor().isEmpty()? AdapterStatus.SERVICE_UNAVAILABLE:

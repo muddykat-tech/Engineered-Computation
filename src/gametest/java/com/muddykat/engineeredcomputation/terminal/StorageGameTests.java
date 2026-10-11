@@ -265,7 +265,7 @@ public final class StorageGameTests
 		storage.collect(expected);
 		check(helper, clientCopy.getClientContents().equals(expected),
 				"client copy "+clientCopy.getClientContents()+" doesn't match storage "+expected);
-		check(helper, clientCopy.getClientStats().equals(new TerminalStats(21, 2048, 2, 10, 1, 0)),
+		check(helper, clientCopy.getClientStats().equals(new TerminalStats(21, 2048, 2, 10, 1, 0, 0, 0, 0)),
 				"capacity not synced: "+clientCopy.getClientStats());
 		helper.succeed();
 	}

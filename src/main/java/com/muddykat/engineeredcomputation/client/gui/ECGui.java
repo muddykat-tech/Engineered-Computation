@@ -148,6 +148,15 @@ public final class ECGui
 		graphics.blitSprite(SLOT, x, y, 18, 18);
 	}
 
+	/** A gauge in one colour: for something it's good to have full, like stored RF. */
+	public static void gauge(GuiGraphics graphics, int x, int y, int width, int height, double fraction, int colour)
+	{
+		sunken(graphics, x, y, width, height);
+		int filled = (int)Math.round((width-2)*Math.max(0, Math.min(1, fraction)));
+		if(filled>0)
+			graphics.fill(x+1, y+1, x+1+filled, y+height-1, colour);
+	}
+
 	public static void gauge(GuiGraphics graphics, int x, int y, int width, int height, double fraction)
 	{
 		sunken(graphics, x, y, width, height);

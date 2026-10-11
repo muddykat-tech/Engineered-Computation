@@ -421,7 +421,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		else if(isOver(mouseX, mouseY, TerminalMenu.GRID_X, gaugeY, GRID_WIDTH+SCROLLBAR_WIDTH+4, GAUGE_HEIGHT))
 		{
 			TerminalStats stats = menu.getClientStats();
-			lines = List.of(
+			lines = new ArrayList<>(List.of(
 					Component.translatable("gui.engineered_computation.terminal.capacity").withStyle(ChatFormatting.YELLOW),
 					Component.translatable("gui.engineered_computation.terminal.capacity.bytes",
 							ByteSize.format(stats.usedBytes()), ByteSize.format(stats.totalBytes()),
@@ -429,7 +429,14 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 					Component.translatable("gui.engineered_computation.terminal.capacity.types",
 							stats.usedTypes(), stats.totalTypes()).withStyle(ChatFormatting.GRAY),
 					Component.translatable("gui.engineered_computation.terminal.capacity.cells",
-							stats.cells()).withStyle(ChatFormatting.GRAY));
+							stats.cells()).withStyle(ChatFormatting.GRAY)));
+			if(stats.powerEnabled())
+			{
+				lines.add(Component.translatable("gui.engineered_computation.terminal.power", number(stats.powerCost()))
+						.withStyle(stats.unpowered()? ChatFormatting.RED: ChatFormatting.GRAY));
+				lines.add(Component.translatable("gui.engineered_computation.terminal.power.stored",
+						number(stats.powerStored()), number(stats.powerCapacity())).withStyle(ChatFormatting.GRAY));
+			}
 		}
 		else if(menu.getFeatures().orders()&&isOver(mouseX, mouseY, jobsX(), 4, BUTTON_SIZE, BUTTON_SIZE))
 			lines = List.of(Component.translatable("gui.engineered_computation.jobs").withStyle(ChatFormatting.YELLOW),
@@ -651,6 +658,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 			return StatusCode.FAILED_DEPENDENCY;
 		if(!stats.conflictingEras().isEmpty())
 			return StatusCode.CONFLICT;
+		if(stats.unpowered())
+			return StatusCode.PAYMENT_REQUIRED;
 		if(!view.isEmpty())
 			return null;
 		if(!stats.erasWithoutProcessor().isEmpty())
@@ -721,6 +730,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 						ByteSize.format(stats.totalBytes()));
 		graphics.drawString(font, usage, imageWidth-8-font.width(usage), inventoryLabelY,
 				isOverOutlet(mouseX, mouseY)? 0x2050A0: ECGui.LABEL, false);
+	}
+
+	private static String number(long value)
+	{
+		return String.format(Locale.ROOT, "%,d", value);
 	}
 
 	static String formatCount(long count)

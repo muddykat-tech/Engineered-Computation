@@ -58,6 +58,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.adapter.AdapterKind;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
@@ -96,6 +97,7 @@ import com.muddykat.engineeredcomputation.pneumatic.TubeNetwork;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlock;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlockEntity;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationMenu;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterBlockEntity;
 import com.muddykat.engineeredcomputation.registration.ECAdapters;
 import com.muddykat.engineeredcomputation.registration.ECBridges;
 import com.muddykat.engineeredcomputation.registration.ECCables;
@@ -105,6 +107,7 @@ import com.muddykat.engineeredcomputation.registration.ECCrafting;
 import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
+import com.muddykat.engineeredcomputation.registration.ECPower;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
 import com.muddykat.engineeredcomputation.storage.CellContents;
 import com.muddykat.engineeredcomputation.storage.CellInventory;
@@ -122,7 +125,7 @@ public final class VisualCheck
 	private static final boolean ENABLED = Boolean.getBoolean("ec.visualcheck");
 	/** Each area's shots, in the order they run; {@link #ONLY} picks some. */
 	private static final List<String> CATEGORIES = List.of("cables", "pneumatics", "drives", "angles", "world", "guide",
-			"terminal", "adapters", "crafting", "config");
+			"terminal", "adapters", "crafting", "power", "config");
 	/**
 	 * The categories to run, from -Pvisuals=adapters,terminal (ec.visualcheck.only); none or "all" runs every one. The
 	 * older ec.visualcheck.angles=true still means the model angles alone.
@@ -249,6 +252,7 @@ public final class VisualCheck
 		section(mc, "cables", true, VisualCheck::queueCables);
 		section(mc, "adapters", true, VisualCheck::queueAdapters);
 		section(mc, "crafting", true, VisualCheck::queueCrafting);
+		section(mc, "power", true, VisualCheck::queuePower);
 		section(mc, "config", true, VisualCheck::queueConfig);
 		STEPS.add(new Step(10, mc::stop));
 	}
@@ -1470,6 +1474,48 @@ public final class VisualCheck
 			Screenshot.grab(mc.gameDirectory, name+".png", mc.getMainRenderTarget(),
 					message -> EngineeredComputation.LOGGER.info("Visual check: {}", message.getString()));
 		}));
+	}
+
+	/**
+	 * An Energy Accepter on the disk pack network with power switched on: the terminal unpaid (402), the accepter's
+	 * screen unpaid then fed, and the terminal's storage bar tooltip with the network's power. Power goes back off
+	 * after.
+	 */
+	private static void queuePower(Minecraft mc)
+	{
+		TerminalMenu.Layout crafting = TerminalMenu.Layout.of(TerminalFeatures.CRAFTING);
+		onServer(mc, (level, player) -> {
+			ECConfig.POWER.set(true);
+			BlockPos accepter = terminalPos(ComputerEra.DISK).above();
+			if(!level.getBlockState(accepter).isAir())
+				EngineeredComputation.LOGGER.error("Visual check: no room for the Energy Accepter at {}", accepter);
+			level.setBlockAndUpdate(accepter, ECPower.BLOCK.get().defaultBlockState());
+			player.teleportTo(level, accepter.getX()+0.5, accepter.getY()+0.4, accepter.getZ()-2.6, 0, 15);
+		}, 20);
+		screenshot(mc, "ec_power_accepter", 2);
+		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.DISK)), 20);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_power_terminal_unpaid", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.DISK).above()), 20);
+		screenshot(mc, "ec_power_accepter_unpaid", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> {
+			BlockPos pos = terminalPos(ComputerEra.DISK).above();
+			if(level.getBlockEntity(pos) instanceof EnergyAccepterBlockEntity accepter)
+				accepter.setEnergy(80_000);
+		}, 10);
+		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.DISK).above()), 20);
+		screenshot(mc, "ec_power_accepter_screen", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.DISK)), 20);
+		STEPS.add(new Step(5, () -> hoverGui(mc, 90, crafting.gridY()+crafting.rows()*18+5)));
+		screenshot(mc, "ec_power_terminal_tooltip", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> {
+			ECConfig.POWER.set(false);
+			level.setBlockAndUpdate(terminalPos(ComputerEra.DISK).above(), Blocks.AIR.defaultBlockState());
+		}, 5);
 	}
 
 	private static void queueConfig(Minecraft mc)

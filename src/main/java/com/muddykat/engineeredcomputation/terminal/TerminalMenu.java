@@ -43,6 +43,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueDesk;
 import com.muddykat.engineeredcomputation.catalogue.RequestSlip;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
@@ -55,6 +56,7 @@ import com.muddykat.engineeredcomputation.crafting.TerminalCraftingPayload;
 import com.muddykat.engineeredcomputation.network.ECCapabilities;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterBlockEntity;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.storage.CellContents;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
@@ -264,7 +266,7 @@ public class TerminalMenu extends AbstractContainerMenu
 	private NetworkStorage storage()
 	{
 		network = StorageNetwork.of(player.level(), terminalPos);
-		return network.isTooLarge()||!network.getConflictingEras().isEmpty()? NetworkStorage.EMPTY: network.getStorage();
+		return network.getUsableStorage(player.level());
 	}
 
 	@Override
@@ -309,8 +311,12 @@ public class TerminalMenu extends AbstractContainerMenu
 			NetworkStorage storage = storage();
 			contents = new HashMap<>();
 			storage.collect(contents);
+			List<EnergyAccepterBlockEntity> accepters = EnergyAccepterBlockEntity.accepters(player.level(), network);
 			stats = TerminalStats.of(storage, network.getConflictingEras(), network.isTooLarge(),
-					CraftingNetwork.isProcessing(network), network.getErasWithoutProcessor());
+					CraftingNetwork.isProcessing(network), network.getErasWithoutProcessor())
+					.withPower(ECConfig.powerEnabled(), network.isPowered(player.level()),
+							network.getPowerCost(player.level()), EnergyAccepterBlockEntity.stored(accepters),
+							(long)accepters.size()*EnergyAccepterBlockEntity.capacity());
 		}
 		if(features.orders())
 			sendCrafting(serverPlayer);
