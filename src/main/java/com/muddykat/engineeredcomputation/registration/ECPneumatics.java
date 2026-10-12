@@ -14,6 +14,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.RegistryObject;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
+import com.muddykat.engineeredcomputation.pneumatic.AdvancedTubeStationBlock;
 import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
 import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlockEntity;
 import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
@@ -42,6 +43,8 @@ public final class ECPneumatics
 			"pneumatic_tube", () -> new PneumaticTubeBlock(TUBE_PROPERTIES));
 	public static final RegistryObject<TubeStationBlock> TUBE_STATION = ECRegistrationHolder.BLOCKS.register(
 			"tube_station", () -> new TubeStationBlock(STATION_PROPERTIES));
+	public static final RegistryObject<AdvancedTubeStationBlock> ADVANCED_TUBE_STATION = ECRegistrationHolder.BLOCKS
+			.register("advanced_tube_station", () -> new AdvancedTubeStationBlock(STATION_PROPERTIES));
 	public static final RegistryObject<ReceivingStationBlock> RECEIVING_STATION = ECRegistrationHolder.BLOCKS.register(
 			"receiving_station", () -> new ReceivingStationBlock(STATION_PROPERTIES));
 
@@ -61,11 +64,12 @@ public final class ECPneumatics
 
 	private static final List<RegistryObject<? extends BlockItem>> ITEMS = List.of(TUBE_ITEM, WINDOWED_TUBE_ITEM,
 			ECRegistrationHolder.simpleBlockItem(TUBE_STATION),
+			ECRegistrationHolder.simpleBlockItem(ADVANCED_TUBE_STATION),
 			ECRegistrationHolder.simpleBlockItem(RECEIVING_STATION));
 
 	public static final RegistryObject<BlockEntityType<TubeStationBlockEntity>> TUBE_STATION_ENTITY =
 			ECRegistrationHolder.BLOCK_ENTITIES.register("tube_station", () -> BlockEntityType.Builder.of(
-					TubeStationBlockEntity::new, TUBE_STATION.get()).build(null));
+					TubeStationBlockEntity::new, TUBE_STATION.get(), ADVANCED_TUBE_STATION.get()).build(null));
 	public static final RegistryObject<BlockEntityType<ReceivingStationBlockEntity>>
 			RECEIVING_STATION_ENTITY = ECRegistrationHolder.BLOCK_ENTITIES.register("receiving_station",
 			() -> BlockEntityType.Builder.of(ReceivingStationBlockEntity::new, RECEIVING_STATION.get()).build(null));

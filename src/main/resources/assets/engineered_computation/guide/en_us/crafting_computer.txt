@@ -1,9 +1,9 @@
 Crafting Computer
 
-The Crafting Computer runs crafting orders on the network. It can be built using the Floppy Disk Era casings and formed with an assembly wrench. Connect it to the network with cable at its network port, low on its back.
+The Crafting Computer runs crafting orders on the network. Build it from Floppy Disk Era casings and form it with the Assembly Wrench. Connect it with cable at its network port, low on its back.
 
-It has eight pattern bays on its front, four down each side. Sneak-use a direct Pattern Floppy on a bay to put it in, and sneak-use a bay with an empty hand to take it out. It crafts those recipes itself, and runs abstract patterns through Advanced Data Processors on the same network.
+It has eight pattern bays on its front, four down each side. To insert a direct Pattern Floppy, sneak while right-clicking a bay with it. To remove it, sneak while right-clicking the bay with an empty hand. It crafts direct patterns itself, and runs abstract patterns through Advanced Data Processors on the same network.
 
-Right-click it to see its bays, numbered as on the machine, and its screen: what it's doing, and the crafting tree of each order it's running.
+Right-click it to see its bays, numbered as on the machine, and its screen: its current activity, and the crafting tree of each running order.
 
-It can run up to eight orders at once, this includes abstract crafting orders, add more of these to allow more orders to run at once. Breaking the crafting computer whilst running will put each order's items back into the storage if it's able to, otherwise it will spit it out in world.
+It runs up to eight orders at once, abstract orders included. Add more Crafting Computers to run more orders. Breaking a Crafting Computer while it's running will return each order's items to storage where possible, otherwise drop them in the world.

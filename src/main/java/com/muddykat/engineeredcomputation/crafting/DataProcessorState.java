@@ -28,6 +28,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.network.NetworkHooks;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockContext;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockOrientation;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
@@ -60,6 +61,18 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	private long allowanceTick = -1;
 	private int allowance;
 	private long processingUntil;
+
+	@Override
+	public int powerCost(Level level, BlockPos pos)
+	{
+		return ECConfig.cost("dataProcessor");
+	}
+
+	@Override
+	public boolean chargedPerBlock()
+	{
+		return false;
+	}
 
 	public DataProcessorState(MultiblockStateHost host)
 	{
@@ -243,6 +256,8 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	{
 		if(!located())
 			return StatusCode.SERVICE_UNAVAILABLE;
+		if(!StorageNetwork.of(level, masterPos).isPowered(level))
+			return StatusCode.PAYMENT_REQUIRED;
 		if(StorageNetwork.of(level, masterPos).getCraftingComputers().isEmpty())
 			return StatusCode.FAILED_DEPENDENCY;
 		if(target()==null||source()==null)
@@ -273,7 +288,7 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	{
 		locate(ctx);
 		IItemHandler source = source();
-		if(source==null)
+		if(source==null||!StorageNetwork.of(level, masterPos).isPowered(level))
 			return;
 		int left = ITEMS_PER_TICK;
 		for(int slot = 0; slot<source.getSlots()&&left>0; slot++)
@@ -369,9 +384,7 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 				patterns.setStackInSlot(slot, ItemStack.EMPTY);
 			}
 		}
-		StorageNetwork network = StorageNetwork.of(level, pos);
-		NetworkStorage storage = network.isTooLarge()||!network.getConflictingEras().isEmpty()? NetworkStorage.EMPTY:
-				network.getStorage();
+		NetworkStorage storage = StorageNetwork.of(level, pos).getUsableStorage(level);
 		arrived.forEach((key, count) -> {
 			long left = count-storage.insert(key, count, false);
 			while(left>0)

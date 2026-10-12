@@ -45,6 +45,7 @@ import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.network.NetworkHooks;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueDesk;
 import com.muddykat.engineeredcomputation.catalogue.RequestSlip;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
@@ -58,6 +59,7 @@ import com.muddykat.engineeredcomputation.network.ECPayloads;
 import com.muddykat.engineeredcomputation.network.NetworkMemberBlock;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterBlockEntity;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.storage.CellContents;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
@@ -267,7 +269,7 @@ public class TerminalMenu extends AbstractContainerMenu
 	private NetworkStorage storage()
 	{
 		network = StorageNetwork.of(player.level, terminalPos);
-		return network.isTooLarge()||!network.getConflictingEras().isEmpty()? NetworkStorage.EMPTY: network.getStorage();
+		return network.getUsableStorage(player.level);
 	}
 
 	@Override
@@ -312,8 +314,12 @@ public class TerminalMenu extends AbstractContainerMenu
 			NetworkStorage storage = storage();
 			contents = new HashMap<>();
 			storage.collect(contents);
+			List<EnergyAccepterBlockEntity> accepters = EnergyAccepterBlockEntity.accepters(player.level, network);
 			stats = TerminalStats.of(storage, network.getConflictingEras(), network.isTooLarge(),
-					CraftingNetwork.isProcessing(network), network.getErasWithoutProcessor());
+					CraftingNetwork.isProcessing(network), network.getErasWithoutProcessor())
+					.withPower(ECConfig.powerEnabled(), network.isPowered(player.level),
+							network.getPowerCost(player.level), EnergyAccepterBlockEntity.stored(accepters),
+							(long)accepters.size()*EnergyAccepterBlockEntity.capacity());
 		}
 		if(features.orders())
 			sendCrafting(serverPlayer);
@@ -363,6 +369,7 @@ public class TerminalMenu extends AbstractContainerMenu
 	{
 		if(!features.orders()||!(player instanceof ServerPlayer serverPlayer))
 			return;
+		target = ItemKey.resolve(ItemKey.resolve(target, sentContents.keySet()), sentCraftables);
 		NetworkStorage storage = storage();
 		Level level = player.level;
 		CraftingPlan plan = offer.isPresent()? CraftingNetwork.planOffer(level, network, storage, offer.get(), amount)
@@ -418,6 +425,8 @@ public class TerminalMenu extends AbstractContainerMenu
 
 	void handleClick(@Nullable ItemKey key, TerminalAction action)
 	{
+		if(key!=null)
+			key = ItemKey.resolve(key, sentContents.keySet());
 		if(desk!=null)
 		{
 			request(key, action);
@@ -746,6 +755,96 @@ public class TerminalMenu extends AbstractContainerMenu
 			stack.shrink((int)storage.insert(ItemKey.of(stack), stack.getCount(), false));
 			giveBack(player, stack);
 		}
+	}
+
+	/**
+	 * Lays a recipe out in the crafting grid (JEI's recipe transfer): per slot, the items that would do, best first. A
+	 * linked grid links each slot to the one the network has most of. An unlinked one puts its items away first, then
+	 * takes real ones from the network and then the player's inventory: one of each, or with {@code max} as many sets
+	 * as there are, up to a stack. Slots with nothing to take are left empty.
+	 */
+	public void fillGrid(List<List<ItemStack>> options, boolean max)
+	{
+		if(craftGrid==null||player.level.isClientSide||options.size()>CraftingGrid.SIZE)
+			return;
+		NetworkStorage storage = storage();
+		boolean linked = isLinked();
+		if(!linked)
+			emptyCraftGrid(player);
+		List<ItemStack> chosen = new ArrayList<>(CraftingGrid.SIZE);
+		for(int i = 0; i<CraftingGrid.SIZE; i++)
+			chosen.add(i<options.size()? mostAvailable(options.get(i), storage, !linked): ItemStack.EMPTY);
+		int sets = linked? 1: max? availableSets(chosen, storage): 1;
+		for(int i = 0; i<CraftingGrid.SIZE; i++)
+		{
+			ItemStack wanted = chosen.get(i);
+			grid.slots().set(i, wanted.isEmpty()? ItemStack.EMPTY: linked? ItemHandlerHelper.copyStackWithSize(wanted, 1):
+					take(wanted, sets, storage));
+		}
+		grid.changed();
+		updateCraftResult();
+	}
+
+	private long available(ItemStack stack, NetworkStorage storage, boolean withInventory)
+	{
+		long count = storage.getAmount(ItemKey.of(stack));
+		if(withInventory)
+			for(ItemStack held : player.getInventory().items)
+				if(ItemStack.isSameItemSameTags(held, stack))
+					count += held.getCount();
+		return count;
+	}
+
+	private ItemStack mostAvailable(List<ItemStack> options, NetworkStorage storage, boolean withInventory)
+	{
+		ItemStack best = ItemStack.EMPTY;
+		long bestCount = -1;
+		for(ItemStack option : options)
+		{
+			long count = option.isEmpty()? -1: available(option, storage, withInventory);
+			if(count>bestCount)
+			{
+				best = option;
+				bestCount = count;
+			}
+		}
+		return best;
+	}
+
+	/** How many sets of the chosen items there are, network and inventory together: at least one, at most a stack. */
+	private int availableSets(List<ItemStack> chosen, NetworkStorage storage)
+	{
+		Map<ItemKey, Integer> uses = new HashMap<>();
+		Map<ItemKey, ItemStack> stacks = new HashMap<>();
+		int sets = Integer.MAX_VALUE;
+		for(ItemStack stack : chosen)
+			if(!stack.isEmpty())
+			{
+				uses.merge(ItemKey.of(stack), 1, Integer::sum);
+				stacks.putIfAbsent(ItemKey.of(stack), stack);
+				sets = Math.min(sets, stack.getMaxStackSize());
+			}
+		for(Map.Entry<ItemKey, Integer> use : uses.entrySet())
+			sets = (int)Math.min(sets, available(stacks.get(use.getKey()), storage, true)/use.getValue());
+		return Math.max(1, sets);
+	}
+
+	private ItemStack take(ItemStack wanted, int count, NetworkStorage storage)
+	{
+		ItemKey key = ItemKey.of(wanted);
+		int taken = (int)storage.extract(key, count, false);
+		for(ItemStack held : player.getInventory().items)
+		{
+			if(taken>=count)
+				break;
+			if(ItemStack.isSameItemSameTags(held, wanted))
+			{
+				int moved = Math.min(count-taken, held.getCount());
+				held.shrink(moved);
+				taken += moved;
+			}
+		}
+		return taken==0? ItemStack.EMPTY: key.toStack(taken);
 	}
 
 	private static void giveBack(Player player, ItemStack stack)

@@ -2,6 +2,6 @@ Storage Networks
 
 A terminal shows the contents of every drive connected to it.
 
-Network Cables join blocks to your network.
+Network Cables connect blocks to the network.
 
-Every drive has a network port, usually low on its back, and can only be attached from that point, a network maxes out at 4096 blocks.
+Every drive has one network port, usually low on its back, and only connects there. A network is limited to 4,096 blocks.

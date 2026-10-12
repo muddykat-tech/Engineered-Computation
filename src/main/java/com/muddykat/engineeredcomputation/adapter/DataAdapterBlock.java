@@ -31,6 +31,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.network.NetworkHooks;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
 import com.muddykat.engineeredcomputation.network.NetworkMember;
@@ -44,6 +45,12 @@ public class DataAdapterBlock extends DirectionalBlock implements EntityBlock, N
 
 	private static final NetworkMember NETWORK_MEMBER = new NetworkMember()
 	{
+		@Override
+		public int powerCost(Level level, BlockPos pos)
+		{
+			return level.getBlockState(pos).getBlock() instanceof DataAdapterBlock adapter
+					? ECConfig.cost(ECConfig.adapterKey(adapter.getEra(), adapter.getKind())): 0;
+		}
 	};
 
 	private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);

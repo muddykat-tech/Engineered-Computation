@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,11 +13,19 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.common.util.FakePlayerFactory;
+import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -64,6 +73,8 @@ public final class MultiblockGameTests
 	public static Collection<TestFunction> multiblockTests()
 	{
 		List<TestFunction> tests = new ArrayList<>();
+		tests.add(new TestFunction("multiblock", "wrench_forms_without_place_events", EMPTY_TEMPLATE, 40, 0, true,
+				MultiblockGameTests::wrenchFormsWithoutPlaceEvents));
 		for(EraDrive drive : EraDrive.values())
 			for(Direction facing : Direction.Plane.HORIZONTAL)
 			{
@@ -74,6 +85,40 @@ public final class MultiblockGameTests
 						helper -> formAndBreak(helper, drive, facing, true)));
 			}
 		return tests;
+	}
+
+	/** A wrench click forms the structure without Forge treating it as the player placing every part. */
+	private static void wrenchFormsWithoutPlaceEvents(GameTestHelper helper)
+	{
+		EraDrive drive = EraDrive.PUNCHCARD_VAULT;
+		Direction facing = Direction.NORTH;
+		EraDriveGeometry geometry = drive.geometry();
+		ServerLevel level = helper.getLevel();
+		BlockPos origin = helper.absolutePos(ORIGIN);
+		for(BlockPos pos : geometry.shapes().keySet())
+			level.setBlockAndUpdate(world(origin, pos, facing), ECContent.casing(drive.era()).get().defaultBlockState());
+		BlockPos trigger = world(origin, geometry.trigger(), facing);
+
+		FakePlayer player = FakePlayerFactory.getMinecraft(level);
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ECContent.ASSEMBLY_WRENCH.get()));
+		int[] placeEvents = new int[1];
+		Consumer<BlockEvent.EntityPlaceEvent> counter = event -> placeEvents[0]++;
+		MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, BlockEvent.EntityPlaceEvent.class, counter);
+		try
+		{
+			player.gameMode.useItemOn(player, level, player.getMainHandItem(), InteractionHand.MAIN_HAND,
+					new BlockHitResult(Vec3.atCenterOf(trigger), facing.getOpposite(), trigger, false));
+		}
+		finally
+		{
+			MinecraftForge.EVENT_BUS.unregister(counter);
+		}
+
+		for(BlockPos pos : geometry.shapes().keySet())
+			check(helper, level.getBlockEntity(world(origin, pos, facing)) instanceof MultiblockPartBlockEntity part
+					&&part.getPosInMultiblock().equals(pos), "wrench didn't form the part at "+pos);
+		check(helper, placeEvents[0]==0, "forming fired "+placeEvents[0]+" place events");
+		helper.succeed();
 	}
 
 	private static void formAndBreak(GameTestHelper helper, EraDrive drive, Direction facing, boolean breakMaster)

@@ -30,6 +30,7 @@ import com.muddykat.engineeredcomputation.registration.ECCrafting;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
+import com.muddykat.engineeredcomputation.registration.ECPower;
 import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
 import com.muddykat.engineeredcomputation.registration.ECSounds;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
@@ -45,7 +46,7 @@ public class EngineeredComputation {
     public static final CreativeModeTab TAB = new CreativeModeTab(MODID) {
         @Override
         public ItemStack makeIcon() {
-            return ECDataCells.DRUM_1K.get().getDefaultInstance();
+            return ECTerminals.items().get(ComputerEra.FLOPPY).get().getDefaultInstance();
         }
 
         @Override
@@ -53,6 +54,7 @@ public class EngineeredComputation {
             items.add(new ItemStack(ECContent.ASSEMBLY_WRENCH.get()));
             items.add(new ItemStack(ECCables.item().get()));
             items.add(new ItemStack(ECBridges.item().get()));
+            items.add(new ItemStack(ECPower.ITEM.get()));
             for (ComputerEra era : ComputerEra.values()) {
                 items.add(new ItemStack(ECContent.guide(era).get()));
                 items.add(new ItemStack(ECContent.casingItem(era).get()));
@@ -64,6 +66,8 @@ public class EngineeredComputation {
                     ECPneumatics.items().forEach(item -> items.add(new ItemStack(item.get())));
                     items.add(new ItemStack(ECCatalogue.CARD.get()));
                     ECCatalogue.decks().forEach(deck -> items.add(new ItemStack(deck.get())));
+                    items.add(new ItemStack(ECCatalogue.FILTER_CARD.get()));
+                    items.add(new ItemStack(ECCatalogue.PROGRAM_DECK.get()));
                 }
                 ECDataCells.cellsOf(era).forEach(cell -> items.add(new ItemStack(cell.get())));
                 if (era == ComputerEra.FLOPPY) {
@@ -89,6 +93,7 @@ public class EngineeredComputation {
         ECTerminals.init();
         ECCables.init();
         ECBridges.init();
+        ECPower.init();
         ECAdapters.init();
         ECCrafting.init();
         ECPneumatics.init();
@@ -99,6 +104,7 @@ public class EngineeredComputation {
         ECTerminals.register(modEventBus);
         ECCables.register(modEventBus);
         ECBridges.register(modEventBus);
+        ECPower.register(modEventBus);
         ECAdapters.register(modEventBus);
         ECCrafting.register(modEventBus);
         ECPneumatics.register(modEventBus);

@@ -39,7 +39,9 @@ import com.muddykat.engineeredcomputation.client.guide.GuideText;
 import com.muddykat.engineeredcomputation.client.model.CoveredCableModel;
 import com.muddykat.engineeredcomputation.client.model.CoveredTubeModel;
 import com.muddykat.engineeredcomputation.client.model.SplitModelLoader;
+import com.muddykat.engineeredcomputation.client.render.AnimationClock;
 import com.muddykat.engineeredcomputation.client.render.CarrierRenderer;
+import com.muddykat.engineeredcomputation.client.render.FilterCardRenderer;
 import com.muddykat.engineeredcomputation.client.render.DriveRenderer;
 import com.muddykat.engineeredcomputation.client.render.TerminalDiskRenderer;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerScreen;
@@ -55,6 +57,7 @@ import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
 import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
 import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationScreen;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationScreen;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterScreen;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECCrafting;
@@ -88,6 +91,7 @@ public final class EngineeredComputationClient {
         modEventBus.addListener(EngineeredComputationClient::registerTubeColours);
         modEventBus.addListener(EngineeredComputationClient::registerTubeItemColours);
         CarrierRenderer.register();
+        AnimationClock.register();
     }
 
     private static void registerItemProperties(FMLClientSetupEvent event) {
@@ -103,10 +107,6 @@ public final class EngineeredComputationClient {
         });
     }
 
-    /**
-     * Chunk layers per block (models can't name theirs before 1.19): era machines, terminals and adapters are cut out,
-     * tubes have glass windows, and covered cables and tubes draw in every layer their cover might need.
-     */
     private static void setRenderLayers(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             for (Block block : ForgeRegistries.BLOCKS.getValues())
@@ -175,6 +175,7 @@ public final class EngineeredComputationClient {
         ForgeModelBakery.addSpecialModel(CarrierRenderer.MODEL);
         CoveredTubeModel.models().forEach(ForgeModelBakery::addSpecialModel);
         TerminalDiskRenderer.models().forEach(ForgeModelBakery::addSpecialModel);
+        FilterCardRenderer.models().forEach(ForgeModelBakery::addSpecialModel);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -191,6 +192,7 @@ public final class EngineeredComputationClient {
             MenuScreens.register(ECMenuTypes.ERA_DRIVE.get(), EraDriveScreen::new);
             MenuScreens.register(ECMenuTypes.TERMINAL.get(), TerminalScreen::new);
             MenuScreens.register(ECMenuTypes.DATA_ADAPTER.get(), DataAdapterScreen::new);
+            MenuScreens.register(ECMenuTypes.ENERGY_ACCEPTER.get(), EnergyAccepterScreen::new);
             MenuScreens.register(ECMenuTypes.PROGRAM_FLOPPY.get(), ProgramFloppyScreen::new);
             MenuScreens.register(ECMenuTypes.PATTERN_FLOPPY.get(), PatternFloppyScreen::new);
             MenuScreens.register(ECMenuTypes.CRAFTING_COMPUTER.get(), CraftingComputerScreen::new);

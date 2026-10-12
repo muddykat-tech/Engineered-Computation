@@ -20,6 +20,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
@@ -210,6 +211,26 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 	{
 		int index = gridIndexAt(mouseX, mouseY);
 		return index>=0&&index<view.size()? view.get(index): null;
+	}
+
+	/** A stored item as drawn in the item grid, and its cell on screen. */
+	public record GridIngredient(ItemStack stack, Rect2i area)
+	{
+	}
+
+	/** The stored item under the mouse, unless a panel covers the grid (for JEI, so its recipe and use keys work). */
+	public Optional<GridIngredient> gridIngredientAt(double mouseX, double mouseY)
+	{
+		Map.Entry<ItemKey, Long> entry = orderPopup!=null||outletPicker!=null||jobs!=null||statusCode()!=null? null:
+				entryAt(mouseX, mouseY);
+		if(entry==null)
+			return Optional.empty();
+		int cell = gridIndexAt(mouseX, mouseY)-scrollRow*TerminalMenu.COLUMNS;
+		PatternOffer offer = offerEntries.get(entry);
+		ItemStack stack = offer!=null? offer.shown(minecraft.level.getGameTime()): entry.getKey().displayStack();
+		int x = leftPos+TerminalMenu.GRID_X+cell%TerminalMenu.COLUMNS*18+1;
+		int y = topPos+layout.gridY()+cell/TerminalMenu.COLUMNS*18+1;
+		return Optional.of(new GridIngredient(stack, new Rect2i(x, y, 16, 16)));
 	}
 
 	private int gridIndexAt(double mouseX, double mouseY)
@@ -414,7 +435,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 		else if(isOver(mouseX, mouseY, TerminalMenu.GRID_X, gaugeY, GRID_WIDTH+SCROLLBAR_WIDTH+4, GAUGE_HEIGHT))
 		{
 			TerminalStats stats = menu.getClientStats();
-			lines = List.of(
+			lines = new ArrayList<>(List.of(
 					new TranslatableComponent("gui.engineered_computation.terminal.capacity")
 							.withStyle(ChatFormatting.YELLOW),
 					new TranslatableComponent("gui.engineered_computation.terminal.capacity.bytes",
@@ -423,7 +444,14 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 					new TranslatableComponent("gui.engineered_computation.terminal.capacity.types",
 							stats.usedTypes(), stats.totalTypes()).withStyle(ChatFormatting.GRAY),
 					new TranslatableComponent("gui.engineered_computation.terminal.capacity.cells",
-							stats.cells()).withStyle(ChatFormatting.GRAY));
+							stats.cells()).withStyle(ChatFormatting.GRAY)));
+			if(stats.powerEnabled())
+			{
+				lines.add(new TranslatableComponent("gui.engineered_computation.terminal.power", number(stats.powerCost()))
+						.withStyle(stats.unpowered()? ChatFormatting.RED: ChatFormatting.GRAY));
+				lines.add(new TranslatableComponent("gui.engineered_computation.terminal.power.stored",
+						number(stats.powerStored()), number(stats.powerCapacity())).withStyle(ChatFormatting.GRAY));
+			}
 		}
 		else if(menu.getFeatures().orders()&&isOver(mouseX, mouseY, jobsX(), 4, BUTTON_SIZE, BUTTON_SIZE))
 			lines = List.of(new TranslatableComponent("gui.engineered_computation.jobs")
@@ -649,6 +677,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 			return StatusCode.FAILED_DEPENDENCY;
 		if(!stats.conflictingEras().isEmpty())
 			return StatusCode.CONFLICT;
+		if(stats.unpowered())
+			return StatusCode.PAYMENT_REQUIRED;
 		if(!view.isEmpty())
 			return null;
 		if(!stats.erasWithoutProcessor().isEmpty())
@@ -720,6 +750,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu>
 						ByteSize.format(stats.usedBytes()), ByteSize.format(stats.totalBytes()));
 		font.draw(pose, usage, imageWidth-8-font.width(usage), inventoryLabelY,
 				isOverOutlet(mouseX, mouseY)? 0x2050A0: ECGui.LABEL);
+	}
+
+	private static String number(long value)
+	{
+		return String.format(Locale.ROOT, "%,d", value);
 	}
 
 	static String formatCount(long count)

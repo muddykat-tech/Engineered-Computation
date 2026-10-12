@@ -25,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.network.NetworkHooks;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.era.EraMachine;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockContext;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
@@ -54,6 +55,18 @@ public class CraftingComputerState implements MultiblockState, NetworkMember
 	private Level level;
 	@Nullable
 	private BlockPos masterPos;
+
+	@Override
+	public int powerCost(Level level, BlockPos pos)
+	{
+		return ECConfig.cost("craftingComputer");
+	}
+
+	@Override
+	public boolean chargedPerBlock()
+	{
+		return false;
+	}
 
 	public CraftingComputerState(MultiblockStateHost host)
 	{
@@ -167,8 +180,7 @@ public class CraftingComputerState implements MultiblockState, NetworkMember
 
 	private NetworkStorage storage()
 	{
-		StorageNetwork network = StorageNetwork.of(level, masterPos);
-		return network.isTooLarge()||!network.getConflictingEras().isEmpty()? NetworkStorage.EMPTY: network.getStorage();
+		return StorageNetwork.of(level, masterPos).getUsableStorage(level);
 	}
 
 	@Override
@@ -176,7 +188,9 @@ public class CraftingComputerState implements MultiblockState, NetworkMember
 	{
 		level = ctx.level();
 		masterPos = ctx.masterPos();
-		if(!orders.isEmpty()&&level instanceof ServerLevel serverLevel)
+		// Orders wait, untouched, while the network can't pay for its machines.
+		if(!orders.isEmpty()&&level instanceof ServerLevel serverLevel
+				&&StorageNetwork.of(level, masterPos).isPowered(level))
 		{
 			for(CraftingOrder order : List.copyOf(orders))
 				if(order.isCancelled())

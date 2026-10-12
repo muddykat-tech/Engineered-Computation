@@ -82,6 +82,32 @@ public final class StorageGameTests
 	{
 	}
 
+	/**
+	 * A key the client draws comes back unchanged and resolves to the stored one, even when drawing writes into the
+	 * stack.
+	 */
+	@GameTest(template = TEMPLATE)
+	public static void drawnKeyComesBackUnchanged(GameTestHelper helper)
+	{
+		ItemStack gear = new ItemStack(Items.DIAMOND_SWORD);
+		gear.getOrCreateTag().putString("rolled", "stats");
+		ItemKey stored = ItemKey.of(gear);
+		ItemKey onClient = viaNetwork(stored);
+		onClient.displayStack().getOrCreateTagElement("clientCache").putInt("rarity", 3);
+		onClient.displayStack().getHoverName();
+		ItemKey sentBack = viaNetwork(onClient);
+		check(helper, sentBack.equals(stored), "drawing changed the key the client sends back");
+		check(helper, ItemKey.resolve(sentBack, java.util.Set.of(stored)).equals(stored), "sent back key didn't resolve");
+		helper.succeed();
+	}
+
+	private static ItemKey viaNetwork(ItemKey key)
+	{
+		FriendlyByteBuf buf = new FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+		key.write(buf);
+		return ItemKey.read(buf);
+	}
+
 	@GameTest(template = TEMPLATE)
 	public static void cellCapacityMatchesAe2(GameTestHelper helper)
 	{
@@ -264,7 +290,7 @@ public final class StorageGameTests
 		storage.collect(expected);
 		check(helper, clientCopy.getClientContents().equals(expected),
 				"client copy "+clientCopy.getClientContents()+" doesn't match storage "+expected);
-		check(helper, clientCopy.getClientStats().equals(new TerminalStats(21, 2048, 2, 10, 1, 0)),
+		check(helper, clientCopy.getClientStats().equals(new TerminalStats(21, 2048, 2, 10, 1, 0, 0, 0, 0)),
 				"capacity not synced: "+clientCopy.getClientStats());
 		helper.succeed();
 	}
@@ -437,7 +463,7 @@ public final class StorageGameTests
 			super(PacketFlow.CLIENTBOUND);
 			new ServerGamePacketListenerImpl(player.server, this, player);
 			ClientboundCustomPayloadPacket sample = (ClientboundCustomPayloadPacket)ECPayloads.CHANNEL.toVanillaPacket(
-					new TerminalContentsPayload(0, false, List.of(), new TerminalStats(0, 0, 0, 0, 0, 0)),
+					new TerminalContentsPayload(0, false, List.of(), new TerminalStats(0, 0, 0, 0, 0, 0, 0, 0, 0)),
 					NetworkDirection.PLAY_TO_CLIENT);
 			channel = sample.getIdentifier();
 			contentsId = new FriendlyByteBuf(sample.getData().copy()).readUnsignedByte();

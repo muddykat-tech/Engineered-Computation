@@ -34,6 +34,7 @@ public final class GuideRecipes
 	public static final ResourceLocation WRENCH = id("assembly_wrench");
 	public static final ResourceLocation CABLE = id("network_cable");
 	public static final ResourceLocation BRIDGE = id("storage_bridge");
+	public static final ResourceLocation ENERGY_ACCEPTER = id("energy_accepter");
 	public static final ResourceLocation PROCESSOR_CASING = id("processor_casing");
 
 	private GuideRecipes()
@@ -84,7 +85,18 @@ public final class GuideRecipes
 
 	public static List<ResourceLocation> tubes(ComputerEra era)
 	{
-		return era==ComputerEra.PUNCHCARD? ECPneumatics.items().stream().map(item -> item.getId()).toList(): List.of();
+		return era==ComputerEra.PUNCHCARD? ECPneumatics.items().stream().map(item -> item.getId())
+				.filter(id -> !id.equals(ECPneumatics.ADVANCED_TUBE_STATION.getId())).toList(): List.of();
+	}
+
+	/**
+	 * The Advanced Tube Station, Filter Card and Program Deck, in that order: with the tubes, in the first edition (its
+	 * Vacuum Tube's recipe shows under Other Parts).
+	 */
+	public static List<ResourceLocation> filterStation(ComputerEra era)
+	{
+		return era==ComputerEra.PUNCHCARD? List.of(ECPneumatics.ADVANCED_TUBE_STATION.getId(),
+				ECCatalogue.FILTER_CARD.getId(), ECCatalogue.PROGRAM_DECK.getId()): List.of();
 	}
 
 	public static Optional<ResourceLocation> catalogueCard(ComputerEra era)
@@ -102,12 +114,13 @@ public final class GuideRecipes
 	{
 		List<ResourceLocation> recipes = new ArrayList<>(List.of(WRENCH));
 		if(era.onDataNetwork())
-			recipes.addAll(List.of(CABLE, BRIDGE));
+			recipes.addAll(List.of(CABLE, BRIDGE, ENERGY_ACCEPTER));
 		recipes.addAll(List.of(component(era), casing(era)));
 		terminal(era).ifPresent(recipes::add);
 		recipes.addAll(terminalDisks(era));
 		recipes.addAll(tubes(era));
 		catalogueCard(era).ifPresent(recipes::add);
+		recipes.addAll(filterStation(era));
 		recipes.addAll(adapters(era));
 		programFloppy(era).ifPresent(recipes::add);
 		patternFloppy(era).ifPresent(recipes::add);

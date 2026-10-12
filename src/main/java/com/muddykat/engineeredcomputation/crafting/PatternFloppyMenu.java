@@ -127,6 +127,30 @@ public class PatternFloppyMenu extends AbstractContainerMenu
 		broadcastChanges();
 	}
 
+	/**
+	 * Replaces the whole pattern (JEI's recipe transfer and drag and drop). A crafting pattern takes one of each input
+	 * and works out its own output; a processing one keeps its counts, up to a stack, and its tags.
+	 */
+	public void fill(Pattern pattern)
+	{
+		if(!(floppy().getItem() instanceof PatternFloppyItem))
+			return;
+		Pattern filled = pattern.mode()==Pattern.Mode.DIRECT
+				? new Pattern(Pattern.Mode.DIRECT, counted(pattern.inputs(), 1), List.of())
+						.withCraftedOutput(player.level)
+				: new Pattern(Pattern.Mode.ABSTRACT, counted(pattern.inputs(), 0), counted(pattern.outputs(), 0),
+						pattern.inputTags(), pattern.outputTags());
+		PatternFloppyItem.setPattern(floppy(), filled);
+		broadcastChanges();
+	}
+
+	/** Each stack with count {@code count}, or (for 0) its own count kept within a stack. */
+	private static List<ItemStack> counted(List<ItemStack> stacks, int count)
+	{
+		return stacks.stream().map(stack -> stack.isEmpty()? ItemStack.EMPTY: ItemHandlerHelper.copyStackWithSize(
+				stack, count>0? count: Mth.clamp(stack.getCount(), 1, stack.getMaxStackSize()))).toList();
+	}
+
 	private static Pattern set(Pattern pattern, boolean output, int index, ItemStack stack)
 	{
 		return output? pattern.withOutput(index, stack): pattern.withInput(index, stack);

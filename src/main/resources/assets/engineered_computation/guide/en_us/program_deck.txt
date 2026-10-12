@@ -1,0 +1,5 @@
+Program Decks
+Program Decks
+A Program Deck holds up to eight Filter Cards, for stations that need more than one filter.
+
+Right-click a card onto the deck to file it, or right-click the deck with an empty hand to take the last card out. Right-click while holding the deck to view and arrange its cards.

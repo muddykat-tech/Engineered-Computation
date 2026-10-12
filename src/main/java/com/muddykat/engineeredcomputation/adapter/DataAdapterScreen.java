@@ -37,6 +37,8 @@ public class DataAdapterScreen extends AbstractContainerScreen<DataAdapterMenu>
 	private static final int POWER_HEIGHT = 14;
 	private static final int POWER_X = 176-8-POWER_WIDTH;
 	private static final int POWER_Y = STATUS_Y+(STATUS_HEIGHT-POWER_HEIGHT)/2;
+	private static final int MODE_X = DataAdapterMenu.FILTER_X-ECGui.FILTER_MODE_SIZE-2;
+	private static final int MODE_Y = DataAdapterMenu.FILTER_Y+(18-ECGui.FILTER_MODE_SIZE)/2;
 
 	public DataAdapterScreen(DataAdapterMenu menu, Inventory inventory, Component title)
 	{
@@ -89,6 +91,8 @@ public class DataAdapterScreen extends AbstractContainerScreen<DataAdapterMenu>
 		GuiComponent.drawCenteredString(pose, font, power, x+POWER_X+POWER_WIDTH/2+1, y+POWER_Y+3,
 				menu.isEnabled()? 0x6CFF7C: 0xFF6A5A);
 
+		ECGui.filterMode(pose, x+MODE_X, y+MODE_Y, menu.isBlocking(), isOverMode(mouseX, mouseY));
+
 		AdapterSpeed speed = speed();
 		stepper(pose, 0, menu.itemsPerMove(), mouseX, mouseY);
 		stepper(pose, 1, menu.ticksBetween(), mouseX, mouseY);
@@ -128,13 +132,14 @@ public class DataAdapterScreen extends AbstractContainerScreen<DataAdapterMenu>
 		if(isOver(mouseX, mouseY, DataAdapterMenu.FILTER_X, DataAdapterMenu.FILTER_Y, 18, 18)&&menu.getCarried().isEmpty())
 		{
 			ItemStack filter = menu.getFilter();
-			lines.add(new TranslatableComponent("gui.engineered_computation.adapter.filter")
-					.withStyle(ChatFormatting.YELLOW));
+			lines.add(new TranslatableComponent(menu.isBlocking()? "gui.engineered_computation.adapter.filter.block"
+					: "gui.engineered_computation.adapter.filter").withStyle(ChatFormatting.YELLOW));
 			if(filter.isEmpty())
-				lines.add(new TranslatableComponent(exporter()
-						? "gui.engineered_computation.adapter.filter.empty_exporter"
-						: "gui.engineered_computation.adapter.filter.empty_importer")
-						.withStyle(ChatFormatting.GRAY));
+				lines.add(new TranslatableComponent(menu.isBlocking()? exporter()?
+						"gui.engineered_computation.adapter.filter.empty_block_exporter":
+						"gui.engineered_computation.adapter.filter.empty_block_importer":
+						exporter()? "gui.engineered_computation.adapter.filter.empty_exporter":
+						"gui.engineered_computation.adapter.filter.empty_importer").withStyle(ChatFormatting.GRAY));
 			else
 			{
 				lines.add(filter.getHoverName());
@@ -149,6 +154,16 @@ public class DataAdapterScreen extends AbstractContainerScreen<DataAdapterMenu>
 		{
 			lines.add(menu.getStatus().title());
 			lines.add(menu.getStatus().detail().copy().withStyle(ChatFormatting.GRAY));
+		}
+		else if(isOverMode(mouseX, mouseY))
+		{
+			String mode = menu.isBlocking()? "block": "allow";
+			lines.add(new TranslatableComponent("gui.engineered_computation.adapter.mode."+mode)
+					.withStyle(menu.isBlocking()? ChatFormatting.RED: ChatFormatting.GREEN));
+			lines.add(new TranslatableComponent("gui.engineered_computation.adapter.mode."+mode+"."
+					+(exporter()? "exporter": "importer")).withStyle(ChatFormatting.GRAY));
+			lines.add(new TranslatableComponent(menu.isBlocking()? "gui.engineered_computation.adapter.mode.to_allow"
+					: "gui.engineered_computation.adapter.mode.to_block").withStyle(ChatFormatting.DARK_GRAY));
 		}
 		else if(isOverPower(mouseX, mouseY))
 			lines.add(new TranslatableComponent(menu.isEnabled()? "gui.engineered_computation.adapter.switch_off"
@@ -190,6 +205,11 @@ public class DataAdapterScreen extends AbstractContainerScreen<DataAdapterMenu>
 		return -1;
 	}
 
+	private boolean isOverMode(double mouseX, double mouseY)
+	{
+		return isOver(mouseX, mouseY, MODE_X, MODE_Y, ECGui.FILTER_MODE_SIZE, ECGui.FILTER_MODE_SIZE);
+	}
+
 	private boolean isOverPower(double mouseX, double mouseY)
 	{
 		return isOver(mouseX, mouseY, POWER_X, POWER_Y, POWER_WIDTH, POWER_HEIGHT);
@@ -204,10 +224,11 @@ public class DataAdapterScreen extends AbstractContainerScreen<DataAdapterMenu>
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button)
 	{
-		int id = isOverPower(mouseX, mouseY)? DataAdapterMenu.TOGGLE_POWER: buttonAt(mouseX, mouseY);
+		int id = isOverPower(mouseX, mouseY)? DataAdapterMenu.TOGGLE_POWER:
+				isOverMode(mouseX, mouseY)? DataAdapterMenu.TOGGLE_FILTER_MODE: buttonAt(mouseX, mouseY);
 		if(id>=0&&button==GLFW.GLFW_MOUSE_BUTTON_LEFT)
 		{
-			if(id!=DataAdapterMenu.TOGGLE_POWER&&hasShiftDown())
+			if(id<DataAdapterMenu.BIG&&hasShiftDown())
 				id += DataAdapterMenu.BIG;
 			minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
 			minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1));

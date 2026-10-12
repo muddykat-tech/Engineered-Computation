@@ -1,23 +1,33 @@
 package com.muddykat.engineeredcomputation.client.gui;
 
+import java.util.Optional;
+
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+
+import com.muddykat.engineeredcomputation.adapter.ProgramEntry;
 
 public final class ECGui
 {
+	private static final int CYCLE_MILLIS = 1000;
 	// Vanilla's slot, creative inventory scroller and button art, drawn from the textures they live in.
 	private static final ResourceLocation CONTAINER = ResourceLocation.withDefaultNamespace(
 			"textures/gui/container/generic_54.png");
@@ -82,6 +92,28 @@ public final class ECGui
 		blit(pose, CREATIVE_TABS, x, y, enabled? 232: 244, 0, 12, SCROLLER_HEIGHT);
 	}
 
+	/** The size of {@link #filterMode}'s button. */
+	public static final int FILTER_MODE_SIZE = 11;
+	private static final String[] ALLOW_ICON = {
+			"....#",
+			"...##",
+			"#.##.",
+			"###..",
+			".#..."};
+	private static final String[] BLOCK_ICON = {
+			".###.",
+			"#..##",
+			"#.#.#",
+			"##..#",
+			".###."};
+
+	/** A filter's allow / block list button: a green tick for an allow list, a red no-entry sign for a block list. */
+	public static void filterMode(PoseStack pose, int x, int y, boolean blocking, boolean hovered)
+	{
+		button(pose, x, y, FILTER_MODE_SIZE, FILTER_MODE_SIZE, hovered);
+		icon(pose, x+3, y+3, blocking? BLOCK_ICON: ALLOW_ICON, blocking? 0xFFFF6A5A: 0xFF6CFF7C);
+	}
+
 	public static void icon(PoseStack pose, int x, int y, String[] rows, int colour)
 	{
 		for(int pass = 0; pass<2; pass++)
@@ -93,6 +125,18 @@ public final class ECGui
 						int py = y+row+(pass==0? 1: 0);
 						GuiComponent.fill(pose, px, py, px+1, py+1, pass==0? 0xFF3F3F3F: colour);
 					}
+	}
+
+	/** What a program entry shows as: its item, or for a tag each of its items in turn (a barrier if it has none). */
+	public static ItemStack entryIcon(ProgramEntry entry)
+	{
+		if(entry.item().isPresent())
+			return new ItemStack(entry.item().get());
+		Optional<HolderSet.Named<Item>> items = entry.tag().flatMap(Registry.ITEM::getTag);
+		if(items.isEmpty()||items.get().size()==0)
+			return entry.tag().isPresent()? new ItemStack(Items.BARRIER): ItemStack.EMPTY;
+		long cycle = Util.getMillis()/CYCLE_MILLIS;
+		return new ItemStack(items.get().get((int)(cycle%items.get().size())));
 	}
 
 	public static FormattedCharSequence fit(Font font, Component text, int width)
@@ -114,6 +158,15 @@ public final class ECGui
 	public static void slot(PoseStack pose, int x, int y)
 	{
 		blit(pose, CONTAINER, x, y, 7, 17, 18, 18);
+	}
+
+	/** A gauge in one colour: for something it's good to have full, like stored RF. */
+	public static void gauge(PoseStack pose, int x, int y, int width, int height, double fraction, int colour)
+	{
+		sunken(pose, x, y, width, height);
+		int filled = (int)Math.round((width-2)*Math.max(0, Math.min(1, fraction)));
+		if(filled>0)
+			GuiComponent.fill(pose, x+1, y+1, x+1+filled, y+height-1, colour);
 	}
 
 	public static void gauge(PoseStack pose, int x, int y, int width, int height, double fraction)

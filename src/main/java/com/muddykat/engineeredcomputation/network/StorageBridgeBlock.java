@@ -1,5 +1,6 @@
 package com.muddykat.engineeredcomputation.network;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -19,6 +20,12 @@ public class StorageBridgeBlock extends HorizontalDirectionalBlock implements Ne
 		public boolean isBridge()
 		{
 			return true;
+		}
+
+		@Override
+		public int powerCost(Level level, BlockPos pos)
+		{
+			return ECConfig.cost("storageBridge");
 		}
 	};
 

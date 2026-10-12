@@ -1,0 +1,7 @@
+Energy Accepter
+
+If the server has power enabled, networks need RF to run. To power a network, connect an Energy Accepter to it and feed it RF. It accepts RF and Network Cables on any side.
+
+Each machine on the network costs RF per tick, set in the server config. The Energy Accepter's screen and the terminal's storage bar show the network's cost and stored RF. Several Energy Accepters on one network share their RF.
+
+A network without enough RF will stop and show a 402 error until it has power again. No items are lost when out of power.

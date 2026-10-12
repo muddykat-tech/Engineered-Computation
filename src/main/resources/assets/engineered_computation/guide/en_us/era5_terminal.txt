@@ -1,5 +1,5 @@
 Floppy Disk Terminal
 
-This terminal can do everything the Video Terminal can, but also has two storage bays for the smaller 3½-inch floppies (see the Terminal Disks page).
+This terminal does everything the Video Terminal does, and has two storage bays for the smaller 3½-inch floppies (see Terminal Disks).
 
-It can also see and order crafting recipes from a connected crafting computer.
+It can also view and order recipes from a Crafting Computer on the network.

@@ -147,7 +147,7 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 	{
 		int status = part.getClientSyncData().getInt(EraDriveState.CELL_STATUS);
 		int tierBits = part.getClientSyncData().getInt(EraDriveState.CELL_TIERS);
-		float[] out = floppyBays.slideOut(part, filled, drive.slots(), part.getLevel().getGameTime()+partialTick);
+		float[] out = floppyBays.slideOut(part, filled, drive.slots(), AnimationClock.now(partialTick));
 		int[] seen = new int[drive.slots()];
 		for(int slot = 0; slot<drive.slots(); slot++)
 			seen[slot] = (tierBits>>4*slot&0xF)-1;
@@ -169,7 +169,7 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 			MultiBufferSource buffers, int packedOverlay)
 	{
 		int tierBits = part.getClientSyncData().getInt(EraDriveState.CELL_TIERS);
-		float[] out = floppyBays.slideOut(part, filled, drive.slots(), part.getLevel().getGameTime()+partialTick);
+		float[] out = floppyBays.slideOut(part, filled, drive.slots(), AnimationClock.now(partialTick));
 		int[] seen = new int[drive.slots()];
 		for(int slot = 0; slot<drive.slots(); slot++)
 			seen[slot] = (tierBits>>4*slot&0xF)-1;
@@ -185,7 +185,7 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 			PoseStack pose, MultiBufferSource buffers, int packedOverlay)
 	{
 		int tierBits = part.getClientSyncData().getInt(EraDriveState.CELL_TIERS);
-		double now = part.getLevel().getGameTime()+partialTick;
+		double now = AnimationClock.now(partialTick);
 		float[] out = floppyBays.slideOut(part, filled, drive.slots(), now);
 		int[] seen = new int[drive.slots()];
 		for(int slot = 0; slot<drive.slots(); slot++)
@@ -223,7 +223,7 @@ public class DriveRenderer implements BlockEntityRenderer<MultiblockPartBlockEnt
 	{
 		int filled = part.getClientSyncData().getInt(CraftingComputerState.FILLED);
 		int bays = 2*COMPUTER_COLUMN_BAYS;
-		float[] out = floppyBays.slideOut(part, filled, bays, part.getLevel().getGameTime()+partialTick);
+		float[] out = floppyBays.slideOut(part, filled, bays, AnimationClock.now(partialTick));
 		for(int slot = 0; slot<bays; slot++)
 		{
 			Matrix4f bay = Matrix4f.createTranslateMatrix(slot<COMPUTER_COLUMN_BAYS? 0: COMPUTER_COLUMN_STEP,

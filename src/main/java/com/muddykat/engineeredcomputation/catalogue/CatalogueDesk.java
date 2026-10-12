@@ -23,6 +23,7 @@ import net.minecraft.world.level.Level;
 
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
 import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.StationFilter;
 import com.muddykat.engineeredcomputation.pneumatic.TubeCarriers;
 import com.muddykat.engineeredcomputation.pneumatic.TubeNetwork;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlockEntity;
@@ -133,19 +134,30 @@ public final class CatalogueDesk
 			return items;
 		TubeNetwork network = TubeNetwork.of(level, home);
 		ItemKey key = ItemKey.of(items);
+		// Stations already holding the item first (most first), then ones whose filter card asks for it, then the
+		// catch-alls: stations taking new items, and block lists. A station with a card takes only what its filter
+		// allows, held items included.
 		List<Source> holding = new ArrayList<>();
+		List<Source> asking = new ArrayList<>();
 		List<Source> taking = new ArrayList<>();
 		for(CatalogueCard card : cards(network).values())
 		{
 			TubeStationBlockEntity station = Catalogue.station(level, network, card);
 			if(station==null)
 				continue;
+			StationFilter filter = station.filter();
+			Source source = new Source(station, card.tally());
+			if(filter!=null&&!filter.allows(items))
+				continue;
 			if(amountOf(card.tally(), key)>0)
-				holding.add(new Source(station, card.tally()));
+				holding.add(source);
+			else if(filter!=null)
+				(filter.blocking()? taking: asking).add(source);
 			else if(station.takesNewItems())
-				taking.add(new Source(station, card.tally()));
+				taking.add(source);
 		}
 		holding.sort(Comparator.comparingLong((Source source) -> -amountOf(source.tally(), key)));
+		holding.addAll(asking);
 		holding.addAll(taking);
 		ItemStack left = items.copy();
 		for(Source source : holding)

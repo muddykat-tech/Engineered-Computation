@@ -16,6 +16,7 @@ import net.minecraft.Util;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
@@ -260,6 +261,17 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 	private int outputsShown()
 	{
 		return isDirect()? 1: Pattern.OUTPUTS;
+	}
+
+	/**
+	 * Where pattern slot {@code slot} (the inputs, then the outputs) is on screen, if it can be set by hand - a
+	 * crafting pattern works out its own output.
+	 */
+	public Optional<Rect2i> settableSlotArea(int slot)
+	{
+		if(slot<0||slot>=Pattern.INPUTS+outputsShown()||slot>=Pattern.INPUTS&&isDirect())
+			return Optional.empty();
+		return Optional.of(new Rect2i(leftPos+slotX(slot), topPos+slotY(slot), 18, 18));
 	}
 
 	private int slotX(int slot)

@@ -1,11 +1,11 @@
 Teletype Terminal
 
-The teletype is where you request for things and put them away. Place it against a Receiving Station to connect to a tube network.
+The teletype is where items are requested and put away. To connect it to a tube network, place it against a Receiving Station.
 
-Click an item to put a stack on the request slip under the grid, or right-click to add one. Click a line on the slip to strike it off, or right-click it for one fewer. When the slip is ready, press the send button beside it and the stations holding each item send these items through the tubes. Anything that would fail to send will stays on the slip bar.
+Click an item to add a stack to the request slip under the grid, or right-click to add one. Click a line on the slip to remove it, or right-click it for one fewer. When the slip is ready, press the send button beside it and the stations holding each item send them through the tubes. Anything that can't be sent stays on the slip.
 
-"To:" under the slip is where things are sent. Click it to show a drop down list of every Receiving Station on the same tube network, allows the ability to search them by name. You can also scroll over it to step through them. Name your Receiving Stations to find them easily.
+"To:" under the slip sets the destination. Click it for a searchable list of every Receiving Station on the tube network, or scroll over it to step through them.
 
-To put something away, click it onto the grid, or shift-click it in your inventory. It goes through the tubes to a station that already lists it as an item, or failing that to one set to take new items. If nowhere will take it, it will fail to send.
+To put items away, click them onto the grid, or shift-click them in your inventory. They go through the tubes to a station that already holds that item, otherwise to one set to take new items. If no station will take them, they won't be sent.
 
-Items whose stations can't be reached right now are greyed out, showing their last tally. While carriers are on their way, the teletype shows 102.
+Items whose stations can't be reached are greyed out and show their last tally. While carriers are travelling, the teletype shows 102.

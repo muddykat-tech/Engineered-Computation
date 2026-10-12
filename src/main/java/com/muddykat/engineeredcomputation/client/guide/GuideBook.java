@@ -51,6 +51,7 @@ final class GuideBook
 	{
 		basics();
 		eraChapter();
+		advancedStation();
 		otherParts();
 		if(era.ordinal()+1<ComputerEra.values().length)
 		{
@@ -108,6 +109,10 @@ final class GuideBook
 		chapter(GuideTexts.BRIDGE);
 		text(GuideTexts.BRIDGE);
 		recipe(GuideRecipes.BRIDGE);
+
+		chapter(GuideTexts.ENERGY_ACCEPTER);
+		text(GuideTexts.ENERGY_ACCEPTER);
+		recipe(GuideRecipes.ENERGY_ACCEPTER);
 
 		chapter(GuideTexts.CELLS);
 		text(GuideTexts.CELLS);
@@ -193,6 +198,23 @@ final class GuideBook
 		section(era.onDataNetwork()? new TranslatableComponent(KEY+"section.memory", era.memoryDisplayName())
 				: new TranslatableComponent(KEY+"section.decks"));
 		GuideRecipes.cells(era).forEach(this::recipe);
+	}
+
+	/** The Advanced Tube Station and its Filter Cards and Program Decks, in the edition they're first made in. */
+	private void advancedStation()
+	{
+		List<ResourceLocation> recipes = GuideRecipes.filterStation(era);
+		if(recipes.isEmpty())
+			return;
+		chapter(GuideTexts.ADVANCED_STATION);
+		text(GuideTexts.ADVANCED_STATION);
+		recipe(recipes.get(0));
+		section(GuideTexts.FILTER_CARDS);
+		text(GuideTexts.FILTER_CARDS);
+		recipe(recipes.get(1));
+		section(GuideTexts.PROGRAM_DECK);
+		text(GuideTexts.PROGRAM_DECK);
+		recipe(recipes.get(2));
 	}
 
 	private void otherParts()
