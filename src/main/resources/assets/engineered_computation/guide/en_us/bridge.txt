@@ -1,5 +1,5 @@
 Storage Bridge
 
-A Storage Bridge joins two networks of different eras, if you want to use disk packs and floppies, you need one of these.
+A Storage Bridge connects two networks of different eras, for example to use disk packs and floppies together.
 
-It connects only on its two sides (left and right of its screen). Each side must keep to one era's storage; you can chain these together if required.
+It only connects on its two sides (left and right of its screen). Each side must hold one era's storage. Bridges can be chained.

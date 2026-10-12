@@ -24,7 +24,6 @@ import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 
 public class MultiblockPartBlockEntity extends BlockEntity implements MultiblockStateHost
 {
-	/** How far a formed structure\'s renderer draws past its master block. */
 	private static final int RENDER_REACH = 5;
 	public static final ModelProperty<BlockPos> MODEL_OFFSET = new ModelProperty<>();
 
@@ -216,19 +215,27 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 	@Override
 	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt)
 	{
+		BlockPos before = posInMultiblock;
 		super.onDataPacket(net, pkt);
-		onClientPositionKnown();
+		onClientPositionKnown(before);
 	}
 
 	@Override
 	public void handleUpdateTag(CompoundTag tag)
 	{
+		BlockPos before = posInMultiblock;
 		super.handleUpdateTag(tag);
-		onClientPositionKnown();
+		onClientPositionKnown(before);
 	}
 
-	private void onClientPositionKnown()
+	/**
+	 * Redraws the block when its piece of the model changes. Only then: a redraw is a chunk rebuild the client waits
+	 * on, and drive contents sync through here every time a cell goes in or out.
+	 */
+	private void onClientPositionKnown(BlockPos before)
 	{
+		if(posInMultiblock.equals(before))
+			return;
 		requestModelDataUpdate();
 		if(level!=null&&level.isClientSide)
 			level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 8);

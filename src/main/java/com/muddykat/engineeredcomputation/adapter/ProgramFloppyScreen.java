@@ -3,15 +3,14 @@ package com.muddykat.engineeredcomputation.adapter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import org.lwjgl.glfw.GLFW;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -20,7 +19,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.network.ECPayloads;
@@ -30,7 +28,6 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 	private static final int TAG_Y = 44;
 	private static final int TAG_X = 32;
 	private static final int SUGGESTIONS = 4;
-	private static final int CYCLE_MILLIS = 1000;
 
 	private EditBox tag;
 	private int selected = 0;
@@ -101,11 +98,11 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 			if(slot.isActive())
 				ECGui.slot(graphics, x+slot.x-1, y+slot.y-1);
 		Program program = menu.program();
-		for(int i = 0; i<Program.SIZE; i++)
+		for(int i = 0; i<menu.size(); i++)
 		{
 			int entryX = x+ProgramFloppyMenu.ENTRIES_X+i*18, entryY = y+ProgramFloppyMenu.ENTRIES_Y;
 			ECGui.slot(graphics, entryX, entryY);
-			ItemStack shown = shown(program.get(i));
+			ItemStack shown = ECGui.entryIcon(program.get(i));
 			graphics.renderItem(shown, entryX+1, entryY+1);
 			if(program.get(i).tag().isPresent())
 				graphics.drawString(font, "#", entryX+12, entryY+10, 0x55FFFF, true);
@@ -119,17 +116,6 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 		graphics.fill(x+TAG_X, y+TAG_Y, x+imageWidth-8, y+TAG_Y+13, 0xFFA0A0A0);
 		graphics.fill(x+TAG_X+1, y+TAG_Y+1, x+imageWidth-9, y+TAG_Y+12, 0xFF000000);
 		tag.setTextColor(tagExists(tag.getValue())? 0xFFFFFF: 0xFF7060);
-	}
-
-	private static ItemStack shown(ProgramEntry entry)
-	{
-		if(entry.item().isPresent())
-			return new ItemStack(entry.item().get());
-		Optional<HolderSet.Named<Item>> items = entry.tag().flatMap(BuiltInRegistries.ITEM::getTag);
-		if(items.isEmpty()||items.get().size()==0)
-			return entry.tag().isPresent()? new ItemStack(Items.BARRIER): ItemStack.EMPTY;
-		long cycle = Util.getMillis()/CYCLE_MILLIS;
-		return new ItemStack(items.get().get((int)(cycle%items.get().size())));
 	}
 
 	private static boolean tagExists(String text)
@@ -186,10 +172,16 @@ public class ProgramFloppyScreen extends AbstractContainerScreen<ProgramFloppyMe
 		return relX>=0&&relX<imageWidth-TAG_X-8&&relY>=0&&index<suggestions.size()? index: -1;
 	}
 
+	/** Where program entry {@code index} is on screen. */
+	public Rect2i entryArea(int index)
+	{
+		return new Rect2i(leftPos+ProgramFloppyMenu.ENTRIES_X+index*18, topPos+ProgramFloppyMenu.ENTRIES_Y, 18, 18);
+	}
+
 	private int entryAt(double mouseX, double mouseY)
 	{
 		double relX = mouseX-leftPos-ProgramFloppyMenu.ENTRIES_X, relY = mouseY-topPos-ProgramFloppyMenu.ENTRIES_Y;
-		if(relX<0||relY<0||relY>=18||relX>=Program.SIZE*18)
+		if(relX<0||relY<0||relY>=18||relX>=menu.size()*18)
 			return -1;
 		return (int)(relX/18);
 	}

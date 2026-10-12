@@ -22,9 +22,11 @@ import com.muddykat.engineeredcomputation.crafting.CraftingComputerPayload;
 import com.muddykat.engineeredcomputation.crafting.OrderPlanPayload;
 import com.muddykat.engineeredcomputation.crafting.OrderRequestPayload;
 import com.muddykat.engineeredcomputation.crafting.PatternEditPayload;
+import com.muddykat.engineeredcomputation.crafting.PatternFillPayload;
 import com.muddykat.engineeredcomputation.crafting.TerminalCraftingPayload;
 import com.muddykat.engineeredcomputation.pneumatic.CarrierSyncPayload;
 import com.muddykat.engineeredcomputation.pneumatic.StationNamePayload;
+import com.muddykat.engineeredcomputation.terminal.GridFillPayload;
 import com.muddykat.engineeredcomputation.terminal.TeletypeOutletPayload;
 import com.muddykat.engineeredcomputation.terminal.TeletypeSlipPayload;
 import com.muddykat.engineeredcomputation.terminal.TerminalClickPayload;
@@ -66,6 +68,9 @@ public final class ECPayloads
 				ProgramEditPayload::handle);
 		toServer(PatternEditPayload.class, PatternEditPayload::encode, PatternEditPayload::decode,
 				PatternEditPayload::handle);
+		toServer(PatternFillPayload.class, PatternFillPayload::encode, PatternFillPayload::decode,
+				PatternFillPayload::handle);
+		toServer(GridFillPayload.class, GridFillPayload::encode, GridFillPayload::decode, GridFillPayload::handle);
 		toServer(OrderRequestPayload.class, OrderRequestPayload::encode, OrderRequestPayload::decode,
 				OrderRequestPayload::handle);
 		toServer(CancelOrderPayload.class, CancelOrderPayload::encode, CancelOrderPayload::decode,

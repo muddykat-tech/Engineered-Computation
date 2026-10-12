@@ -56,7 +56,7 @@ public class TerminalDiskRenderer implements BlockEntityRenderer<TerminalDiskBlo
 			if(!bays.getDisks().getStackInSlot(slot).isEmpty())
 				filled |= 1<<slot;
 		float[] out = floppyBays.slideOut(bays, filled, TerminalDiskBlockEntity.SLOTS,
-				bays.getLevel().getGameTime()+partialTick);
+				AnimationClock.now(partialTick));
 		int[] seen = new int[TerminalDiskBlockEntity.SLOTS];
 		for(int slot = 0; slot<TerminalDiskBlockEntity.SLOTS; slot++)
 			seen[slot] = tierOf(bays.getDisks().getStackInSlot(slot));

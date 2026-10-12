@@ -30,6 +30,9 @@ import com.muddykat.engineeredcomputation.storage.NetworkStorage;
 
 public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 {
+	/** Synced to the menu: status, items per move, ticks between, on/off, block list. */
+	static final int DATA_COUNT = 5;
+
 	private final SimpleContainer filter = new SimpleContainer(1)
 	{
 		@Override
@@ -44,6 +47,8 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 	private int ticks;
 	private int cooldown;
 	private boolean enabled = true;
+	/** Whether the filter lists what not to move (a block list) rather than what to move (an allow list). */
+	private boolean blocking;
 	private AdapterStatus status = AdapterStatus.SERVICE_UNAVAILABLE;
 
 	private final ContainerData data = new ContainerData()
@@ -56,7 +61,8 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 				case 0 -> status.ordinal();
 				case 1 -> items;
 				case 2 -> ticks;
-				default -> enabled? 1: 0;
+				case 3 -> enabled? 1: 0;
+				default -> blocking? 1: 0;
 			};
 		}
 
@@ -68,7 +74,7 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 		@Override
 		public int getCount()
 		{
-			return 4;
+			return DATA_COUNT;
 		}
 	};
 
@@ -135,6 +141,18 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 		setChanged();
 	}
 
+	public boolean isBlocking()
+	{
+		return blocking;
+	}
+
+	public void setBlocking(boolean blocking)
+	{
+		this.blocking = blocking;
+		cooldown = 0;
+		setChanged();
+	}
+
 	public AdapterStatus getStatus()
 	{
 		return status;
@@ -171,13 +189,15 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 			return AdapterStatus.CONTENT_TOO_LARGE;
 		if(!network.getConflictingEras().isEmpty())
 			return AdapterStatus.CONFLICT;
+		if(!network.isPowered(level))
+			return AdapterStatus.PAYMENT_REQUIRED;
 		NetworkStorage storage = network.getStorage();
 		if(storage.getCells().isEmpty())
 			return network.getErasWithoutProcessor().isEmpty()? AdapterStatus.SERVICE_UNAVAILABLE:
 					AdapterStatus.NO_PROCESSOR;
 		if(AdapterFilter.isProgram(getFilter())&&!AdapterFilter.takesPrograms(block().getEra()))
 			return AdapterStatus.NOT_FOUND;
-		AdapterFilter match = new AdapterFilter(getFilter());
+		AdapterFilter match = new AdapterFilter(getFilter(), blocking);
 		return block().getKind()==AdapterKind.EXPORTER? export(storage, target, match): importFrom(target, storage, match);
 	}
 
@@ -190,7 +210,7 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 		for(Map.Entry<ItemKey, Long> entry : stored.entrySet())
 		{
 			ItemKey key = entry.getKey();
-			if(budget==0||!match.matches(key.displayStack()))
+			if(budget==0||!match.allows(key.displayStack()))
 				continue;
 			found = true;
 			int want = (int)Math.min(budget, entry.getValue());
@@ -224,7 +244,7 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 		for(int slot = 0; slot<source.getSlots()&&budget>0; slot++)
 		{
 			ItemStack stack = source.getStackInSlot(slot);
-			if(stack.isEmpty()||!everything&&!match.matches(stack))
+			if(stack.isEmpty()||!everything&&!match.allows(stack))
 				continue;
 			ItemStack offered = source.extractItem(slot, Math.min(budget, stack.getCount()), true);
 			if(offered.isEmpty())
@@ -267,6 +287,7 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 		tag.putInt("items", items);
 		tag.putInt("ticks", ticks);
 		tag.putBoolean("enabled", enabled);
+		tag.putBoolean("blocking", blocking);
 	}
 
 	@Override
@@ -278,5 +299,6 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 		setSpeed(tag.contains("items")? tag.getInt("items"): speed.items(),
 				tag.contains("ticks")? tag.getInt("ticks"): speed.ticks());
 		enabled = !tag.contains("enabled")||tag.getBoolean("enabled");
+		blocking = tag.getBoolean("blocking");
 	}
 }

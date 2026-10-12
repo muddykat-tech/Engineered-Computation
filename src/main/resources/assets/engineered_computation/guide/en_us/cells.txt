@@ -1,7 +1,7 @@
 Memory Cells
 
-Cells hold items. Every 8 items use one byte, and each different item will need extra bytes.
+Cells hold items. Every 8 items use one byte, and each different item uses extra bytes.
 
-Identical items always stack, even tools and potions.
+Identical items always stack, including tools and potions.
 
-Cells keep their contents when taken out of a drive, and can only be used for their specific hardware.
+Cells keep their contents when removed from a drive, and only work in their own era's hardware.

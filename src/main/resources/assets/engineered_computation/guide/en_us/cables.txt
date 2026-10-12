@@ -1,7 +1,7 @@
 Network Cables
 
-Network Cables can create a storage network between drives and terminals.
+Network Cables connect drives and terminals into a storage network.
 
-They hold no storage themselves, and connect on their own to any terminal or other cable they touch, and to a drive at its network port. Any era's hardware can use the same cable.
+Cables hold no storage. They connect automatically to any terminal or cable they touch, and to a drive at its network port. All eras use the same cable.
 
-To hide a cable, sneak-use a full block on it. See-through blocks like glass show the cable inside. Breaking it, or using the Assembly Wrench on it, takes the block back off and leaves the cable.
+To hide a cable, sneak while placing a block on it to cover it. Breaking a covered cable, or using the Assembly Wrench on it will remove the cover.

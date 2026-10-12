@@ -17,6 +17,7 @@ import com.muddykat.engineeredcomputation.crafting.PatternFloppyMenu;
 import com.muddykat.engineeredcomputation.multiblock.era.EraDriveMenu;
 import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationMenu;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationMenu;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterMenu;
 import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
 
 public final class ECMenuTypes
@@ -29,6 +30,9 @@ public final class ECMenuTypes
 
 	public static final RegistryObject<MenuType<TerminalMenu>> TERMINAL =
 			REGISTER.register("terminal", () -> IForgeMenuType.create(TerminalMenu::new));
+
+	public static final RegistryObject<MenuType<EnergyAccepterMenu>> ENERGY_ACCEPTER =
+			REGISTER.register("energy_accepter", () -> IForgeMenuType.create(EnergyAccepterMenu::new));
 
 	public static final RegistryObject<MenuType<DataAdapterMenu>> DATA_ADAPTER =
 			REGISTER.register("data_adapter", () -> IForgeMenuType.create(DataAdapterMenu::new));

@@ -1,8 +1,8 @@
 Floppy Disk Era
 
-Floppy disks, it has a larger size and a decent amount of item varity, good for general usecases.
+Floppy disks have a larger capacity and decent item variety, good for general use.
 
-The Floppy Disk Workstation is this era's processor, if you want to use a Floppy Bank you need one on the network.
+The Floppy Disk Workstation is this era's processor. Floppy Banks need one on the network.
 
 Memory: {memory}
 Part: {part}

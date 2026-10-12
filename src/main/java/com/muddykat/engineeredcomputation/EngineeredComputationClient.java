@@ -18,6 +18,8 @@ import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.client.event.RegisterItemDecorationsEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -26,12 +28,15 @@ import com.muddykat.engineeredcomputation.adapter.DataAdapterScreen;
 import com.muddykat.engineeredcomputation.adapter.ProgramFloppyScreen;
 import com.muddykat.engineeredcomputation.catalogue.CardDeckScreen;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCardItem;
+import com.muddykat.engineeredcomputation.catalogue.FilterCardItem;
 import com.muddykat.engineeredcomputation.client.ECConfigScreen;
 import com.muddykat.engineeredcomputation.client.guide.GuideText;
 import com.muddykat.engineeredcomputation.client.model.CoveredCableModel;
 import com.muddykat.engineeredcomputation.client.model.CoveredTubeModel;
 import com.muddykat.engineeredcomputation.client.model.SplitModelLoader;
+import com.muddykat.engineeredcomputation.client.render.AnimationClock;
 import com.muddykat.engineeredcomputation.client.render.CarrierRenderer;
+import com.muddykat.engineeredcomputation.client.gui.FilterCardDecorator;
 import com.muddykat.engineeredcomputation.client.render.DriveRenderer;
 import com.muddykat.engineeredcomputation.client.render.TerminalDiskRenderer;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerScreen;
@@ -46,6 +51,7 @@ import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
 import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
 import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationScreen;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationScreen;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterScreen;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECCrafting;
@@ -76,7 +82,10 @@ public final class EngineeredComputationClient {
         modEventBus.addListener(EngineeredComputationClient::registerBlockColours);
         modEventBus.addListener(EngineeredComputationClient::registerTubeColours);
         modEventBus.addListener(EngineeredComputationClient::registerTubeItemColours);
+        modEventBus.addListener(EventPriority.NORMAL, false, RegisterItemDecorationsEvent.class,
+                event -> event.register(ECCatalogue.FILTER_CARD.get(), new FilterCardDecorator()));
         CarrierRenderer.register();
+        AnimationClock.register();
     }
 
     private static void registerItemProperties(FMLClientSetupEvent event) {
@@ -89,6 +98,9 @@ public final class EngineeredComputationClient {
             ItemProperties.register(ECCatalogue.CARD.get(),
                     ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "punched"),
                     (stack, level, entity, seed) -> CatalogueCardItem.card(stack) != null? 1: 0);
+            ItemProperties.register(ECCatalogue.FILTER_CARD.get(),
+                    ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "punched"),
+                    (stack, level, entity, seed) -> FilterCardItem.filter(stack).isEmpty()? 0: 1);
         });
     }
 
@@ -162,6 +174,7 @@ public final class EngineeredComputationClient {
             MenuScreens.register(ECMenuTypes.ERA_DRIVE.get(), EraDriveScreen::new);
             MenuScreens.register(ECMenuTypes.TERMINAL.get(), TerminalScreen::new);
             MenuScreens.register(ECMenuTypes.DATA_ADAPTER.get(), DataAdapterScreen::new);
+            MenuScreens.register(ECMenuTypes.ENERGY_ACCEPTER.get(), EnergyAccepterScreen::new);
             MenuScreens.register(ECMenuTypes.PROGRAM_FLOPPY.get(), ProgramFloppyScreen::new);
             MenuScreens.register(ECMenuTypes.PATTERN_FLOPPY.get(), PatternFloppyScreen::new);
             MenuScreens.register(ECMenuTypes.CRAFTING_COMPUTER.get(), CraftingComputerScreen::new);

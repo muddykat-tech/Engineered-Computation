@@ -40,7 +40,14 @@ configurations {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // JEI (optional integration, see compat.jei).
+    maven {
+        name = "BlameJared"
+        url = "https://maven.blamejared.com"
+        content {
+            includeGroup "mezz.jei"
+        }
+    }
 }
 
 base {
@@ -70,6 +77,12 @@ legacyForge {
             client()
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+            // The visual check (VisualCheck in src/gametest), for some areas: ./gradlew runClient -Pvisuals=adapters,guide
+            // (or -Pvisuals=all). Its categories are listed in the log.
+            if (project.hasProperty('visuals')) {
+                systemProperty 'ec.visualcheck', 'true'
+                systemProperty 'ec.visualcheck.only', project.property('visuals').toString()
+            }
         }
 
         server {
@@ -136,13 +149,17 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+// Mods built for players (SRG names) need remapping to run in dev: modLocalRuntime is localRuntime, remapped.
+obfuscation {
+    createRemappingConfiguration(configurations.localRuntime)
+}
+
 dependencies {
-    // Example optional mod dependency with JEI
-    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
-    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
-    // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
-    // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+    // JEI is optional: the API to compile the plugin in compat.jei against, the mod itself only in dev runs (localRuntime
+    // is not published as a dependency).
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"
+    modLocalRuntime "mezz.jei:jei-${minecraft_version}-forge:${jei_version}"
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar

@@ -145,6 +145,18 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 	}
 
 	@Override
+	public int powerCost(Level level, BlockPos pos)
+	{
+		return ECConfig.cost(ECConfig.costKey(drive));
+	}
+
+	@Override
+	public boolean chargedPerBlock()
+	{
+		return false;
+	}
+
+	@Override
 	public ComputerEra getEra()
 	{
 		return era;
@@ -286,7 +298,7 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 		if(reels.isEmpty())
 			return;
 		StorageNetwork network = StorageNetwork.of(ctx.level(), ctx.masterPos());
-		if(network.isTooLarge()||!network.getConflictingEras().isEmpty())
+		if(network.isTooLarge()||!network.getConflictingEras().isEmpty()||!network.isPowered(ctx.level()))
 			return;
 		Archivist.run(network.getStorage(), reels, ARCHIVE_ITEMS);
 	}

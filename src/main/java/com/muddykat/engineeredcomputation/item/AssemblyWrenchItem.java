@@ -40,9 +40,21 @@ public class AssemblyWrenchItem extends Item
 				takeCover(level, context.getClickedPos(), context.getPlayer());
 			return InteractionResult.sidedSuccess(level.isClientSide);
 		}
+		return InteractionResult.PASS;
+	}
+
+	/**
+	 * Forms structures here rather than in {@link #useOn}, which Forge runs as a block placement: it fires a place event
+	 * for every part and can roll them all back. This should help ensure multiblock formation is smoother on servers
+	 */
+	@Override
+	public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context)
+	{
+		Level level = context.getLevel();
+		BlockState clicked = level.getBlockState(context.getClickedPos());
 		boolean isTemplateBlock = ECMultiblocks.formable().stream()
 				.anyMatch(definition -> clicked.is(definition.templateBlock()));
-		if(!isTemplateBlock)
+		if(!isTemplateBlock||context.getPlayer()!=null&&!context.getPlayer().getAbilities().mayBuild)
 			return InteractionResult.PASS;
 		if(level.isClientSide)
 			return InteractionResult.SUCCESS;

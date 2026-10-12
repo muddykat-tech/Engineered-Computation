@@ -4,7 +4,11 @@ import net.minecraft.world.item.ItemStack;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 
-public record AdapterFilter(ItemStack held)
+/**
+ * What an adapter moves: with an allow list, what the held item (or Program Floppy) matches; with a block list
+ * ({@code blocking}), everything else - so an empty block list blocks nothing.
+ */
+public record AdapterFilter(ItemStack held, boolean blocking)
 {
 	public static boolean isProgram(ItemStack stack)
 	{
@@ -26,7 +30,12 @@ public record AdapterFilter(ItemStack held)
 		return held.isEmpty()||isProgram(held)&&program().isEmpty();
 	}
 
-	public boolean matches(ItemStack stack)
+	public boolean allows(ItemStack stack)
+	{
+		return matches(stack)!=blocking;
+	}
+
+	private boolean matches(ItemStack stack)
 	{
 		if(held.isEmpty())
 			return false;

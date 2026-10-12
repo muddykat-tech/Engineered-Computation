@@ -1,7 +1,6 @@
 Magnetic Tape Era
 
-Reels of magnetic tape have a very large storage capacity, although it needs to be read sequentially.
-For the purpose of this mod, they're good for bulk storage of the same item, as they have the lowest item variety.
+Reels of magnetic tape have a very large capacity, but are read sequentially. In this mod, tape is bulk storage for a few item types, as it has the lowest item variety.
 
 Memory: {memory}
 Part: {part}

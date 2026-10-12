@@ -1,6 +1,11 @@
 package com.muddykat.engineeredcomputation.storage;
 
+import java.util.Collection;
+
+import org.jetbrains.annotations.Nullable;
+
 import com.mojang.serialization.Codec;
+import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -12,6 +17,10 @@ public final class ItemKey
 
 	private final ItemStack stack;
 	private final int hash;
+	@Nullable
+	private ItemKey received;
+	@Nullable
+	private ItemStack display;
 
 	private ItemKey(ItemStack stack)
 	{
@@ -27,6 +36,41 @@ public final class ItemKey
 	public void write(FriendlyByteBuf buf)
 	{
 		buf.writeItem(stack);
+	}
+
+	/**
+	 * Finds the stored key a client sent back. Items can come back with different NBT (share tags) and without their
+	 * capabilities, so a key that has been to the client and back may no longer equal the one it was made from.
+	 */
+	public static ItemKey resolve(ItemKey sent, Collection<ItemKey> known)
+	{
+		if(known.contains(sent))
+			return sent;
+		for(ItemKey key : known)
+			if(key.getItem()==sent.getItem()&&key.received().equals(sent))
+				return key;
+		return sent;
+	}
+
+	private ItemKey received()
+	{
+		if(received==null)
+			received = roundTrip().roundTrip();
+		return received;
+	}
+
+	private ItemKey roundTrip()
+	{
+		FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+		try
+		{
+			write(buf);
+			return read(buf);
+		}
+		finally
+		{
+			buf.release();
+		}
 	}
 
 	public static ItemKey of(ItemStack stack)
@@ -51,9 +95,15 @@ public final class ItemKey
 		return stack.copyWithCount(count);
 	}
 
+	/**
+	 * A copy for drawing and tooltips. Some mods write into the stacks they draw which can screw with how we tell items
+	 * apart from each other, if we don't use a copy our item guards will stop you from removing or taking via gui
+	 */
 	public ItemStack displayStack()
 	{
-		return stack;
+		if(display==null)
+			display = stack.copy();
+		return display;
 	}
 
 	public boolean matches(ItemStack other)

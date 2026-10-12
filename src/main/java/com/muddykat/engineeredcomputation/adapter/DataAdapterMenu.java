@@ -30,6 +30,7 @@ public class DataAdapterMenu extends AbstractContainerMenu
 	public static final int TICKS_UP = 3;
 	public static final int BIG = 4;
 	public static final int TOGGLE_POWER = 2*BIG;
+	public static final int TOGGLE_FILTER_MODE = TOGGLE_POWER+1;
 	private static final int BIG_ITEMS = 8;
 	private static final int BIG_TICKS = 10;
 
@@ -41,7 +42,8 @@ public class DataAdapterMenu extends AbstractContainerMenu
 
 	public DataAdapterMenu(int id, Inventory inventory, FriendlyByteBuf buf)
 	{
-		this(id, inventory, buf.readBlockPos(), null, new SimpleContainer(1), new SimpleContainerData(4));
+		this(id, inventory, buf.readBlockPos(), null, new SimpleContainer(1),
+				new SimpleContainerData(DataAdapterBlockEntity.DATA_COUNT));
 	}
 
 	DataAdapterMenu(int id, Inventory inventory, DataAdapterBlockEntity adapter)
@@ -116,6 +118,11 @@ public class DataAdapterMenu extends AbstractContainerMenu
 	public ItemStack getFilter()
 	{
 		return filter.getItem(0);
+	}
+
+	public boolean isBlocking()
+	{
+		return data.get(4)!=0;
 	}
 
 	public boolean isEnabled()
@@ -196,6 +203,11 @@ public class DataAdapterMenu extends AbstractContainerMenu
 		if(id==TOGGLE_POWER)
 		{
 			adapter.setEnabled(!adapter.isEnabled());
+			return true;
+		}
+		if(id==TOGGLE_FILTER_MODE)
+		{
+			adapter.setBlocking(!adapter.isBlocking());
 			return true;
 		}
 		boolean big = id>=BIG;

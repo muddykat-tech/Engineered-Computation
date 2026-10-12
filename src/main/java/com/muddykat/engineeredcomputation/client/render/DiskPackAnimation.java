@@ -72,7 +72,7 @@ final class DiskPackAnimation
 	void render(DriveRenderer renderer, MultiblockPartBlockEntity part, Unit unit, boolean loaded, boolean networked,
 			float partialTick, PoseStack pose, MultiBufferSource buffers, int packedOverlay)
 	{
-		double now = part.getLevel().getGameTime()+partialTick;
+		double now = AnimationClock.now(partialTick);
 		Progress state = progress.computeIfAbsent(part, p -> {
 			Progress initial = new Progress();
 			initial.value = loaded? 1: 0;

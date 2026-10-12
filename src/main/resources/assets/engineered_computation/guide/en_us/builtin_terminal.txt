@@ -1,5 +1,5 @@
 Built-in Terminal
 
-This drive has a terminal of its own. Use its screen or keyboard to browse the network's storage, just like a terminal block.
+This drive has its own terminal. Right-click its screen or keyboard to browse the network's storage.
 
-Use anywhere else on the drive to reach its cells.
+Right-click any other part of the drive to access its cells.

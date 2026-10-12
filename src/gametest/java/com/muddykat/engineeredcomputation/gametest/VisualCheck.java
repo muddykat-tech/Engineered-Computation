@@ -7,6 +7,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import org.lwjgl.glfw.GLFW;
 
@@ -16,6 +18,7 @@ import net.minecraft.client.MouseHandler;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
@@ -52,17 +55,22 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.adapter.AdapterKind;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlockEntity;
 import com.muddykat.engineeredcomputation.adapter.Program;
 import com.muddykat.engineeredcomputation.adapter.ProgramEntry;
+import com.muddykat.engineeredcomputation.adapter.ProgrammableItem;
 import com.muddykat.engineeredcomputation.adapter.ProgramFloppyItem;
 import com.muddykat.engineeredcomputation.catalogue.CardDeck;
 import com.muddykat.engineeredcomputation.catalogue.CardDeckItem;
 import com.muddykat.engineeredcomputation.catalogue.CardDeckMenu;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCard;
+import com.muddykat.engineeredcomputation.catalogue.FilterCardItem;
+import com.muddykat.engineeredcomputation.catalogue.ProgramDeckItem;
+import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.client.ECConfigScreen;
 import com.muddykat.engineeredcomputation.client.guide.GuideScreen;
 import com.muddykat.engineeredcomputation.crafting.CraftingComputerMenu;
@@ -88,6 +96,8 @@ import com.muddykat.engineeredcomputation.pneumatic.TubeCarriers;
 import com.muddykat.engineeredcomputation.pneumatic.TubeNetwork;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlock;
 import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.TubeStationMenu;
+import com.muddykat.engineeredcomputation.power.EnergyAccepterBlockEntity;
 import com.muddykat.engineeredcomputation.registration.ECAdapters;
 import com.muddykat.engineeredcomputation.registration.ECBridges;
 import com.muddykat.engineeredcomputation.registration.ECCables;
@@ -96,6 +106,7 @@ import com.muddykat.engineeredcomputation.registration.ECContent;
 import com.muddykat.engineeredcomputation.registration.ECCrafting;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
+import com.muddykat.engineeredcomputation.registration.ECPower;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
 import com.muddykat.engineeredcomputation.storage.CellContents;
 import com.muddykat.engineeredcomputation.storage.CellInventory;
@@ -111,7 +122,14 @@ import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
 public final class VisualCheck
 {
 	private static final boolean ENABLED = Boolean.getBoolean("ec.visualcheck");
-	private static final boolean ANGLES_ONLY = Boolean.getBoolean("ec.visualcheck.angles");
+	/** Each area's shots, in the order they run; {@link #ONLY} picks some. */
+	private static final List<String> CATEGORIES = List.of("cables", "pneumatics", "drives", "angles", "world", "guide",
+			"terminal", "adapters", "crafting", "power", "config");
+	/**
+	 * The categories to run, from -Pvisuals=adapters,terminal (ec.visualcheck.only); none or "all" runs every one. The
+	 * older ec.visualcheck.angles=true still means the model angles alone.
+	 */
+	private static final Set<String> ONLY = categoriesToRun();
 	private static final List<String> ANGLE_DRIVES = List.of(System.getProperty("ec.visualcheck.drives", "").split(","))
 			.stream().filter(name -> !name.isBlank()).toList();
 	private static final String WORLD = "ec_visualcheck";
@@ -158,6 +176,10 @@ public final class VisualCheck
 			wait = 60;
 			queueSteps(mc);
 		}
+		// Kept flying: creative flight stops whenever the player touches ground after a teleport, and then they fall
+		// away from the camera position, or not, depending on timing.
+		if(mc.player.getAbilities().mayfly)
+			mc.player.getAbilities().flying = true;
 		if(--wait>0||STEPS.isEmpty())
 			return;
 		Step step = STEPS.poll();
@@ -196,23 +218,63 @@ public final class VisualCheck
 
 	private static void queueSteps(Minecraft mc)
 	{
-		onServer(mc, VisualCheck::buildScene, 120);
-		STEPS.add(new Step(5, () -> mc.options.hideGui = true));
-		queueCoveredCables(mc);
-		queuePneumatics(mc);
-		queueCloseups(mc);
-		queueFloppyBays(mc);
-		queueDiskPack(mc);
-		queueTapeReels(mc);
-		queueBanks(mc);
-		queueCardVault(mc);
-		queueDrumEra(mc);
-		queueModelAngles(mc);
-		if(ANGLES_ONLY)
+		List<String> unknown = ONLY.stream().filter(name -> !CATEGORIES.contains(name)).toList();
+		if(!unknown.isEmpty())
 		{
+			EngineeredComputation.LOGGER.error("Visual check: unknown categories {} - the categories are {}", unknown,
+					CATEGORIES);
 			STEPS.add(new Step(5, mc::stop));
 			return;
 		}
+		EngineeredComputation.LOGGER.info("Visual check: categories {}, running {}", CATEGORIES,
+				ONLY.isEmpty()? "all": ONLY);
+		onServer(mc, VisualCheck::buildScene, 120);
+		// In the order of a full run, each with the HUD as that run had it, so any can be left out.
+		section(mc, "cables", false, VisualCheck::queueCoveredCables);
+		section(mc, "pneumatics", false, VisualCheck::queuePneumatics);
+		section(mc, "drives", false, VisualCheck::queueCloseups);
+		section(mc, "drives", false, VisualCheck::queueFloppyBays);
+		section(mc, "drives", false, VisualCheck::queueDiskPack);
+		section(mc, "drives", false, VisualCheck::queueTapeReels);
+		section(mc, "drives", false, VisualCheck::queueBanks);
+		section(mc, "drives", false, VisualCheck::queueCardVault);
+		section(mc, "drives", false, VisualCheck::queueDrumEra);
+		section(mc, "angles", false, VisualCheck::queueModelAngles);
+		section(mc, "world", false, VisualCheck::queueWorld);
+		section(mc, "guide", true, VisualCheck::queueGuides);
+		section(mc, "terminal", true, VisualCheck::queueTerminals);
+		section(mc, "drives", true, VisualCheck::queueDriveScreens);
+		section(mc, "terminal", true, VisualCheck::queueConsoleClicks);
+		section(mc, "cables", true, VisualCheck::queueCables);
+		section(mc, "adapters", true, VisualCheck::queueAdapters);
+		section(mc, "crafting", true, VisualCheck::queueCrafting);
+		section(mc, "power", true, VisualCheck::queuePower);
+		section(mc, "config", true, VisualCheck::queueConfig);
+		STEPS.add(new Step(10, mc::stop));
+	}
+
+	private static Set<String> categoriesToRun()
+	{
+		if(Boolean.getBoolean("ec.visualcheck.angles"))
+			return Set.of("angles");
+		Set<String> names = Set.copyOf(List.of(System.getProperty("ec.visualcheck.only", "").split(",")).stream()
+				.map(String::trim).filter(name -> !name.isEmpty()).toList());
+		return names.contains("all")? Set.of(): names;
+	}
+
+	/** Queues one area's shots, if it's one of the categories asked for, with the HUD shown or hidden first. */
+	private static void section(Minecraft mc, String category, boolean hud, Consumer<Minecraft> queue)
+	{
+		if(!CATEGORIES.contains(category))
+			throw new IllegalArgumentException("not a visual check category: "+category);
+		if(!ONLY.isEmpty()&&!ONLY.contains(category))
+			return;
+		STEPS.add(new Step(5, () -> mc.options.hideGui = !hud));
+		queue.accept(mc);
+	}
+
+	private static void queueWorld(Minecraft mc)
+	{
 		onServer(mc, (level, player) -> overview(player), 20);
 		screenshot(mc, "ec_01_world_day", 5);
 		onServer(mc, (level, player) -> {
@@ -226,8 +288,10 @@ public final class VisualCheck
 		}, 80);
 		screenshot(mc, "ec_03_world_night_torches", 5);
 		onServer(mc, (level, player) -> level.setDayTime(6000), 20);
-		STEPS.add(new Step(5, () -> mc.options.hideGui = false));
+	}
 
+	private static void queueGuides(Minecraft mc)
+	{
 		for(ComputerEra era : ComputerEra.values())
 		{
 			STEPS.add(new Step(10, () -> {
@@ -261,7 +325,10 @@ public final class VisualCheck
 		STEPS.add(new Step(5, () -> mc.screen.mouseClicked(guideLeft(mc)+16+5, 2+16+3, GLFW.GLFW_MOUSE_BUTTON_LEFT)));
 		screenshot(mc, "ec_guide_link_back", 2);
 		STEPS.add(new Step(10, () -> mc.setScreen(null)));
+	}
 
+	private static void queueTerminals(Minecraft mc)
+	{
 		TerminalMenu.Layout crafting = TerminalMenu.Layout.of(TerminalFeatures.CRAFTING);
 		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.DISK)), 30);
 		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
@@ -375,6 +442,10 @@ public final class VisualCheck
 		STEPS.add(new Step(5, () -> "pack".chars().forEach(c -> mc.screen.charTyped((char)c, 0))));
 		screenshot(mc, "ec_teletype_outlets_search", 2);
 		STEPS.add(new Step(10, () -> mc.setScreen(null)));
+	}
+
+	private static void queueDriveScreens(Minecraft mc)
+	{
 		onServer(mc, (level, player) -> use(level, player, driveOrigin(ComputerEra.DRUM)
 				.offset(EraDrive.DRUM_COMPUTER.geometry().trigger())), 20);
 		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
@@ -400,12 +471,6 @@ public final class VisualCheck
 		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
 		screenshot(mc, "ec_drive_disk", 2);
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
-		queueConsoleClicks(mc);
-		queueCables(mc);
-		queueAdapters(mc);
-		queueCrafting(mc);
-		queueConfig(mc);
-		STEPS.add(new Step(10, mc::stop));
 	}
 
 	private static void queueCables(Minecraft mc)
@@ -440,8 +505,6 @@ public final class VisualCheck
 				Blocks.GRASS_BLOCK.defaultBlockState(), Blocks.OAK_LEAVES.defaultBlockState(), null,
 				Blocks.OAK_LOG.defaultBlockState(), null};
 		onServer(mc, (level, player) -> {
-			player.getAbilities().flying = true;
-			player.onUpdateAbilities();
 			BlockPos start = coveredCablesPos();
 			for(int x = 0; x<covers.length; x++)
 				placeCable(level, start.east(x));
@@ -565,6 +628,64 @@ public final class VisualCheck
 			CardDeckMenu.open(player, InteractionHand.MAIN_HAND);
 		}, 15);
 		screenshot(mc, "ec_card_deck_screen", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY), 5);
+		queueAdvancedStation(mc);
+	}
+
+	/** An Advanced Tube Station with a Program Deck in, its screen (allow then block list), and its cards' screens. */
+	private static void queueAdvancedStation(Minecraft mc)
+	{
+		ItemStack deck = new ItemStack(ECCatalogue.PROGRAM_DECK.get());
+		((ProgramDeckItem)deck.getItem()).setCards(deck, List.of(
+				FilterCardItem.of(ProgramEntry.of(new ItemStack(Items.COBBLESTONE))),
+				FilterCardItem.of(ProgramEntry.of(ItemTags.LOGS))));
+		onServer(mc, (level, player) -> {
+			BlockPos station = pneumaticsPos().north(3);
+			level.setBlockAndUpdate(station, ECPneumatics.ADVANCED_TUBE_STATION.get().defaultBlockState()
+					.setValue(TubeStationBlock.FACING, Direction.UP));
+			level.setBlockAndUpdate(station.above(), Blocks.CHEST.defaultBlockState());
+			if(level.getBlockEntity(station) instanceof TubeStationBlockEntity entity)
+				entity.setFilterCard(deck.copy());
+			player.teleportTo(level, station.getX()+2.3, station.getY()+1.0, station.getZ()+2.3, 135, 25);
+		}, 20);
+		screenshot(mc, "ec_advanced_tube_station", 2);
+		onServer(mc, (level, player) -> use(level, player, pneumaticsPos().north(3)), 15);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_advanced_tube_station_screen", 2);
+		int modeX = TubeStationMenu.FILTER_X-ECGui.FILTER_MODE_SIZE-3+5;
+		int modeY = TubeStationMenu.FILTER_Y+(18-ECGui.FILTER_MODE_SIZE)/2+5;
+		STEPS.add(new Step(5, () -> clickGui(mc, modeX, modeY)));
+		STEPS.add(new Step(10, () -> hoverGui(mc, modeX, modeY)));
+		screenshot(mc, "ec_advanced_tube_station_block_list", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> {
+			player.setItemInHand(InteractionHand.MAIN_HAND, FilterCardItem.of(ProgramEntry.of(TagKey.create(
+					Registries.ITEM, ResourceLocation.parse("forge:ingots")))));
+			ProgrammableItem.open(player, InteractionHand.MAIN_HAND);
+		}, 15);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_filter_card_screen", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		// A blank card beside a punched (filtering) one in the hotbar, the punched one's tooltip showing.
+		onServer(mc, (level, player) -> {
+			player.getInventory().setItem(0, new ItemStack(ECCatalogue.FILTER_CARD.get()));
+			player.getInventory().setItem(1, FilterCardItem.of(ProgramEntry.of(new ItemStack(Items.COBBLESTONE))));
+		}, 5);
+		// The player is in creative, so the inventory opens as the creative one: its hotbar is at y 112.
+		STEPS.add(new Step(5, () -> mc.setScreen(new InventoryScreen(mc.player))));
+		STEPS.add(new Step(5, () -> hoverGui(mc, 9+18+8, 112+8)));
+		screenshot(mc, "ec_filter_card_tooltip", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> {
+			player.getInventory().setItem(0, ItemStack.EMPTY);
+			player.getInventory().setItem(1, ItemStack.EMPTY);
+		}, 5);
+		onServer(mc, (level, player) -> {
+			player.setItemInHand(InteractionHand.MAIN_HAND, deck.copy());
+			CardDeckMenu.open(player, InteractionHand.MAIN_HAND);
+		}, 15);
+		screenshot(mc, "ec_program_deck_screen", 2);
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
 		onServer(mc, (level, player) -> player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY), 5);
 	}
@@ -821,6 +942,12 @@ public final class VisualCheck
 		screenshot(mc, "ec_adapter_exporter_screen", 2);
 		STEPS.add(new Step(25, () -> clickGui(mc, 176-8-12, 17+13)));
 		screenshot(mc, "ec_adapter_exporter_off", 2);
+		// The filter's allow / block list toggle, left of the filter slot: switched to a block list, then back.
+		STEPS.add(new Step(25, () -> clickGui(mc, 4+5, 29+5)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, 4+5, 29+5)));
+		screenshot(mc, "ec_adapter_exporter_block_list", 2);
+		STEPS.add(new Step(25, () -> clickGui(mc, 4+5, 29+5)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
 		onServer(mc, (level, player) -> level.setBlockAndUpdate(workingImporter().north(3),
 				ECAdapters.of(ComputerEra.DRUM).get(AdapterKind.IMPORTER).get().defaultBlockState()), 30);
@@ -1334,8 +1461,57 @@ public final class VisualCheck
 
 	private static void screenshot(Minecraft mc, String name, int waitAfter)
 	{
-		STEPS.add(new Step(waitAfter, () -> Screenshot.grab(mc.gameDirectory, name+".png", mc.getMainRenderTarget(),
-				message -> EngineeredComputation.LOGGER.info("Visual check: {}", message.getString()))));
+		STEPS.add(new Step(waitAfter, () -> {
+			// Where the camera was, from the scene's base, to tell a moved camera from a changed scene.
+			if(mc.player!=null&&base!=null)
+				EngineeredComputation.LOGGER.debug("Visual check: {} from ({}, {}, {}) facing {}/{}{}", name,
+						mc.player.getX()-base.getX(), mc.player.getEyeY()-base.getY(), mc.player.getZ()-base.getZ(),
+						mc.player.getYRot(), mc.player.getXRot(), mc.player.getAbilities().flying? " flying": "");
+			Screenshot.grab(mc.gameDirectory, name+".png", mc.getMainRenderTarget(),
+					message -> EngineeredComputation.LOGGER.info("Visual check: {}", message.getString()));
+		}));
+	}
+
+	/**
+	 * An Energy Accepter on the disk pack network with power switched on: the terminal unpaid (402), the accepter's
+	 * screen unpaid then fed, and the terminal's storage bar tooltip with the network's power. Power goes back off
+	 * after.
+	 */
+	private static void queuePower(Minecraft mc)
+	{
+		TerminalMenu.Layout crafting = TerminalMenu.Layout.of(TerminalFeatures.CRAFTING);
+		onServer(mc, (level, player) -> {
+			ECConfig.POWER.set(true);
+			BlockPos accepter = terminalPos(ComputerEra.DISK).above();
+			if(!level.getBlockState(accepter).isAir())
+				EngineeredComputation.LOGGER.error("Visual check: no room for the Energy Accepter at {}", accepter);
+			level.setBlockAndUpdate(accepter, ECPower.BLOCK.get().defaultBlockState());
+			player.teleportTo(level, accepter.getX()+0.5, accepter.getY()+0.4, accepter.getZ()-2.6, 0, 15);
+		}, 20);
+		screenshot(mc, "ec_power_accepter", 2);
+		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.DISK)), 20);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_power_terminal_unpaid", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.DISK).above()), 20);
+		screenshot(mc, "ec_power_accepter_unpaid", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> {
+			BlockPos pos = terminalPos(ComputerEra.DISK).above();
+			if(level.getBlockEntity(pos) instanceof EnergyAccepterBlockEntity accepter)
+				accepter.setEnergy(80_000);
+		}, 10);
+		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.DISK).above()), 20);
+		screenshot(mc, "ec_power_accepter_screen", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.DISK)), 20);
+		STEPS.add(new Step(5, () -> hoverGui(mc, 90, crafting.gridY()+crafting.rows()*18+5)));
+		screenshot(mc, "ec_power_terminal_tooltip", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> {
+			ECConfig.POWER.set(false);
+			level.setBlockAndUpdate(terminalPos(ComputerEra.DISK).above(), Blocks.AIR.defaultBlockState());
+		}, 5);
 	}
 
 	private static void queueConfig(Minecraft mc)
