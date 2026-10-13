@@ -34,6 +34,14 @@
     "engineered_computation:receiving_station",
     "engineered_computation:autotube",
     "engineered_computation:observing_autotube",
-    "engineered_computation:pressurizer"
+    "engineered_computation:pressurizer",
+    "engineered_computation:era2_data_importer",
+    "engineered_computation:era2_data_exporter",
+    "engineered_computation:era3_data_importer",
+    "engineered_computation:era3_data_exporter",
+    "engineered_computation:era4_data_importer",
+    "engineered_computation:era4_data_exporter",
+    "engineered_computation:era5_data_importer",
+    "engineered_computation:era5_data_exporter"
   ]
 }

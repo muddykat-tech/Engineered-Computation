@@ -111,6 +111,14 @@ public class CoveredTubeBlock extends PneumaticTubeBlock implements EntityBlock
 	}
 
 	@Override
+	protected float getDestroyProgress(BlockState state, Player player, BlockGetter level, BlockPos pos)
+	{
+		BlockState cover = coverAt(level, pos);
+		return cover.isAir()? super.getDestroyProgress(state, player, level, pos)
+				: cover.getDestroyProgress(player, level, pos);
+	}
+
+	@Override
 	public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state)
 	{
 		BlockState cover = coverAt(level, pos);
