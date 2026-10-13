@@ -149,8 +149,21 @@ public final class StorageGameTests
 			check(helper, small.insert(ItemKey.of(new ItemStack(item)), 1, false)==1, "one of the first eight types refused");
 		check(helper, small.insert(ItemKey.of(new ItemStack(Items.CLAY_BALL)), 1, false)==0, "a ninth type accepted");
 
-		check(helper, cell.insert(ItemKey.of(new ItemStack(ECDataCells.cellsOf(ComputerEra.DRUM).get(1).get())), 1, false)==0,
-				"a cell was stored inside a cell");
+		check(helper, cell.insert(ItemKey.of(small.getStack()), 1, false)==0, "a cell holding items was stored inside a cell");
+		helper.succeed();
+	}
+
+	@GameTest(template = TEMPLATE)
+	public static void onlyEmptyCellsCanBeStored(GameTestHelper helper)
+	{
+		CellInventory storage = CellInventory.of(new ItemStack(ECDataCells.cellsOf(ComputerEra.DRUM).get(3).get()), () -> {
+		});
+		ItemStack full = new ItemStack(ECDataCells.cellsOf(ComputerEra.DRUM).get(0).get());
+		CellInventory.of(full, () -> {
+		}).insert(ItemKey.of(new ItemStack(Items.COBBLESTONE)), 8, false);
+		ItemStack empty = new ItemStack(ECDataCells.cellsOf(ComputerEra.DRUM).get(0).get());
+		check(helper, storage.insert(ItemKey.of(empty), 1, false)==1, "an empty cell wasn't stored");
+		check(helper, storage.insert(ItemKey.of(full), 1, false)==0, "a cell holding items was stored");
 		helper.succeed();
 	}
 

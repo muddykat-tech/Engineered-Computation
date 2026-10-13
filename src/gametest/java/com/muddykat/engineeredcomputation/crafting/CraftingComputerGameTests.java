@@ -95,6 +95,26 @@ public final class CraftingComputerGameTests
 	}
 
 	@GameTest(template = NetworkStressGameTests.BIG)
+	public static void anOrderForACellFinishes(GameTestHelper helper)
+	{
+		Setup setup = setup(helper);
+		Item small = ECDataCells.cellsOf(ComputerEra.DISK).get(0).get();
+		Item medium = ECDataCells.cellsOf(ComputerEra.DISK).get(1).get();
+		Item large = ECDataCells.cellsOf(ComputerEra.DISK).get(2).get();
+		setup.store(medium, 1);
+		setup.store(small, 1);
+		StorageGameTests.check(helper, setup.stored(medium)==1&&setup.stored(small)==1, "empty cells weren't stored");
+		setup.computer.getPatternSlots().setStackInSlot(0, directFloppy(setup.level, new ItemStack(medium),
+				new ItemStack(small)));
+		StorageGameTests.check(helper, setup.order(large, 1).isEmpty(), "the order for a cell was refused");
+		helper.runAfterDelay(ECConfig.craftingTicks()+5, () -> {
+			StorageGameTests.check(helper, setup.stored(large)==1, "the crafted cell didn't reach storage");
+			StorageGameTests.check(helper, setup.computer.getOrders().isEmpty(), "the order for a cell never finished");
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = NetworkStressGameTests.BIG)
 	public static void chainedOrderCraftsIntermediates(GameTestHelper helper)
 	{
 		Setup setup = setup(helper);

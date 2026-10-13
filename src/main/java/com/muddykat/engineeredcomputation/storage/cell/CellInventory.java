@@ -71,6 +71,12 @@ public final class CellInventory implements ItemStorage
 		return Math.max(0, getTotalTypes()-getContents().types());
 	}
 
+	/** A cell holding items can't go into storage, or storage could nest inside itself. */
+	private static boolean holdsItems(ItemKey key)
+	{
+		return key.getItem() instanceof EraDataCell&&getContents(key.toStack(1)).types()>0;
+	}
+
 	public static CellContents getContents(ItemStack stack)
 	{
 		return stack.getOrDefault(ECDataComponents.CELL_CONTENTS.get(), CellContents.EMPTY);
@@ -126,7 +132,7 @@ public final class CellInventory implements ItemStorage
 	@Override
 	public long insert(ItemKey key, long amount, boolean simulate)
 	{
-		if(amount<=0||key.getItem() instanceof EraDataCell)
+		if(amount<=0||holdsItems(key))
 			return 0;
 		CellContents contents = getContents();
 		Map<ItemKey, Long> amounts = toMap(contents);
