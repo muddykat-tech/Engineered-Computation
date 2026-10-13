@@ -51,7 +51,7 @@ public record TerminalStats(long usedBytes, long totalBytes, long usedTypes, lon
 		{
 			usedBytes += cell.getUsedBytes();
 			totalBytes += cell.getTotalBytes();
-			usedTypes += cell.getContents().types();
+			usedTypes += cell.getTypes();
 			totalTypes += cell.getTotalTypes();
 		}
 		int lockBits = (tooLarge? TOO_LARGE: 0)|(processing? PROCESSING: 0);

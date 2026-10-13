@@ -11,11 +11,13 @@ import net.neoforged.neoforge.registries.DeferredItem;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.storage.cell.EraDataCell;
+import com.muddykat.engineeredcomputation.storage.cell.UuidDataCell;
 
 public final class ECDataCells
 {
 	private static final Map<ComputerEra, List<DeferredItem<EraDataCell>>> CELLS = new EnumMap<>(ComputerEra.class);
 	private static final List<DeferredItem<EraDataCell>> TERMINAL_DISKS = new ArrayList<>();
+	private static final Map<ComputerEra, DeferredItem<UuidDataCell>> UUID_CELLS = new EnumMap<>(ComputerEra.class);
 
 	static
 	{
@@ -51,6 +53,14 @@ public final class ECDataCells
 		terminalDisk(8192, 64, 10);
 	}
 
+	static
+	{
+		uuidCell(ComputerEra.DRUM, 4096, 8, 24);
+		uuidCell(ComputerEra.TAPE, 4*1024*1024, 8, 2);
+		uuidCell(ComputerEra.DISK, 32*1024, 32, 256);
+		uuidCell(ComputerEra.FLOPPY, 524288, 4096, 63);
+	}
+
 
 	private ECDataCells()
 	{
@@ -68,6 +78,18 @@ public final class ECDataCells
 	public static List<DeferredItem<EraDataCell>> terminalDisks()
 	{
 		return Collections.unmodifiableList(TERMINAL_DISKS);
+	}
+
+	/** List of the Test cells separated so we don't have the guide pick them up. */
+	public static Map<ComputerEra, DeferredItem<UuidDataCell>> uuidCells()
+	{
+		return Collections.unmodifiableMap(UUID_CELLS);
+	}
+
+	private static void uuidCell(ComputerEra era, int totalBytes, int bytesPerType, int totalTypes)
+	{
+		UUID_CELLS.put(era, ECRegistrationHolder.ITEMS.register("uuid_cell_"+era.getSerializedName(),
+				() -> new UuidDataCell(new Properties(), era, totalBytes, bytesPerType, totalTypes)));
 	}
 
 	private static void terminalDisk(int totalBytes, int bytesPerType, int totalTypes)

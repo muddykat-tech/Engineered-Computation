@@ -1,7 +1,10 @@
 package com.muddykat.engineeredcomputation.registration;
 
+import java.util.UUID;
+
 import com.mojang.serialization.Codec;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -28,6 +31,11 @@ public final class ECDataComponents
 					.persistent(CellContents.CODEC)
 					.networkSynchronized(CellContents.STREAM_CODEC)
 					.cacheEncoding());
+
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> CELL_UUID =
+			REGISTER.registerComponentType("cell_uuid", builder -> builder
+					.persistent(UUIDUtil.CODEC)
+					.networkSynchronized(UUIDUtil.STREAM_CODEC));
 
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PRIORITY =
 			REGISTER.registerComponentType("priority", builder -> builder

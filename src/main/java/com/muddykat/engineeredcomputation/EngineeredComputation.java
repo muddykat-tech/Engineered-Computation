@@ -66,6 +66,8 @@ public class EngineeredComputation {
                         output.accept(ECCatalogue.PROGRAM_DECK.get());
                     }
                     ECDataCells.cellsOf(era).forEach(cell -> output.accept(cell.get()));
+                    if (ECDataCells.uuidCells().containsKey(era))
+                        output.accept(ECDataCells.uuidCells().get(era).get());
                     if (era == ComputerEra.FLOPPY) {
                         ECDataCells.terminalDisks().forEach(disk -> output.accept(disk.get()));
                         output.accept(ECAdapters.PROGRAM_FLOPPY.get());

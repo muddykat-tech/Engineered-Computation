@@ -50,6 +50,7 @@ import com.muddykat.engineeredcomputation.storage.StorageRole;
 import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
 import com.muddykat.engineeredcomputation.storage.cell.CellStatus;
 import com.muddykat.engineeredcomputation.storage.cell.EraDataCell;
+import com.muddykat.engineeredcomputation.storage.cell.UuidDataCell;
 import com.muddykat.engineeredcomputation.terminal.TerminalFeatures;
 import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
 import com.muddykat.engineeredcomputation.terminal.crafting.CraftingGrid;
@@ -363,6 +364,8 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 			return ECCatalogue.tierOf(stack.getItem());
 		List<? extends Supplier<EraDataCell>> tiers = drive.isCompactSlot(slot)? ECDataCells.terminalDisks()
 				: ECDataCells.cellsOf(era);
+		if(stack.getItem() instanceof UuidDataCell)
+			return tiers.size()-1;
 		for(int tier = 0; tier<tiers.size(); tier++)
 			if(stack.is(tiers.get(tier).get()))
 				return tier;

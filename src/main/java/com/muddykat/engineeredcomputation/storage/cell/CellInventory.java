@@ -1,6 +1,5 @@
 package com.muddykat.engineeredcomputation.storage.cell;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
@@ -19,18 +18,25 @@ public final class CellInventory implements ItemStorage
 	private final ItemStack stack;
 	private final EraDataCell cell;
 	private final Runnable onChanged;
+	private final CellData data;
 
 	private CellInventory(ItemStack stack, EraDataCell cell, Runnable onChanged)
 	{
 		this.stack = stack;
 		this.cell = cell;
 		this.onChanged = onChanged;
+		this.data = cell instanceof UuidDataCell? new UuidCellData(stack, CellStorage.get()): new ComponentCellData(stack);
 	}
 
 	@Nullable
 	public static CellInventory of(ItemStack stack, Runnable onChanged)
 	{
 		return stack.getItem() instanceof EraDataCell cell? new CellInventory(stack, cell, onChanged): null;
+	}
+
+	public boolean isReadable()
+	{
+		return !(data instanceof UuidCellData uuid)||uuid.readable();
 	}
 
 	public ItemStack getStack()
@@ -40,7 +46,7 @@ public final class CellInventory implements ItemStorage
 
 	public CellContents getContents()
 	{
-		return getContents(stack);
+		return data.snapshot();
 	}
 
 	public StorageRole getRole()
@@ -66,9 +72,14 @@ public final class CellInventory implements ItemStorage
 			stack.set(ECDataComponents.PRIORITY.get(), priority);
 	}
 
+	public int getTypes()
+	{
+		return data.types();
+	}
+
 	public long getFreeTypes()
 	{
-		return Math.max(0, getTotalTypes()-getContents().types());
+		return Math.max(0, getTotalTypes()-data.types());
 	}
 
 	/** A cell holding items can't go into storage, or storage could nest inside itself. */
@@ -79,7 +90,9 @@ public final class CellInventory implements ItemStorage
 
 	public static CellContents getContents(ItemStack stack)
 	{
-		return stack.getOrDefault(ECDataComponents.CELL_CONTENTS.get(), CellContents.EMPTY);
+		CellInventory inventory = of(stack, () -> {
+		});
+		return inventory==null? CellContents.EMPTY: inventory.getContents();
 	}
 
 	public long getTotalBytes()
@@ -89,7 +102,9 @@ public final class CellInventory implements ItemStorage
 
 	public long getUsedBytes()
 	{
-		return getUsedBytes(getContents());
+		long count = data.totalCount();
+		long bytesForItems = (count+unusedItemCount(count))/ITEMS_PER_BYTE;
+		return (long)data.types()*cell.getBytesPerType()+bytesForItems;
 	}
 
 	public long getTotalTypes()
@@ -99,20 +114,12 @@ public final class CellInventory implements ItemStorage
 
 	public boolean isBytesFull()
 	{
-		CellContents contents = getContents();
-		return getUsedBytes(contents)>=getTotalBytes()&&unusedItemCount(contents.totalCount())==0;
+		return getUsedBytes()>=getTotalBytes()&&unusedItemCount(data.totalCount())==0;
 	}
 
 	public boolean isTypesFull()
 	{
-		return getContents().types()>=getTotalTypes();
-	}
-
-	private long getUsedBytes(CellContents contents)
-	{
-		long count = contents.totalCount();
-		long bytesForItems = (count+unusedItemCount(count))/ITEMS_PER_BYTE;
-		return (long)contents.types()*cell.getBytesPerType()+bytesForItems;
+		return data.types()>=getTotalTypes();
 	}
 
 	private static long unusedItemCount(long count)
@@ -121,11 +128,11 @@ public final class CellInventory implements ItemStorage
 		return remainder==0? 0: ITEMS_PER_BYTE-remainder;
 	}
 
-	private boolean canHoldNewType(CellContents contents, long freeBytes)
+	private boolean canHoldNewType(long freeBytes)
 	{
 		long bytesPerType = cell.getBytesPerType();
-		long remainingTypes = Math.min(freeBytes/bytesPerType, cell.getTotalTypes()-contents.types());
-		return (freeBytes>bytesPerType||freeBytes==bytesPerType&&unusedItemCount(contents.totalCount())>0)
+		long remainingTypes = Math.min(freeBytes/bytesPerType, cell.getTotalTypes()-data.types());
+		return (freeBytes>bytesPerType||freeBytes==bytesPerType&&unusedItemCount(data.totalCount())>0)
 				&&remainingTypes>0;
 	}
 
@@ -134,15 +141,13 @@ public final class CellInventory implements ItemStorage
 	{
 		if(amount<=0||holdsItems(key))
 			return 0;
-		CellContents contents = getContents();
-		Map<ItemKey, Long> amounts = toMap(contents);
-		long current = amounts.getOrDefault(key, 0L);
+		long current = data.amount(key);
 
-		long freeBytes = cell.getTotalBytes()-getUsedBytes(contents);
-		long room = Math.max(0, freeBytes*ITEMS_PER_BYTE+unusedItemCount(contents.totalCount()));
+		long freeBytes = cell.getTotalBytes()-getUsedBytes();
+		long room = Math.max(0, freeBytes*ITEMS_PER_BYTE+unusedItemCount(data.totalCount()));
 		if(current==0)
 		{
-			if(!canHoldNewType(contents, freeBytes))
+			if(!canHoldNewType(freeBytes))
 				return 0;
 			room -= (long)cell.getBytesPerType()*ITEMS_PER_BYTE;
 			if(room<=0)
@@ -152,8 +157,8 @@ public final class CellInventory implements ItemStorage
 		long inserted = Math.min(amount, room);
 		if(!simulate&&inserted>0)
 		{
-			amounts.put(key, current+inserted);
-			write(amounts);
+			data.set(key, current+inserted);
+			onChanged.run();
 		}
 		return inserted;
 	}
@@ -163,16 +168,12 @@ public final class CellInventory implements ItemStorage
 	{
 		if(amount<=0)
 			return 0;
-		Map<ItemKey, Long> amounts = toMap(getContents());
-		long current = amounts.getOrDefault(key, 0L);
+		long current = data.amount(key);
 		long extracted = Math.min(amount, current);
 		if(!simulate&&extracted>0)
 		{
-			if(extracted==current)
-				amounts.remove(key);
-			else
-				amounts.put(key, current-extracted);
-			write(amounts);
+			data.set(key, current-extracted);
+			onChanged.run();
 		}
 		return extracted;
 	}
@@ -180,33 +181,12 @@ public final class CellInventory implements ItemStorage
 	@Override
 	public long getAmount(ItemKey key)
 	{
-		for(CellContents.Entry entry : getContents().entries())
-			if(entry.key().equals(key))
-				return entry.count();
-		return 0;
+		return data.amount(key);
 	}
 
 	@Override
 	public void collect(Map<ItemKey, Long> into)
 	{
-		for(CellContents.Entry entry : getContents().entries())
-			into.merge(entry.key(), entry.count(), Long::sum);
-	}
-
-	private static Map<ItemKey, Long> toMap(CellContents contents)
-	{
-		Map<ItemKey, Long> amounts = new LinkedHashMap<>();
-		for(CellContents.Entry entry : contents.entries())
-			amounts.put(entry.key(), entry.count());
-		return amounts;
-	}
-
-	private void write(Map<ItemKey, Long> amounts)
-	{
-		if(amounts.isEmpty())
-			stack.remove(ECDataComponents.CELL_CONTENTS.get());
-		else
-			stack.set(ECDataComponents.CELL_CONTENTS.get(), CellContents.of(amounts));
-		onChanged.run();
+		data.collect(into);
 	}
 }
