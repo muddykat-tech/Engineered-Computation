@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
+
 public final class Archivist
 {
 	public static final int ARCHIVE_STACKS = 16;

@@ -1,0 +1,7 @@
+Floppy Disk Processor
+
+The Floppy Disk Processor is a smaller tower than the Floppy Disk Workstation's, without its desk or terminal. Build it from Floppy Disk Casings and form it with the Assembly Wrench. Connect it with cable at its network port, low on its back.
+
+Like the Workstation, it lets a network use Floppy Disk storage, and the storage of every older era, through Floppy Banks, Compact Floppy Bays and Storage Bridges.
+
+It holds one floppy disk in its top bay and two 3½-inch floppies in the bays under it. Sneak-right-click a bay with a disk to put it in, or with an empty hand to take it out. Right-click elsewhere to open its slots.

@@ -7,6 +7,7 @@ import java.util.Optional;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 
+import com.muddykat.engineeredcomputation.crafting.pattern.ProvidedPattern;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
 public record CraftingPlan(ItemKey target, Optional<TagKey<Item>> targetTag, long amount, List<Step> steps,

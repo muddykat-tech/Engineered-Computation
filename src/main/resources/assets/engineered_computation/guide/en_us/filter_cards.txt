@@ -3,3 +3,7 @@ Filter Cards
 A Filter Card is a punch card designed to filter incoming items to an advanced tube station. These can be made by dyeing a blank Catalogue Card orange.
 
 You can right-click an item onto a filter card to set the filter, or you can open it and set it in the GUI, it also supports tag based filters.
+
+A card can also filter by name. Open it, click the Tag button to switch it to Name, then type part of a name, the filter is set as you type. Like the terminal search, `iron` matches every item with iron in its name, and `@mod` every item from said mod. Advanced Tube Stations, which can't see item names, match the text against item IDs instead.
+
+A Filter Card in a Teletype Terminal's card slot filters the items it shows.

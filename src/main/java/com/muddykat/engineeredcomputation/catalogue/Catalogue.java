@@ -13,11 +13,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.items.IItemHandler;
 
+import com.muddykat.engineeredcomputation.catalogue.deck.CardDeck;
+import com.muddykat.engineeredcomputation.catalogue.deck.CardDeckItem;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
-import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
+import com.muddykat.engineeredcomputation.multiblock.drive.EraDriveState;
 import com.muddykat.engineeredcomputation.pneumatic.TubeNetwork;
-import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.station.TubeStationBlockEntity;
 
 public final class Catalogue
 {

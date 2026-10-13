@@ -12,6 +12,8 @@ import java.util.Optional;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 
+import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
+import com.muddykat.engineeredcomputation.crafting.pattern.ProvidedPattern;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
 public final class CraftingPlanner

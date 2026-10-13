@@ -6,10 +6,10 @@ import java.util.stream.IntStream;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredItem;
 
-import com.muddykat.engineeredcomputation.catalogue.CardDeckItem;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCardItem;
 import com.muddykat.engineeredcomputation.catalogue.FilterCardItem;
-import com.muddykat.engineeredcomputation.catalogue.ProgramDeckItem;
+import com.muddykat.engineeredcomputation.catalogue.deck.CardDeckItem;
+import com.muddykat.engineeredcomputation.catalogue.deck.ProgramDeckItem;
 
 public final class ECCatalogue
 {

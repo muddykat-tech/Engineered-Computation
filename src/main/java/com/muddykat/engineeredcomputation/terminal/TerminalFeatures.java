@@ -17,7 +17,8 @@ public record TerminalFeatures(boolean search, boolean crafting, boolean orders,
 			case PUNCHCARD -> REQUESTS;
 			case DRUM -> GRID;
 			case TAPE -> SEARCH;
-			case DISK, FLOPPY -> CRAFTING;
+			case DISK -> CRAFTING;
+			case FLOPPY -> ORDERING;
 		};
 	}
 }

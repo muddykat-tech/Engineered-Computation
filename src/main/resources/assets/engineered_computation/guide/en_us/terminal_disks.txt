@@ -2,4 +2,4 @@ Terminal Disks
 
 The Floppy Disk Terminal has two bays below its keyboard for 3½-inch floppies (1k, 2k, 4k and 8k).
 
-Right-click the bays to open them. Their disks join the terminal's network like a drive's cells. The terminal runs them itself, with no workstation needed, but they are the only storage it runs. The bays don't take the larger floppy cells, and drives don't take 3½-inch floppies.
+Right-click the bays to open them. Their disks join the terminal's network like a drive's cells. The terminal runs them itself, with no workstation needed, but they are the only storage it runs. The bays don't take the larger floppy cells. The Floppy Disk Processor and the Compact Floppy Bay take 3½-inch floppies too.

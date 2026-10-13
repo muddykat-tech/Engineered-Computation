@@ -1,8 +1,12 @@
 {
-  "parent": "minecraft:block/orientable",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "front": "engineered_computation:block/storage_bridge_front",
-    "side": "engineered_computation:block/storage_bridge_side",
-    "top": "engineered_computation:block/storage_bridge_top"
+    "particle": "engineered_computation:block/storage_bridge_front",
+    "north": "engineered_computation:block/storage_bridge_front",
+    "south": "engineered_computation:block/storage_bridge_back",
+    "east": "engineered_computation:block/storage_bridge_side",
+    "west": "engineered_computation:block/storage_bridge_side",
+    "up": "engineered_computation:block/storage_bridge_top",
+    "down": "engineered_computation:block/storage_bridge_top"
   }
 }

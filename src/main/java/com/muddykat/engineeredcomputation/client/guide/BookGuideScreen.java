@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.inventory.PageButton;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
+import com.muddykat.engineeredcomputation.client.guide.page.GuidePage;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 
 final class BookGuideScreen extends GuideScreen
@@ -54,13 +55,13 @@ final class BookGuideScreen extends GuideScreen
 	}
 
 	@Override
-	int textColour()
+	public int textColour()
 	{
 		return TEXT;
 	}
 
 	@Override
-	int linkColour(boolean hovered)
+	public int linkColour(boolean hovered)
 	{
 		return hovered? LINK_HOVERED: LINK;
 	}

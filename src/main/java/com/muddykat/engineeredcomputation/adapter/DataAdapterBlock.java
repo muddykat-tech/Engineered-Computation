@@ -31,8 +31,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
+import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECAdapters;
 
 public class DataAdapterBlock extends DirectionalBlock implements EntityBlock

@@ -3,7 +3,7 @@ package com.muddykat.engineeredcomputation.storage;
 import java.util.List;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
-import com.muddykat.engineeredcomputation.era.EraDrive;
+import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
 
 public interface StorageHost
 {

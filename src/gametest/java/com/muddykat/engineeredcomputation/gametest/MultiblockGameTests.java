@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,12 +13,20 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.items.IItemHandler;
 
@@ -30,11 +39,11 @@ import com.muddykat.engineeredcomputation.multiblock.core.MultiblockOrientation;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlock;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockStateHost;
-import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
+import com.muddykat.engineeredcomputation.multiblock.drive.EraDriveState;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECContent;
+import com.muddykat.engineeredcomputation.registration.ECDataCells;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
-import com.muddykat.engineeredcomputation.storage.ECDataCells;
 
 @TestCategory("multiblock")
 @GameTestHolder(EngineeredComputation.MODID)
@@ -64,6 +73,8 @@ public final class MultiblockGameTests
 	public static Collection<TestFunction> multiblockTests()
 	{
 		List<TestFunction> tests = new ArrayList<>();
+		tests.add(new TestFunction("multiblock", "wrench_forms_without_place_events", EMPTY_TEMPLATE, 40, 0, true,
+				MultiblockGameTests::wrenchFormsWithoutPlaceEvents));
 		for(EraDrive drive : EraDrive.values())
 			for(Direction facing : Direction.Plane.HORIZONTAL)
 			{
@@ -131,7 +142,7 @@ public final class MultiblockGameTests
 		BlockPos cellPart = templatePositions.stream().filter(p -> !geometry.hasStorageAt(p)).findFirst().orElseThrow();
 		IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, world(origin, cellPart, facing), null);
 		check(helper, handler!=null, "no item handler on a part");
-		ItemStack cell = firstBayItem(era);
+		ItemStack cell = firstBayItem(drive);
 		ItemStack foreignCell = firstBayItem(otherEra(era));
 		check(helper, !handler.insertItem(0, foreignCell, false).isEmpty(), "other era's cell accepted");
 		check(helper, handler.insertItem(0, cell.copy(), false).isEmpty(), "own era's cell rejected");
@@ -163,9 +174,51 @@ public final class MultiblockGameTests
 				entity -> entity.getItem().is(item)).stream().mapToInt(entity -> entity.getItem().getCount()).sum();
 	}
 
+	/**
+	 * Forming mustn't count as the player placing each part, or other players keep seeing casings until they rejoin.
+	 */
+	private static void wrenchFormsWithoutPlaceEvents(GameTestHelper helper)
+	{
+		EraDrive drive = EraDrive.PUNCHCARD_VAULT;
+		Direction facing = Direction.NORTH;
+		EraDriveGeometry geometry = drive.geometry();
+		ServerLevel level = helper.getLevel();
+		BlockPos origin = helper.absolutePos(ORIGIN);
+		for(BlockPos pos : geometry.shapes().keySet())
+			level.setBlockAndUpdate(world(origin, pos, facing), ECContent.casing(drive.era()).get().defaultBlockState());
+		BlockPos trigger = world(origin, geometry.trigger(), facing);
+
+		FakePlayer player = FakePlayerFactory.getMinecraft(level);
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ECContent.ASSEMBLY_WRENCH.get()));
+		int[] placeEvents = new int[1];
+		Consumer<BlockEvent.EntityPlaceEvent> counter = event -> placeEvents[0]++;
+		NeoForge.EVENT_BUS.addListener(BlockEvent.EntityPlaceEvent.class, counter);
+		try
+		{
+			player.gameMode.useItemOn(player, level, player.getMainHandItem(), InteractionHand.MAIN_HAND,
+					new BlockHitResult(Vec3.atCenterOf(trigger), facing.getOpposite(), trigger, false));
+		}
+		finally
+		{
+			NeoForge.EVENT_BUS.unregister(counter);
+		}
+
+		for(BlockPos pos : geometry.shapes().keySet())
+			helper.assertTrue(level.getBlockEntity(world(origin, pos, facing)) instanceof MultiblockPartBlockEntity part
+					&&part.getPosInMultiblock().equals(pos), "wrench didn't form the part at "+pos);
+		helper.assertTrue(placeEvents[0]==0, "forming fired "+placeEvents[0]+" place events");
+		helper.succeed();
+	}
+
 	static BlockPos world(BlockPos origin, BlockPos templatePos, Direction facing)
 	{
 		return origin.offset(MultiblockOrientation.toWorldOffset(templatePos, facing));
+	}
+
+	private static ItemStack firstBayItem(EraDrive drive)
+	{
+		return drive.isCompactSlot(0)? new ItemStack(ECDataCells.terminalDisks().get(0).get())
+				: firstBayItem(drive.era());
 	}
 
 	private static ItemStack firstBayItem(ComputerEra era)

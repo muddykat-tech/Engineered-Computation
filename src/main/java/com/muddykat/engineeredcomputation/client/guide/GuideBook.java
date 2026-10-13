@@ -15,11 +15,17 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import com.muddykat.engineeredcomputation.ECConfig;
+import com.muddykat.engineeredcomputation.client.guide.page.ContentsPage;
+import com.muddykat.engineeredcomputation.client.guide.page.GuidePage;
+import com.muddykat.engineeredcomputation.client.guide.page.RecipePage;
+import com.muddykat.engineeredcomputation.client.guide.page.StructurePage;
+import com.muddykat.engineeredcomputation.client.guide.page.TextPage;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.era.EraDrive;
 import com.muddykat.engineeredcomputation.era.EraMachine;
-import com.muddykat.engineeredcomputation.item.GuideRecipes;
-import com.muddykat.engineeredcomputation.item.GuideTexts;
+import com.muddykat.engineeredcomputation.guide.GuideRecipes;
+import com.muddykat.engineeredcomputation.guide.GuideTexts;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.registration.ECContent;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
@@ -136,6 +142,7 @@ final class GuideBook
 				text(GuideTexts.BUILTIN_TERMINAL);
 			if(!drive.geometry().storageZones().isEmpty())
 				text(GuideTexts.STORAGE_BAY);
+			GuideTexts.drive(drive).ifPresent(this::text);
 		}
 
 		if(!GuideRecipes.tubes(era).isEmpty())
@@ -143,6 +150,22 @@ final class GuideBook
 			section(GuideTexts.TUBES);
 			text(GuideTexts.TUBES);
 			GuideRecipes.tubes(era).forEach(this::recipe);
+		}
+		GuideRecipes.pressurizer(era).ifPresent(pressurizer -> {
+			section(GuideTexts.PRESSURIZER);
+			text(GuideTexts.PRESSURIZER, Map.of(
+					GuideTexts.CARRIER_SIZE_UNPRESSURED, number(ECConfig.carrierItems(false)),
+					GuideTexts.CARRIER_TICKS, number(ECConfig.carrierTicks(false)),
+					GuideTexts.CARRIER_SIZE_PRESSURED, number(ECConfig.carrierItems(true)),
+					GuideTexts.CARRIER_PRESSURED_TICKS, number(ECConfig.carrierTicks(true)),
+					GuideTexts.CARRIERS_PER_FUEL, number(ECConfig.carriersPerFuel())));
+			recipe(pressurizer);
+		});
+		if(!GuideRecipes.autotubes(era).isEmpty())
+		{
+			section(GuideTexts.AUTOTUBE);
+			text(GuideTexts.AUTOTUBE);
+			GuideRecipes.autotubes(era).forEach(this::recipe);
 		}
 		GuideRecipes.catalogueCard(era).ifPresent(card -> {
 			section(GuideTexts.CATALOGUE_CARDS);
@@ -198,7 +221,6 @@ final class GuideBook
 		GuideRecipes.cells(era).forEach(this::recipe);
 	}
 
-	/** The Advanced Tube Station and its Filter Cards and Program Decks, in the edition they're first made in. */
 	private void advancedStation()
 	{
 		List<ResourceLocation> recipes = GuideRecipes.filterStation(era);
@@ -281,6 +303,11 @@ final class GuideBook
 	private void text(String page, Map<String, Component> values)
 	{
 		text(GuideText.title(page), GuideText.body(page, values));
+	}
+
+	private static Component number(int value)
+	{
+		return Component.literal(Integer.toString(value));
 	}
 
 	private void section(Component label)

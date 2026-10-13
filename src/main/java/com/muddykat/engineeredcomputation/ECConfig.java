@@ -16,8 +16,8 @@ public final class ECConfig
 	private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
 	public static final ModConfigSpec.BooleanValue TAPE_ARCHIVING = BUILDER
-			.comment("Whether tape drives move a network's biggest stocks onto their reels, and small ones back off them.",
-					"Off, tape still takes items that are already on it, and new ones once other storage is full.")
+			.comment("Whether bulk storage drives move a network's biggest stocks onto themself while moving smaller stock into generic storage if possible",
+					"Off, bulk storage drives still takes items that are already on it, and new ones once other storage is full.")
 			.translation(EngineeredComputation.MODID+".configuration.tapeArchiving")
 			.define("tapeArchiving", true);
 
@@ -36,8 +36,54 @@ public final class ECConfig
 			.translation(KEY+"accepterCapacity")
 			.defineInRange("accepterCapacity", 100_000, 1, Integer.MAX_VALUE);
 
-	/** Each machine's cost in RF per tick, by config key (see {@link #costKey}). */
 	private static final Map<String, ModConfigSpec.IntValue> COSTS = defineCosts();
+
+	public static final ModConfigSpec.BooleanValue PRESSURIZER_REQUIRED = BUILDER.pop()
+			.comment("Pneumatic tube networks, pressurised by Pressurizers.")
+			.translation(KEY+"section.pneumatics").push("pneumatics")
+			.comment("Whether a tube network needs a fuelled Pressurizer to run at high pressure.",
+					"Off, every tube network runs at high pressure, with no Pressurizer.")
+			.translation(KEY+"pressurizerRequired")
+			.define("pressurizerRequired", true);
+
+	public static final ModConfigSpec.IntValue LOW_PRESSURE_ITEMS = BUILDER
+			.comment("How many items a carrier holds at low pressure: with no fuelled Pressurizer on its network.",
+					"Autotubes aren't held back by pressure.")
+			.translation(KEY+"lowPressureItems")
+			.defineInRange("lowPressureItems", 8, 1, 64);
+
+	public static final ModConfigSpec.IntValue LOW_PRESSURE_TICKS = BUILDER
+			.comment("How long a station waits between carriers at low pressure, in ticks.")
+			.translation(KEY+"lowPressureTicks")
+			.defineInRange("lowPressureTicks", 10, 1, 1200);
+
+	public static final ModConfigSpec.IntValue HIGH_PRESSURE_ITEMS = BUILDER
+			.comment("How many items a carrier holds at high pressure (never more than a stack of them).")
+			.translation(KEY+"highPressureItems")
+			.defineInRange("highPressureItems", 64, 1, 64);
+
+	public static final ModConfigSpec.IntValue HIGH_PRESSURE_TICKS = BUILDER
+			.comment("How long a station waits between carriers at high pressure, in ticks.")
+			.translation(KEY+"highPressureTicks")
+			.defineInRange("highPressureTicks", 4, 1, 1200);
+
+	public static final ModConfigSpec.ConfigValue<String> PRESSURIZER_FUEL = BUILDER
+			.comment("The item tag a Pressurizer burns for pressure.")
+			.translation(KEY+"pressurizerFuel")
+			.define("pressurizerFuel", "minecraft:coals");
+
+	public static final ModConfigSpec.IntValue CARRIERS_PER_FUEL = BUILDER
+			.comment("How many high pressure carriers one fuel item gives a Pressurizer.")
+			.translation(KEY+"carriersPerFuel")
+			.defineInRange("carriersPerFuel", 128, 1, 100_000);
+
+	public static final ModConfigSpec.IntValue CRAFTING_TICKS = BUILDER.pop()
+			.comment("Autocrafting by Crafting Computers.")
+			.translation(KEY+"section.crafting").push("crafting")
+			.comment("How many ticks a Crafting Computer takes over each crafting grid recipe it crafts.",
+					"Processing patterns run through Advanced Data Processors, at their machines' own pace.")
+			.translation(KEY+"craftingTicks")
+			.defineInRange("craftingTicks", 10, 1, 1200);
 
 	public static final ModConfigSpec SPEC = BUILDER.pop().build();
 
@@ -82,11 +128,13 @@ public final class ECConfig
 			case DISK_BANK -> 16;
 			case FLOPPY_WORKSTATION -> 40;
 			case FLOPPY_BANK -> 20;
+			case DISK_PROCESSOR -> 24;
+			case FLOPPY_PROCESSOR -> 30;
+			case COMPACT_FLOPPY_BAY -> 10;
 			case PUNCHCARD_VAULT -> 0;
 		};
 	}
 
-	/** A config key from an enum name: DRUM_COMPUTER becomes drumComputer. */
 	private static String camel(String name)
 	{
 		StringBuilder key = new StringBuilder();
@@ -129,7 +177,38 @@ public final class ECConfig
 		return SPEC.isLoaded()? ACCEPTER_CAPACITY.getAsInt(): ACCEPTER_CAPACITY.getDefault();
 	}
 
-	/** A machine's cost in RF per tick by its config key, or 0 for a key with no cost. */
+	public static boolean pressurizerRequired()
+	{
+		return SPEC.isLoaded()? PRESSURIZER_REQUIRED.getAsBoolean(): PRESSURIZER_REQUIRED.getDefault();
+	}
+
+	public static int carrierItems(boolean pressurised)
+	{
+		ModConfigSpec.IntValue items = pressurised? HIGH_PRESSURE_ITEMS: LOW_PRESSURE_ITEMS;
+		return SPEC.isLoaded()? items.getAsInt(): items.getDefault();
+	}
+
+	public static int carrierTicks(boolean pressurised)
+	{
+		ModConfigSpec.IntValue ticks = pressurised? HIGH_PRESSURE_TICKS: LOW_PRESSURE_TICKS;
+		return SPEC.isLoaded()? ticks.getAsInt(): ticks.getDefault();
+	}
+
+	public static String pressurizerFuel()
+	{
+		return SPEC.isLoaded()? PRESSURIZER_FUEL.get(): PRESSURIZER_FUEL.getDefault();
+	}
+
+	public static int craftingTicks()
+	{
+		return SPEC.isLoaded()? CRAFTING_TICKS.getAsInt(): CRAFTING_TICKS.getDefault();
+	}
+
+	public static int carriersPerFuel()
+	{
+		return SPEC.isLoaded()? CARRIERS_PER_FUEL.getAsInt(): CARRIERS_PER_FUEL.getDefault();
+	}
+
 	public static int cost(String key)
 	{
 		ModConfigSpec.IntValue cost = COSTS.get(key);

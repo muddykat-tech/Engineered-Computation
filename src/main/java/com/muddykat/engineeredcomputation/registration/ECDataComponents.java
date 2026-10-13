@@ -10,13 +10,13 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
-import com.muddykat.engineeredcomputation.adapter.Program;
-import com.muddykat.engineeredcomputation.catalogue.CardDeck;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCard;
-import com.muddykat.engineeredcomputation.catalogue.FilterDeck;
-import com.muddykat.engineeredcomputation.crafting.Pattern;
-import com.muddykat.engineeredcomputation.storage.CellContents;
-import com.muddykat.engineeredcomputation.storage.EraDataCell;
+import com.muddykat.engineeredcomputation.catalogue.deck.CardDeck;
+import com.muddykat.engineeredcomputation.catalogue.deck.FilterDeck;
+import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
+import com.muddykat.engineeredcomputation.program.Program;
+import com.muddykat.engineeredcomputation.storage.cell.CellContents;
+import com.muddykat.engineeredcomputation.storage.cell.EraDataCell;
 
 public final class ECDataComponents
 {

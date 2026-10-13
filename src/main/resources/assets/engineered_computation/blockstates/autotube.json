@@ -1,0 +1,168 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "engineered_computation:block/autotube/body"
+      }
+    },
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/intake"
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/intake",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/intake",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/intake",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "up"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/intake",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "down"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/intake",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "north": "joined"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm"
+      }
+    },
+    {
+      "when": {
+        "north": "capped"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/cap"
+      }
+    },
+    {
+      "when": {
+        "east": "joined"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "capped"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/cap",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "south": "joined"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "capped"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/cap",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "west": "joined"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "capped"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/cap",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "up": "joined"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "up": "capped"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/cap",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "down": "joined"
+      },
+      "apply": {
+        "model": "engineered_computation:block/tube/arm",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "down": "capped"
+      },
+      "apply": {
+        "model": "engineered_computation:block/autotube/cap",
+        "x": 90
+      }
+    }
+  ]
+}

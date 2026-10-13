@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
+
 public final class NetworkStorage implements ItemStorage
 {
 	public static final NetworkStorage EMPTY = new NetworkStorage(List.of());

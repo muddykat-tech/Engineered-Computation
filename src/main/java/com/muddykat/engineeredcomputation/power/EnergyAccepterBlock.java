@@ -19,7 +19,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECPower;
 
-/** Takes RF on any side and joins network cables on any side, paying its network's machines while power is enabled. */
 public class EnergyAccepterBlock extends BaseEntityBlock
 {
 	public static final MapCodec<EnergyAccepterBlock> CODEC = simpleCodec(EnergyAccepterBlock::new);

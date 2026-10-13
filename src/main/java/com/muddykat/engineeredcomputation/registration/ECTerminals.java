@@ -17,15 +17,14 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
-import com.muddykat.engineeredcomputation.terminal.CraftingTerminalBlock;
-import com.muddykat.engineeredcomputation.terminal.CraftingTerminalBlockEntity;
 import com.muddykat.engineeredcomputation.terminal.EraTerminalBlock;
-import com.muddykat.engineeredcomputation.terminal.FloppyTerminalBlock;
-import com.muddykat.engineeredcomputation.terminal.TerminalDiskBlockEntity;
-import com.muddykat.engineeredcomputation.terminal.TeletypeBlock;
-import com.muddykat.engineeredcomputation.terminal.TeletypeBlockEntity;
 import com.muddykat.engineeredcomputation.terminal.TerminalFeatures;
+import com.muddykat.engineeredcomputation.terminal.crafting.CraftingTerminalBlock;
+import com.muddykat.engineeredcomputation.terminal.crafting.CraftingTerminalBlockEntity;
+import com.muddykat.engineeredcomputation.terminal.floppy.FloppyTerminalBlock;
+import com.muddykat.engineeredcomputation.terminal.floppy.TerminalDiskBlockEntity;
+import com.muddykat.engineeredcomputation.terminal.teletype.TeletypeBlock;
+import com.muddykat.engineeredcomputation.terminal.teletype.TeletypeBlockEntity;
 
 public final class ECTerminals
 {

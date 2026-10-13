@@ -24,21 +24,20 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
-import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
-import com.muddykat.engineeredcomputation.crafting.DataProcessorState;
+import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerState;
+import com.muddykat.engineeredcomputation.crafting.processor.DataProcessorState;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.era.EraDrive;
-import com.muddykat.engineeredcomputation.era.EraMachine;
-import com.muddykat.engineeredcomputation.network.NetworkMember;
-import com.muddykat.engineeredcomputation.storage.StorageRole;
 import com.muddykat.engineeredcomputation.era.EraDriveGeometry;
+import com.muddykat.engineeredcomputation.era.EraMachine;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockDefinition;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockOrientation;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlock;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
-import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
+import com.muddykat.engineeredcomputation.multiblock.drive.EraDriveState;
+import com.muddykat.engineeredcomputation.network.NetworkMember;
 import com.muddykat.engineeredcomputation.pneumatic.TubeMember;
+import com.muddykat.engineeredcomputation.storage.StorageRole;
 
 public final class ECMultiblocks
 {
@@ -63,7 +62,7 @@ public final class ECMultiblocks
 	public static final MultiblockDefinition<CraftingComputerState> CRAFTING_COMPUTER =
 			MultiblockDefinition.<CraftingComputerState>builder(id("multiblocks/"+EraMachine.CRAFTING_COMPUTER.blockName()))
 					.positions(EraMachine.CRAFTING_COMPUTER.geometry().master(), EraMachine.CRAFTING_COMPUTER.geometry().trigger())
-					.shapes(EraMachine.CRAFTING_COMPUTER.geometry()::shapeAt)
+					.shapes(EraMachine.CRAFTING_COMPUTER.shape())
 					.blocks(CRAFTING_COMPUTER_BLOCK, ECContent.casing(EraMachine.CRAFTING_COMPUTER.era()))
 					.state(CraftingComputerState::new)
 					.ticking()
@@ -76,7 +75,7 @@ public final class ECMultiblocks
 	public static final MultiblockDefinition<DataProcessorState> DATA_PROCESSOR =
 			MultiblockDefinition.<DataProcessorState>builder(id("multiblocks/"+EraMachine.DATA_PROCESSOR.blockName()))
 					.positions(EraMachine.DATA_PROCESSOR.geometry().master(), EraMachine.DATA_PROCESSOR.geometry().trigger())
-					.shapes(EraMachine.DATA_PROCESSOR.geometry()::shapeAt)
+					.shapes(EraMachine.DATA_PROCESSOR.shape())
 					.blocks(DATA_PROCESSOR_BLOCK, ECContent.PROCESSOR_CASING)
 					.state(DataProcessorState::new)
 					.ticking()
@@ -102,7 +101,7 @@ public final class ECMultiblocks
 			MultiblockDefinition.Builder<EraDriveState> builder =
 					MultiblockDefinition.<EraDriveState>builder(id("multiblocks/"+drive.blockName()))
 							.positions(geometry.master(), geometry.trigger())
-							.shapes(geometry::shapeAt)
+							.shapes(drive.shape())
 							.blocks(block, ECContent.casing(drive.era()))
 							.state(host -> new EraDriveState(drive, host));
 			if(StorageRole.of(drive.era())==StorageRole.BULK||drive.era()==ComputerEra.PUNCHCARD)

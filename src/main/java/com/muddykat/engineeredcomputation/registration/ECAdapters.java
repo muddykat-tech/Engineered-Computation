@@ -25,11 +25,10 @@ import com.muddykat.engineeredcomputation.adapter.AdapterKind;
 import com.muddykat.engineeredcomputation.adapter.AdapterSpeed;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlockEntity;
-import com.muddykat.engineeredcomputation.adapter.ProgramFloppyItem;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
-import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
 import com.muddykat.engineeredcomputation.network.NetworkMember;
+import com.muddykat.engineeredcomputation.network.cable.NetworkCableBlock;
+import com.muddykat.engineeredcomputation.program.ProgramFloppyItem;
 
 public final class ECAdapters
 {

@@ -1,0 +1,72 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "engineered_computation:block/autotube/housing",
+    "housing": "engineered_computation:block/autotube/housing",
+    "intake": "engineered_computation:block/autotube/intake",
+    "cap": "engineered_computation:block/autotube/cap",
+    "body": "engineered_computation:block/tube/body",
+    "coupling": "engineered_computation:block/tube/coupling"
+  },
+  "elements": [
+    {
+      "from": [
+        4.5,
+        4.5,
+        2
+      ],
+      "to": [
+        11.5,
+        11.5,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cap",
+          "uv": [
+            0,
+            0,
+            7,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#cap",
+          "uv": [
+            0,
+            8,
+            7,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#cap",
+          "uv": [
+            0,
+            8,
+            7,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#cap",
+          "uv": [
+            0,
+            8,
+            7,
+            9
+          ]
+        },
+        "down": {
+          "texture": "#cap",
+          "uv": [
+            0,
+            8,
+            7,
+            9
+          ]
+        }
+      }
+    }
+  ]
+}

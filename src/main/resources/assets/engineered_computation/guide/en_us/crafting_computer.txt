@@ -4,6 +4,4 @@ The Crafting Computer runs crafting orders on the network. Build it from Floppy 
 
 It has eight pattern bays on its front, four down each side. To insert a direct Pattern Floppy, sneak while right-clicking a bay with it. To remove it, sneak while right-clicking the bay with an empty hand. It crafts direct patterns itself, and runs abstract patterns through Advanced Data Processors on the same network.
 
-Right-click it to see its bays, numbered as on the machine, and its screen: its current activity, and the crafting tree of each running order.
-
 It runs up to eight orders at once, abstract orders included. Add more Crafting Computers to run more orders. Breaking a Crafting Computer while it's running will return each order's items to storage where possible, otherwise drop them in the world.

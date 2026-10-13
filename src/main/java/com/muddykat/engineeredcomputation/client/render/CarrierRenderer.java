@@ -25,11 +25,13 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-import com.muddykat.engineeredcomputation.pneumatic.Carrier;
-import com.muddykat.engineeredcomputation.pneumatic.CarrierFlights;
-import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
-import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
+import com.muddykat.engineeredcomputation.client.render.drive.DriveRenderer;
+import com.muddykat.engineeredcomputation.pneumatic.carrier.Carrier;
+import com.muddykat.engineeredcomputation.pneumatic.carrier.CarrierFlights;
+import com.muddykat.engineeredcomputation.pneumatic.tube.CoveredTubeBlock;
+import com.muddykat.engineeredcomputation.pneumatic.tube.PneumaticTubeBlock;
 
+// This will likely be switched up later on
 public final class CarrierRenderer
 {
 	public static final ResourceLocation MODEL = DriveRenderer.id("block/tube_carrier");
@@ -49,6 +51,7 @@ public final class CarrierRenderer
 	private static boolean isWindowed(ClientLevel level, BlockPos pos)
 	{
 		BlockState state = level.getBlockState(pos);
+
 		return state.getBlock() instanceof PneumaticTubeBlock&&state.getValue(PneumaticTubeBlock.WINDOWED)
 				&&!(state.getBlock() instanceof CoveredTubeBlock covered&&!covered.isClear());
 	}
@@ -58,8 +61,10 @@ public final class CarrierRenderer
 		Collection<CarrierFlights.Flight> flights = CarrierFlights.all();
 		Minecraft mc = Minecraft.getInstance();
 		ClientLevel level = mc.level;
+
 		if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES||flights.isEmpty()||level==null)
 			return;
+
 		double time = level.getGameTime()+event.getPartialTick().getGameTimeDeltaPartialTick(false);
 		Vec3 camera = event.getCamera().getPosition();
 		PoseStack pose = event.getPoseStack();
@@ -67,6 +72,7 @@ public final class CarrierRenderer
 		VertexConsumer consumer = buffers.getBuffer(Sheets.cutoutBlockSheet());
 		BakedModel model = mc.getModelManager().getModel(ModelResourceLocation.standalone(MODEL));
 		List<BakedQuad> quads = DriveRenderer.allQuads(model);
+
 		for(CarrierFlights.Flight flight : flights)
 		{
 			BlockPos[] path = flight.path();

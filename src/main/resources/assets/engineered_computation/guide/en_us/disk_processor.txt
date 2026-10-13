@@ -1,0 +1,5 @@
+Disk Pack Processor
+
+The Disk Pack Processor is the Disk Pack Mainframe's processor cabinet on its own, without the Mainframe's disk unit or terminal. Build it from Disk Pack Casings and form it with the Assembly Wrench. Connect it with cable at its network port, low on its back.
+
+Like the Mainframe, it lets a network use Disk Pack storage, and the storage of every older era, through Disk Banks and Storage Bridges. It holds one disk pack: right-click it to open its slot. It has no screen of its own, so pair it with a terminal to reach it.

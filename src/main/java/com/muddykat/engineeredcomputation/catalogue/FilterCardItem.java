@@ -17,17 +17,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
-import com.muddykat.engineeredcomputation.adapter.Program;
-import com.muddykat.engineeredcomputation.adapter.ProgramEntry;
-import com.muddykat.engineeredcomputation.adapter.ProgrammableItem;
+import com.muddykat.engineeredcomputation.catalogue.deck.DeckItem;
+import com.muddykat.engineeredcomputation.program.Program;
+import com.muddykat.engineeredcomputation.program.ProgramEntry;
+import com.muddykat.engineeredcomputation.program.ProgrammableItem;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 
-/**
- * A punch card with an orange stripe holding one filter, an item or a tag, for an Advanced Tube Station (alone or in a
- * Program Deck). Set it by right-clicking an item onto it (or it onto an item) in an inventory, or by using it in hand
- * to pick an item or type a tag (ProgramFloppyMenu, one entry). The filter is kept in its program's first entry.
- */
 public class FilterCardItem extends Item implements ProgrammableItem
 {
 	public FilterCardItem(Properties properties)
@@ -49,7 +45,6 @@ public class FilterCardItem extends Item implements ProgrammableItem
 			card.set(ECDataComponents.PROGRAM.get(), Program.EMPTY.with(0, filter));
 	}
 
-	/** A Filter Card holding {@code filter}. */
 	public static ItemStack of(ProgramEntry filter)
 	{
 		ItemStack card = new ItemStack(ECCatalogue.FILTER_CARD.get());
@@ -57,7 +52,7 @@ public class FilterCardItem extends Item implements ProgrammableItem
 		return card;
 	}
 
-	/** Whether {@code stack} can be a card's filter: anything but a card or deck (so they still file and stack). */
+	/** Cards and decks can't be filters, so they still file and stack. */
 	private static boolean filters(ItemStack stack)
 	{
 		return !stack.isEmpty()&&!(stack.getItem() instanceof FilterCardItem)&&!(stack.getItem() instanceof DeckItem);
@@ -112,13 +107,15 @@ public class FilterCardItem extends Item implements ProgrammableItem
 					.withStyle(ChatFormatting.DARK_GRAY));
 	}
 
-	/** A filter as a tooltip line. */
-	static Component describe(ProgramEntry filter)
+	public static Component describe(ProgramEntry filter)
 	{
 		if(filter.item().isPresent())
 			return filter.item().get().value().getDescription().copy().withStyle(ChatFormatting.GRAY);
 		if(filter.tag().isPresent())
 			return Component.literal("#"+filter.tag().get().location()).withStyle(ChatFormatting.DARK_AQUA);
+		if(filter.name().isPresent())
+			return Component.translatable("tooltip.engineered_computation.filter.name", filter.name().get())
+					.withStyle(ChatFormatting.GOLD);
 		return Component.translatable("tooltip.engineered_computation.filter_card.blank")
 				.withStyle(ChatFormatting.GRAY);
 	}

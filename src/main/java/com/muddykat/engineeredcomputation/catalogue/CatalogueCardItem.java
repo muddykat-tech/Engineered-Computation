@@ -20,7 +20,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
-import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.station.TubeStationBlockEntity;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 

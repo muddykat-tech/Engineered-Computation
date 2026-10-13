@@ -10,17 +10,16 @@ import mezz.jei.api.registration.IRecipeTransferRegistration;
 import net.minecraft.resources.ResourceLocation;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
-import com.muddykat.engineeredcomputation.adapter.ProgramFloppyScreen;
-import com.muddykat.engineeredcomputation.crafting.PatternFloppyScreen;
+import com.muddykat.engineeredcomputation.client.screen.crafting.PatternFloppyScreen;
+import com.muddykat.engineeredcomputation.client.screen.program.ProgramFloppyScreen;
+import com.muddykat.engineeredcomputation.client.screen.terminal.TerminalScreen;
+import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
 import com.muddykat.engineeredcomputation.terminal.TerminalFeatures;
-import com.muddykat.engineeredcomputation.terminal.TerminalScreen;
+import com.muddykat.engineeredcomputation.terminal.crafting.VideoTerminalMenu;
+import com.muddykat.engineeredcomputation.terminal.floppy.FloppyTerminalMenu;
 
-/**
- * JEI integration, found by JEI through {@link JeiPlugin} (only JEI loads this package): its [+] button fills a
- * terminal's crafting grid from a crafting recipe and a pattern floppy from any recipe, items drag from JEI onto
- * pattern and program floppy slots, and JEI's keys work on the terminal's item grid.
- */
+/** Only loaded when JEI is installed. */
 @JeiPlugin
 public class ECJeiPlugin implements IModPlugin
 {
@@ -36,8 +35,10 @@ public class ECJeiPlugin implements IModPlugin
 	@Override
 	public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration)
 	{
-		registration.addRecipeTransferHandler(new TerminalGridTransfer(registration.getTransferHelper()),
-				RecipeTypes.CRAFTING);
+		registration.addRecipeTransferHandler(new TerminalGridTransfer<>(registration.getTransferHelper(),
+				VideoTerminalMenu.class, ECMenuTypes.VIDEO_TERMINAL), RecipeTypes.CRAFTING);
+		registration.addRecipeTransferHandler(new TerminalGridTransfer<>(registration.getTransferHelper(),
+				FloppyTerminalMenu.class, ECMenuTypes.FLOPPY_TERMINAL), RecipeTypes.CRAFTING);
 		registration.addUniversalRecipeTransferHandler(new PatternTransfer(registration.getTransferHelper()));
 	}
 
@@ -53,8 +54,14 @@ public class ECJeiPlugin implements IModPlugin
 	@Override
 	public void registerGuiHandlers(IGuiHandlerRegistration registration)
 	{
-		registration.addGuiContainerHandler(TerminalScreen.class, new TerminalGridHandler());
+		registration.addGuiContainerHandler(terminalScreens(), new TerminalGridHandler());
 		registration.addGhostIngredientHandler(PatternFloppyScreen.class, new PatternGhostHandler());
 		registration.addGhostIngredientHandler(ProgramFloppyScreen.class, new ProgramGhostHandler());
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Class<TerminalScreen<?>> terminalScreens()
+	{
+		return (Class<TerminalScreen<?>>)(Class<?>)TerminalScreen.class;
 	}
 }

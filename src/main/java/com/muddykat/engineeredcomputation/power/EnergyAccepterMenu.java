@@ -46,7 +46,7 @@ public class EnergyAccepterMenu extends AbstractContainerMenu
 		addDataSlots(data);
 	}
 
-	/** The accepter's values, each as its low and high 16 bits. */
+	/** Menu data only syncs 16 bits per value, so each value is split into two halves. */
 	private static ContainerData split(EnergyAccepterBlockEntity accepter)
 	{
 		return new ContainerData()

@@ -10,7 +10,6 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
 import com.muddykat.engineeredcomputation.network.StorageBridgeBlock;
 
 public final class ECBridges

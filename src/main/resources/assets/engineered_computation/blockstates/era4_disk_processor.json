@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "engineered_computation:block/era4_disk_processor_split"
+    },
+    "facing=east": {
+      "model": "engineered_computation:block/era4_disk_processor_split",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south": {
+      "model": "engineered_computation:block/era4_disk_processor_split",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west": {
+      "model": "engineered_computation:block/era4_disk_processor_split",
+      "y": 270,
+      "uvlock": true
+    }
+  }
+}

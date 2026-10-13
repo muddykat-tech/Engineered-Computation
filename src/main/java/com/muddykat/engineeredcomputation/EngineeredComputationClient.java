@@ -12,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -27,32 +28,42 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
-import com.muddykat.engineeredcomputation.adapter.DataAdapterScreen;
-import com.muddykat.engineeredcomputation.adapter.ProgramFloppyScreen;
-import com.muddykat.engineeredcomputation.catalogue.CardDeckScreen;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCardItem;
 import com.muddykat.engineeredcomputation.catalogue.FilterCardItem;
 import com.muddykat.engineeredcomputation.client.gui.FilterCardDecorator;
 import com.muddykat.engineeredcomputation.client.guide.GuideText;
+import com.muddykat.engineeredcomputation.client.model.CappedModel;
 import com.muddykat.engineeredcomputation.client.model.CoveredCableModel;
 import com.muddykat.engineeredcomputation.client.model.CoveredTubeModel;
-import com.muddykat.engineeredcomputation.client.model.SplitModelLoader;
+import com.muddykat.engineeredcomputation.client.model.split.SplitModelLoader;
+import com.muddykat.engineeredcomputation.client.render.AnimationClock;
 import com.muddykat.engineeredcomputation.client.render.CarrierRenderer;
-import com.muddykat.engineeredcomputation.client.render.DriveRenderer;
-import com.muddykat.engineeredcomputation.client.render.TerminalDiskRenderer;
-import com.muddykat.engineeredcomputation.crafting.CraftingComputerScreen;
-import com.muddykat.engineeredcomputation.crafting.DataProcessorScreen;
-import com.muddykat.engineeredcomputation.crafting.Pattern;
-import com.muddykat.engineeredcomputation.crafting.PatternFloppyItem;
-import com.muddykat.engineeredcomputation.crafting.PatternFloppyScreen;
-import com.muddykat.engineeredcomputation.multiblock.era.EraDriveScreen;
-import com.muddykat.engineeredcomputation.network.CoveredCableBlock;
-import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
-import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
-import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
-import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationScreen;
-import com.muddykat.engineeredcomputation.pneumatic.TubeStationScreen;
-import com.muddykat.engineeredcomputation.power.EnergyAccepterScreen;
+import com.muddykat.engineeredcomputation.client.render.WrenchPortOutline;
+import com.muddykat.engineeredcomputation.client.render.drive.DriveRenderer;
+import com.muddykat.engineeredcomputation.client.render.drive.TerminalDiskRenderer;
+import com.muddykat.engineeredcomputation.client.screen.adapter.DataAdapterScreen;
+import com.muddykat.engineeredcomputation.client.screen.catalogue.CardDeckScreen;
+import com.muddykat.engineeredcomputation.client.screen.crafting.CraftingComputerScreen;
+import com.muddykat.engineeredcomputation.client.screen.crafting.DataProcessorScreen;
+import com.muddykat.engineeredcomputation.client.screen.crafting.PatternFloppyScreen;
+import com.muddykat.engineeredcomputation.client.screen.drive.EraDriveScreen;
+import com.muddykat.engineeredcomputation.client.screen.pneumatic.AutotubeScreen;
+import com.muddykat.engineeredcomputation.client.screen.pneumatic.PressurizerScreen;
+import com.muddykat.engineeredcomputation.client.screen.pneumatic.ReceivingStationScreen;
+import com.muddykat.engineeredcomputation.client.screen.pneumatic.TubeStationScreen;
+import com.muddykat.engineeredcomputation.client.screen.power.EnergyAccepterScreen;
+import com.muddykat.engineeredcomputation.client.screen.program.ProgramFloppyScreen;
+import com.muddykat.engineeredcomputation.client.screen.terminal.FloppyTerminalScreen;
+import com.muddykat.engineeredcomputation.client.screen.terminal.TeletypeScreen;
+import com.muddykat.engineeredcomputation.client.screen.terminal.TypewriterScreen;
+import com.muddykat.engineeredcomputation.client.screen.terminal.UniscopeScreen;
+import com.muddykat.engineeredcomputation.client.screen.terminal.VideoTerminalScreen;
+import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
+import com.muddykat.engineeredcomputation.crafting.pattern.PatternFloppyItem;
+import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlock;
+import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.tube.CoveredTubeBlock;
+import com.muddykat.engineeredcomputation.pneumatic.tube.PneumaticTubeBlock;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECCrafting;
@@ -60,7 +71,7 @@ import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
-import com.muddykat.engineeredcomputation.terminal.TerminalScreen;
+import com.muddykat.engineeredcomputation.terminal.crafting.VideoTerminalMenu;
 
 @Mod(value = EngineeredComputation.MODID, dist = Dist.CLIENT)
 public class EngineeredComputationClient {
@@ -82,6 +93,8 @@ public class EngineeredComputationClient {
         modEventBus.addListener(RegisterItemDecorationsEvent.class,
                 event -> event.register(ECCatalogue.FILTER_CARD.get(), new FilterCardDecorator()));
         CarrierRenderer.register();
+        AnimationClock.register();
+        WrenchPortOutline.register();
     }
 
     private void registerItemProperties(FMLClientSetupEvent event) {
@@ -101,6 +114,14 @@ public class EngineeredComputationClient {
     }
 
     private void wrapCoveredCableModels(ModelEvent.ModifyBakingResult event) {
+        // Caps go on first so a clear cover shows them.
+        for (Block block : List.of(ECCables.block().get(), ECCables.covered().get(), ECCables.clearCovered().get(),
+                ECPneumatics.TUBE.get(), ECPneumatics.COVERED_TUBE.get(), ECPneumatics.CLEAR_COVERED_TUBE.get())) {
+            String caps = block instanceof PneumaticTubeBlock ? CappedModel.TUBE : CappedModel.CABLE;
+            for (BlockState state : block.getStateDefinition().getPossibleStates())
+                event.getModels().computeIfPresent(BlockModelShaper.stateToModelLocation(state),
+                        (location, model) -> new CappedModel(model, caps));
+        }
         for (CoveredCableBlock block : List.of(ECCables.covered().get(), ECCables.clearCovered().get()))
             for (BlockState state : block.getStateDefinition().getPossibleStates())
                 event.getModels().computeIfPresent(BlockModelShaper.stateToModelLocation(state),
@@ -147,6 +168,7 @@ public class EngineeredComputationClient {
         DriveRenderer.models().forEach(event::register);
         event.register(ModelResourceLocation.standalone(CarrierRenderer.MODEL));
         CoveredTubeModel.models().forEach(event::register);
+        CappedModel.models().forEach(event::register);
         TerminalDiskRenderer.models().forEach(event::register);
     }
 
@@ -161,7 +183,11 @@ public class EngineeredComputationClient {
 
     private void registerScreens(RegisterMenuScreensEvent event) {
         event.register(ECMenuTypes.ERA_DRIVE.get(), EraDriveScreen::new);
-        event.register(ECMenuTypes.TERMINAL.get(), TerminalScreen::new);
+        event.register(ECMenuTypes.TELETYPE.get(), TeletypeScreen::new);
+        event.register(ECMenuTypes.TYPEWRITER.get(), TypewriterScreen::new);
+        event.register(ECMenuTypes.UNISCOPE.get(), UniscopeScreen::new);
+        event.register(ECMenuTypes.VIDEO_TERMINAL.get(), VideoTerminalScreen<VideoTerminalMenu>::new);
+        event.register(ECMenuTypes.FLOPPY_TERMINAL.get(), FloppyTerminalScreen::new);
         event.register(ECMenuTypes.DATA_ADAPTER.get(), DataAdapterScreen::new);
         event.register(ECMenuTypes.ENERGY_ACCEPTER.get(), EnergyAccepterScreen::new);
         event.register(ECMenuTypes.PROGRAM_FLOPPY.get(), ProgramFloppyScreen::new);
@@ -169,6 +195,8 @@ public class EngineeredComputationClient {
         event.register(ECMenuTypes.CRAFTING_COMPUTER.get(), CraftingComputerScreen::new);
         event.register(ECMenuTypes.DATA_PROCESSOR.get(), DataProcessorScreen::new);
         event.register(ECMenuTypes.TUBE_STATION.get(), TubeStationScreen::new);
+        event.register(ECMenuTypes.AUTOTUBE.get(), AutotubeScreen::new);
+        event.register(ECMenuTypes.PRESSURIZER.get(), PressurizerScreen::new);
         event.register(ECMenuTypes.CARD_DECK.get(), CardDeckScreen::new);
         event.register(ECMenuTypes.RECEIVING_STATION.get(), ReceivingStationScreen::new);
     }

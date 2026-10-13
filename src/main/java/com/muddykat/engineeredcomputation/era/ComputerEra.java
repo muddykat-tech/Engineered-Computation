@@ -12,6 +12,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockOrientation;
+import com.muddykat.engineeredcomputation.multiblock.shapes.TerminalShape;
 
 public enum ComputerEra implements StringRepresentable
 {
@@ -102,7 +103,7 @@ public enum ComputerEra implements StringRepresentable
 	{
 		if(terminalShapes==null)
 		{
-			VoxelShape north = EraModelGeometry.terminalNorth(this);
+			VoxelShape north = TerminalShape.north(this);
 			Map<Direction, VoxelShape> shapes = new EnumMap<>(Direction.class);
 			for(Direction direction : Direction.Plane.HORIZONTAL)
 				shapes.put(direction, MultiblockOrientation.rotateShape(north, direction));

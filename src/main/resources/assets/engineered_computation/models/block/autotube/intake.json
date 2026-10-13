@@ -1,0 +1,131 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "engineered_computation:block/autotube/housing",
+    "housing": "engineered_computation:block/autotube/housing",
+    "intake": "engineered_computation:block/autotube/intake",
+    "cap": "engineered_computation:block/autotube/cap",
+    "body": "engineered_computation:block/tube/body",
+    "coupling": "engineered_computation:block/tube/coupling"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        2,
+        0
+      ],
+      "to": [
+        14,
+        14,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#intake",
+          "uv": [
+            0,
+            0,
+            12,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#intake",
+          "uv": [
+            0,
+            0,
+            12,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#intake",
+          "uv": [
+            12,
+            0,
+            13,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#intake",
+          "uv": [
+            12,
+            0,
+            13,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#intake",
+          "uv": [
+            0,
+            13,
+            12,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#intake",
+          "uv": [
+            0,
+            13,
+            12,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        4,
+        1
+      ],
+      "to": [
+        12,
+        12,
+        3
+      ],
+      "faces": {
+        "east": {
+          "texture": "#intake",
+          "uv": [
+            14,
+            0,
+            16,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#intake",
+          "uv": [
+            14,
+            0,
+            16,
+            8
+          ]
+        },
+        "up": {
+          "texture": "#intake",
+          "uv": [
+            0,
+            14,
+            8,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#intake",
+          "uv": [
+            0,
+            14,
+            8,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

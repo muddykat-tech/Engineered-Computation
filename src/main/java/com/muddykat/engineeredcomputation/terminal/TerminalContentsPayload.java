@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
-import com.muddykat.engineeredcomputation.storage.CellContents;
+import com.muddykat.engineeredcomputation.storage.cell.CellContents;
 
 public record TerminalContentsPayload(
 		int containerId, boolean reset, List<CellContents.Entry> entries, TerminalStats stats)

@@ -13,7 +13,6 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
 import com.muddykat.engineeredcomputation.network.NetworkMember;
 import com.muddykat.engineeredcomputation.power.EnergyAccepterBlock;
 import com.muddykat.engineeredcomputation.power.EnergyAccepterBlockEntity;

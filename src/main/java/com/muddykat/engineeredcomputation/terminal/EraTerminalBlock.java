@@ -25,6 +25,7 @@ import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.network.NetworkMember;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
+import com.muddykat.engineeredcomputation.terminal.crafting.CraftingGrid;
 
 public class EraTerminalBlock extends HorizontalDirectionalBlock
 {
@@ -87,13 +88,13 @@ public class EraTerminalBlock extends HorizontalDirectionalBlock
 			BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult)
 	{
 		if(player instanceof ServerPlayer serverPlayer)
-			TerminalMenu.open(serverPlayer, pos, getName(), features(), craftingGrid(level, pos));
+			openTerminal(serverPlayer, level, pos);
 		return InteractionResult.sidedSuccess(level.isClientSide);
 	}
 
-	protected TerminalFeatures features()
+	public void openTerminal(ServerPlayer player, Level level, BlockPos pos)
 	{
-		return TerminalFeatures.of(era);
+		TerminalMenu.open(player, pos, getName(), era, craftingGrid(level, pos));
 	}
 
 	@Nullable

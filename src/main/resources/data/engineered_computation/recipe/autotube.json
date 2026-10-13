@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " H ",
+    "TRT",
+    " P "
+  ],
+  "key": {
+    "H": {
+      "item": "minecraft:hopper"
+    },
+    "T": {
+      "item": "engineered_computation:pneumatic_tube"
+    },
+    "R": {
+      "item": "engineered_computation:relay"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    }
+  },
+  "result": {
+    "id": "engineered_computation:autotube",
+    "count": 1
+  }
+}

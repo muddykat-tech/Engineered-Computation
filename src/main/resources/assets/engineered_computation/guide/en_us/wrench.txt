@@ -3,3 +3,5 @@ Assembly Wrench
 The Assembly Wrench forms the hardware for the storage systems.
 
 Each era has its own casings. To form a drive, place its casings in the drive's structure, then right-click it with the Assembly Wrench.
+
+It also cuts connections. Right-click a cable OR tube connection to cap that side. Right-click the cap to reconnect it again.

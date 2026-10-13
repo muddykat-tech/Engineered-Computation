@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -17,7 +18,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
+import com.muddykat.engineeredcomputation.registration.ECCapabilities;
 
 public final class TubeNetwork
 {
@@ -130,6 +131,31 @@ public final class TubeNetwork
 	public boolean isTooLarge()
 	{
 		return tooLarge;
+	}
+
+	/** Maps each tube or end to the one it's first reached from, nearest first; ends aren't passed through. */
+	public Map<BlockPos, BlockPos> tree(BlockPos from)
+	{
+		Map<BlockPos, BlockPos> cameFrom = new LinkedHashMap<>();
+		if(tooLarge||!ends.contains(from))
+			return cameFrom;
+		Queue<BlockPos> queue = new ArrayDeque<>();
+		cameFrom.put(from, from);
+		queue.add(from);
+		while(!queue.isEmpty())
+		{
+			BlockPos pos = queue.poll();
+			if(!pos.equals(from)&&!tubes.contains(pos))
+				continue;
+			for(BlockPos next : links.getOrDefault(pos, List.of()))
+			{
+				if(cameFrom.containsKey(next)||!tubes.contains(next)&&!tubes.contains(pos))
+					continue;
+				cameFrom.put(next, pos);
+				queue.add(next);
+			}
+		}
+		return cameFrom;
 	}
 
 	public List<BlockPos> route(BlockPos from, BlockPos to)

@@ -23,13 +23,14 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 
 import com.muddykat.engineeredcomputation.ECConfig;
-import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
-import com.muddykat.engineeredcomputation.crafting.DataProcessorState;
+import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerState;
+import com.muddykat.engineeredcomputation.crafting.processor.DataProcessorState;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.power.EnergyAccepterBlockEntity;
-import com.muddykat.engineeredcomputation.storage.CellInventory;
+import com.muddykat.engineeredcomputation.registration.ECCapabilities;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
 import com.muddykat.engineeredcomputation.storage.StorageHost;
+import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
 
 public final class StorageNetwork
 {
@@ -44,9 +45,8 @@ public final class StorageNetwork
 	private final Set<BlockPos> blocks;
 	private final List<CraftingComputerState> craftingComputers;
 	private final List<DataProcessorState> dataProcessors;
-	/** What its machines cost: one per block, or one per multiblock (see NetworkMember.chargedPerBlock). */
 	private final List<Charge> charges;
-	/** Its Energy Accepters, lowest first: the first pays for the network. */
+
 	private final List<BlockPos> accepters;
 
 	private record Charge(NetworkMember member, BlockPos pos)
@@ -243,7 +243,6 @@ public final class StorageNetwork
 		return conflictingEras;
 	}
 
-	/** RF per tick its machines cost while power is enabled, from the config as it is now. */
 	public long getPowerCost(Level level)
 	{
 		long cost = 0;
@@ -257,17 +256,13 @@ public final class StorageNetwork
 		return accepters;
 	}
 
-	/** The Energy Accepter that pays for the network each tick (the lowest, so they all agree), if it has any. */
+	/** The lowest one, so every machine agrees on which accepter handles energy payments. */
 	@Nullable
 	public BlockPos getPayingAccepter()
 	{
 		return accepters.isEmpty()? null: accepters.get(0);
 	}
 
-	/**
-	 * Whether its machines can run as far as power goes: power is disabled, the network costs nothing, or its paying
-	 * accepter paid this tick or the last.
-	 */
 	public boolean isPowered(Level level)
 	{
 		if(!ECConfig.powerEnabled())
@@ -279,7 +274,6 @@ public final class StorageNetwork
 				&&accepter.paidRecently(level.getGameTime());
 	}
 
-	/** Its storage, or none while the network can't run: too large, mixed eras, or not paid for. */
 	public NetworkStorage getUsableStorage(Level level)
 	{
 		return tooLarge||!conflictingEras.isEmpty()||!isPowered(level)? NetworkStorage.EMPTY: getStorage();

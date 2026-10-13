@@ -13,8 +13,8 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
+import com.muddykat.engineeredcomputation.guide.GuideItem;
 import com.muddykat.engineeredcomputation.item.AssemblyWrenchItem;
-import com.muddykat.engineeredcomputation.item.GuideItem;
 
 public final class ECContent
 {

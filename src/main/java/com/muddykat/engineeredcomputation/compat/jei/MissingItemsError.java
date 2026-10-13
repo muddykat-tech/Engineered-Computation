@@ -11,7 +11,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
-/** Marks the recipe slots nothing could fill, in red, without stopping the transfer. */
 record MissingItemsError(List<IRecipeSlotView> missing, boolean linked) implements IRecipeTransferError
 {
 	private static final int HIGHLIGHT = 0x66FF0000;

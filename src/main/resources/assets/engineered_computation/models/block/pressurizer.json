@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "engineered_computation:block/pressurizer_front",
+    "side": "engineered_computation:block/pressurizer_side",
+    "top": "engineered_computation:block/pressurizer_top"
+  }
+}

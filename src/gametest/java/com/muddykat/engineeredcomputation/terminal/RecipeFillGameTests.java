@@ -18,17 +18,20 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
-import com.muddykat.engineeredcomputation.crafting.Pattern;
-import com.muddykat.engineeredcomputation.crafting.PatternFloppyMenu;
+import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
+import com.muddykat.engineeredcomputation.crafting.pattern.PatternFloppyMenu;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.gametest.TestCategory;
-import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
+import com.muddykat.engineeredcomputation.multiblock.drive.EraDriveState;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECCrafting;
-import com.muddykat.engineeredcomputation.storage.ECDataCells;
+import com.muddykat.engineeredcomputation.registration.ECDataCells;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
+import com.muddykat.engineeredcomputation.storage.StorageGameTests;
+import com.muddykat.engineeredcomputation.terminal.crafting.CraftingGrid;
+import com.muddykat.engineeredcomputation.terminal.crafting.CraftingTerminalBlockEntity;
+import com.muddykat.engineeredcomputation.terminal.crafting.VideoTerminalMenu;
 
-/** Filling a terminal's crafting grid and a pattern floppy from a whole recipe at once (what JEI's [+] sends). */
 @TestCategory({"terminal", "crafting"})
 @GameTestHolder(EngineeredComputation.MODID)
 @PrefixGameTestTemplate(false)
@@ -47,7 +50,7 @@ public final class RecipeFillGameTests
 		StorageGameTests.check(helper, top.is(Items.OAK_PLANKS)&&top.getCount()==1&&below.is(Items.OAK_PLANKS),
 				"the grid didn't link oak planks (the stored option), one each: "+top+", "+below);
 		StorageGameTests.check(helper, stored(setup, Items.OAK_PLANKS)==64, "linking took planks out of storage");
-		StorageGameTests.check(helper, setup.menu().getSlot(TerminalMenu.RESULT_SLOT).getItem().is(Items.STICK),
+		StorageGameTests.check(helper, setup.menu().getSlot(VideoTerminalMenu.RESULT_SLOT).getItem().is(Items.STICK),
 				"the filled grid doesn't make sticks");
 		helper.succeed();
 	}
@@ -59,7 +62,7 @@ public final class RecipeFillGameTests
 		setup.menu().fillGrid(sticks(Items.BIRCH_PLANKS), false);
 		StorageGameTests.check(helper, grid(setup, 0).is(Items.BIRCH_PLANKS)&&grid(setup, 3).is(Items.BIRCH_PLANKS),
 				"slots with nothing in storage weren't linked to their first option");
-		StorageGameTests.check(helper, setup.menu().getSlot(TerminalMenu.RESULT_SLOT).getItem().is(Items.STICK),
+		StorageGameTests.check(helper, setup.menu().getSlot(VideoTerminalMenu.RESULT_SLOT).getItem().is(Items.STICK),
 				"the linked grid should still show its result");
 		helper.succeed();
 	}
@@ -68,7 +71,7 @@ public final class RecipeFillGameTests
 	public static void anUnlinkedFillTakesOneOfEach(GameTestHelper helper)
 	{
 		Setup setup = setup(helper);
-		setup.menu().clickMenuButton(setup.player(), TerminalMenu.TOGGLE_LINKED);
+		setup.menu().clickMenuButton(setup.player(), VideoTerminalMenu.TOGGLE_LINKED);
 		setup.menu().fillGrid(sticks(Items.OAK_PLANKS), false);
 		StorageGameTests.check(helper, grid(setup, 0).getCount()==1&&grid(setup, 3).getCount()==1,
 				"an unlinked fill should take one plank per slot");
@@ -83,7 +86,7 @@ public final class RecipeFillGameTests
 	public static void anUnlinkedMaxFillTakesAsManySetsAsThereAre(GameTestHelper helper)
 	{
 		Setup setup = setup(helper);
-		setup.menu().clickMenuButton(setup.player(), TerminalMenu.TOGGLE_LINKED);
+		setup.menu().clickMenuButton(setup.player(), VideoTerminalMenu.TOGGLE_LINKED);
 		setup.menu().fillGrid(sticks(Items.OAK_PLANKS), true);
 		StorageGameTests.check(helper, grid(setup, 0).getCount()==32&&grid(setup, 3).getCount()==32,
 				"64 stored planks should make 32 sets, got "+grid(setup, 0).getCount()+" and "
@@ -96,7 +99,7 @@ public final class RecipeFillGameTests
 	public static void anUnlinkedFillUsesTheInventoryToo(GameTestHelper helper)
 	{
 		Setup setup = setup(helper);
-		setup.menu().clickMenuButton(setup.player(), TerminalMenu.TOGGLE_LINKED);
+		setup.menu().clickMenuButton(setup.player(), VideoTerminalMenu.TOGGLE_LINKED);
 		setup.player().getInventory().add(new ItemStack(Items.BIRCH_PLANKS, 5));
 		setup.menu().fillGrid(sticks(Items.BIRCH_PLANKS), true);
 		StorageGameTests.check(helper, grid(setup, 0).is(Items.BIRCH_PLANKS)&&grid(setup, 0).getCount()==2
@@ -111,8 +114,8 @@ public final class RecipeFillGameTests
 	public static void anUnlinkedFillPutsAwayWhatWasThere(GameTestHelper helper)
 	{
 		Setup setup = setup(helper);
-		setup.menu().clickMenuButton(setup.player(), TerminalMenu.TOGGLE_LINKED);
-		setup.menu().getSlot(TerminalMenu.CRAFT_GRID_FIRST+8).set(new ItemStack(Items.COBBLESTONE, 7));
+		setup.menu().clickMenuButton(setup.player(), VideoTerminalMenu.TOGGLE_LINKED);
+		setup.menu().getSlot(VideoTerminalMenu.CRAFT_GRID_FIRST+8).set(new ItemStack(Items.COBBLESTONE, 7));
 		setup.menu().fillGrid(sticks(Items.OAK_PLANKS), false);
 		StorageGameTests.check(helper, grid(setup, 8).isEmpty(), "the old cobblestone is still in the grid");
 		StorageGameTests.check(helper, stored(setup, Items.COBBLESTONE)==7, "the old cobblestone didn't go to storage");
@@ -153,12 +156,11 @@ public final class RecipeFillGameTests
 		helper.succeed();
 	}
 
-	private record Setup(StorageGameTests.MenuRecordingPlayer player, TerminalMenu menu, BlockPos terminalPos,
+	private record Setup(StorageGameTests.MenuRecordingPlayer player, VideoTerminalMenu menu, BlockPos terminalPos,
 			ServerLevel level)
 	{
 	}
 
-	/** A disk terminal on a drum drive holding 64 oak planks, its crafting grid linked (as a new one is). */
 	private static Setup setup(GameTestHelper helper)
 	{
 		ServerLevel level = helper.getLevel();
@@ -168,7 +170,7 @@ public final class RecipeFillGameTests
 		level.setBlockAndUpdate(terminalPos, StorageGameTests.terminal(ComputerEra.DISK));
 		CraftingGrid grid = ((CraftingTerminalBlockEntity)level.getBlockEntity(terminalPos)).getCraftingGrid();
 		StorageGameTests.MenuRecordingPlayer player = new StorageGameTests.MenuRecordingPlayer(level);
-		TerminalMenu menu = new TerminalMenu(1, player.getInventory(), terminalPos, TerminalFeatures.CRAFTING, grid);
+		VideoTerminalMenu menu = new VideoTerminalMenu(1, player.getInventory(), terminalPos, grid);
 		menu.broadcastChanges();
 		menu.setCarried(new ItemStack(Items.OAK_PLANKS, 64));
 		menu.handleClick(null, TerminalAction.INSERT_ALL);
@@ -177,7 +179,6 @@ public final class RecipeFillGameTests
 		return new Setup(player, menu, terminalPos, level);
 	}
 
-	/** The sticks recipe's slots (top left and the one below it), each taking any of {@code planks}. */
 	private static List<List<ItemStack>> sticks(Item... planks)
 	{
 		List<ItemStack> options = new ArrayList<>();
@@ -191,7 +192,7 @@ public final class RecipeFillGameTests
 
 	private static ItemStack grid(Setup setup, int slot)
 	{
-		return setup.menu().getSlot(TerminalMenu.CRAFT_GRID_FIRST+slot).getItem();
+		return setup.menu().getSlot(VideoTerminalMenu.CRAFT_GRID_FIRST+slot).getItem();
 	}
 
 	private static long stored(Setup setup, Item item)

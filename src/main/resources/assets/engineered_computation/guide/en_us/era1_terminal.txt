@@ -8,4 +8,6 @@ Click an item to add a stack to the request slip under the grid, or right-click 
 
 To put items away, click them onto the grid, or shift-click them in your inventory. They go through the tubes to a station that already holds that item, otherwise to one set to take new items. If no station will take them, they won't be sent.
 
-Items whose stations can't be reached are greyed out and show their last tally. While carriers are travelling, the teletype shows 102.
+To narrow down the items shown, place a Filter Card in the card slot to the right of your inventory. Only the items it matches will be shown. Click the card to edit its filter, or right-click it to take it out.
+
+Items whose stations can't be reached are greyed out and show their last tally. While carriers are traveling, the teletype shows 102.

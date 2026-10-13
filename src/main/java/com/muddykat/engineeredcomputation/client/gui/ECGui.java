@@ -16,12 +16,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-import com.muddykat.engineeredcomputation.adapter.ProgramEntry;
+import com.muddykat.engineeredcomputation.program.ProgramEntry;
 
 public final class ECGui
 {
 	private static final int CYCLE_MILLIS = 1000;
 	public static final ResourceLocation SLOT = ResourceLocation.withDefaultNamespace("container/slot");
+	private static final int GHOST_FADE = 0xB48B8B8B;
 	public static final ResourceLocation SCROLLER =
 			ResourceLocation.withDefaultNamespace("container/creative_inventory/scroller");
 	public static final ResourceLocation SCROLLER_DISABLED =
@@ -80,46 +81,20 @@ public final class ECGui
 		graphics.blitSprite(hovered? BUTTON_HIGHLIGHTED: BUTTON, x, y, width, height);
 	}
 
-	/** The size of {@link #filterMode}'s button. */
 	public static final int FILTER_MODE_SIZE = 11;
-	private static final String[] ALLOW_ICON = {
-			"....#",
-			"...##",
-			"#.##.",
-			"###..",
-			".#..."};
-	private static final String[] BLOCK_ICON = {
-			".###.",
-			"#..##",
-			"#.#.#",
-			"##..#",
-			".###."};
 
-	/** A filter's allow / block list button: a green tick for an allow list, a red no-entry sign for a block list. */
 	public static void filterMode(GuiGraphics graphics, int x, int y, boolean blocking, boolean hovered)
 	{
 		button(graphics, x, y, FILTER_MODE_SIZE, FILTER_MODE_SIZE, hovered);
-		icon(graphics, x+3, y+3, blocking? BLOCK_ICON: ALLOW_ICON, blocking? 0xFFFF6A5A: 0xFF6CFF7C);
+		(blocking? GuiIcon.BLOCK: GuiIcon.ALLOW).draw(graphics, x+3, y+3);
 	}
 
-	public static void icon(GuiGraphics graphics, int x, int y, String[] rows, int colour)
-	{
-		for(int pass = 0; pass<2; pass++)
-			for(int row = 0; row<rows.length; row++)
-				for(int col = 0; col<rows[row].length(); col++)
-					if(rows[row].charAt(col)=='#')
-					{
-						int px = x+col+(pass==0? 1: 0);
-						int py = y+row+(pass==0? 1: 0);
-						graphics.fill(px, py, px+1, py+1, pass==0? 0xFF3F3F3F: colour);
-					}
-	}
-
-	/** What a program entry shows as: its item, or for a tag each of its items in turn (a barrier if it has none). */
 	public static ItemStack entryIcon(ProgramEntry entry)
 	{
 		if(entry.item().isPresent())
 			return new ItemStack(entry.item().get());
+		if(entry.name().isPresent())
+			return new ItemStack(Items.NAME_TAG);
 		Optional<HolderSet.Named<Item>> items = entry.tag().flatMap(BuiltInRegistries.ITEM::getTag);
 		if(items.isEmpty()||items.get().size()==0)
 			return entry.tag().isPresent()? new ItemStack(Items.BARRIER): ItemStack.EMPTY;
@@ -148,7 +123,16 @@ public final class ECGui
 		graphics.blitSprite(SLOT, x, y, 18, 18);
 	}
 
-	/** A gauge in one colour: for something it's good to have full, like stored RF. */
+	// quick ghost function to show the player what item can go where
+	public static void ghost(GuiGraphics graphics, ItemStack stack, int x, int y)
+	{
+		graphics.renderFakeItem(stack, x, y);
+		graphics.pose().pushPose();
+		graphics.pose().translate(0, 0, 200);
+		graphics.fill(x, y, x+16, y+16, GHOST_FADE);
+		graphics.pose().popPose();
+	}
+
 	public static void gauge(GuiGraphics graphics, int x, int y, int width, int height, double fraction, int colour)
 	{
 		sunken(graphics, x, y, width, height);

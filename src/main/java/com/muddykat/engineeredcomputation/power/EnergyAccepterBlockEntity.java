@@ -25,7 +25,6 @@ import com.muddykat.engineeredcomputation.registration.ECPower;
 public class EnergyAccepterBlockEntity extends BlockEntity implements MenuProvider
 {
 	private int energy;
-	/** The last game tick this accepter paid for its network. */
 	private long paidAt = Long.MIN_VALUE;
 
 	private final IEnergyStorage storage = new IEnergyStorage()
@@ -99,7 +98,7 @@ public class EnergyAccepterBlockEntity extends BlockEntity implements MenuProvid
 		setChanged();
 	}
 
-	/** Whether it paid for its network this tick or the last (machines check before or after it ticks). */
+	/** Counts this tick or the last, because machines may check before or after the accepter ticks. */
 	public boolean paidRecently(long gameTime)
 	{
 		return paidAt>=gameTime-1;
@@ -135,7 +134,6 @@ public class EnergyAccepterBlockEntity extends BlockEntity implements MenuProvid
 		return taken;
 	}
 
-	/** A network's Energy Accepters (loaded ones). */
 	public static List<EnergyAccepterBlockEntity> accepters(Level level, StorageNetwork network)
 	{
 		List<EnergyAccepterBlockEntity> accepters = new ArrayList<>();

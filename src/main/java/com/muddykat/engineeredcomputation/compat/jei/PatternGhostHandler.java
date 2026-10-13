@@ -11,11 +11,10 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import com.muddykat.engineeredcomputation.crafting.Pattern;
-import com.muddykat.engineeredcomputation.crafting.PatternFillPayload;
-import com.muddykat.engineeredcomputation.crafting.PatternFloppyScreen;
+import com.muddykat.engineeredcomputation.client.screen.crafting.PatternFloppyScreen;
+import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
+import com.muddykat.engineeredcomputation.crafting.pattern.PatternFillPayload;
 
-/** Items dragged from JEI onto a pattern floppy's slots: one of the item, as if set with it in hand. */
 final class PatternGhostHandler implements IGhostIngredientHandler<PatternFloppyScreen>
 {
 	@Override

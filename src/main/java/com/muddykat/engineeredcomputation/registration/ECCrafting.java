@@ -4,7 +4,7 @@ import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 
-import com.muddykat.engineeredcomputation.crafting.PatternFloppyItem;
+import com.muddykat.engineeredcomputation.crafting.pattern.PatternFloppyItem;
 
 public final class ECCrafting
 {

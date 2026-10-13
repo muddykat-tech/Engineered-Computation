@@ -1,6 +1,6 @@
 Ordering
 
-The Floppy Disk Terminal shows everything the network can craft. Items with none in storage are faded: click one to order it. To order more of a stored item, Ctrl-click or middle-click it.
+The Floppy Disk Terminal, and the Floppy Disk Workstation's built-in terminal, show everything the network can craft. Items with none in storage are faded: click one to order it. To order more of a stored item, Ctrl-click or middle-click it.
 
 Set the amount and the order screen shows what it needs: what comes from storage, what gets crafted along the way, and anything missing. If a recipe needs an item another pattern makes, that item is crafted first. Patterns with a tag are marked #; ordering one asks what to send for each tag.
 

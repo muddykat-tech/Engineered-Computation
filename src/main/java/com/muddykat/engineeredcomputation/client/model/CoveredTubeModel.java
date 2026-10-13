@@ -21,8 +21,8 @@ import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
-import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
-import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
+import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.tube.PneumaticTubeBlock;
 
 public class CoveredTubeModel extends CoveredCableModel
 {

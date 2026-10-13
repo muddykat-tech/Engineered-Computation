@@ -33,6 +33,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
@@ -63,22 +64,21 @@ import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.adapter.AdapterKind;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlock;
 import com.muddykat.engineeredcomputation.adapter.DataAdapterBlockEntity;
-import com.muddykat.engineeredcomputation.adapter.Program;
-import com.muddykat.engineeredcomputation.adapter.ProgramEntry;
-import com.muddykat.engineeredcomputation.adapter.ProgrammableItem;
-import com.muddykat.engineeredcomputation.catalogue.CardDeck;
-import com.muddykat.engineeredcomputation.catalogue.CardDeckItem;
-import com.muddykat.engineeredcomputation.catalogue.CardDeckMenu;
 import com.muddykat.engineeredcomputation.catalogue.CatalogueCard;
 import com.muddykat.engineeredcomputation.catalogue.FilterCardItem;
-import com.muddykat.engineeredcomputation.catalogue.ProgramDeckItem;
+import com.muddykat.engineeredcomputation.catalogue.deck.CardDeck;
+import com.muddykat.engineeredcomputation.catalogue.deck.CardDeckItem;
+import com.muddykat.engineeredcomputation.catalogue.deck.CardDeckMenu;
+import com.muddykat.engineeredcomputation.catalogue.deck.ProgramDeckItem;
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.client.guide.GuideScreen;
-import com.muddykat.engineeredcomputation.crafting.CraftingComputerMenu;
-import com.muddykat.engineeredcomputation.crafting.CraftingComputerState;
+import com.muddykat.engineeredcomputation.client.screen.terminal.TerminalScreen;
+import com.muddykat.engineeredcomputation.connector.ConnectorPorts;
 import com.muddykat.engineeredcomputation.crafting.CraftingNetwork;
-import com.muddykat.engineeredcomputation.crafting.DataProcessorState;
-import com.muddykat.engineeredcomputation.crafting.Pattern;
+import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerMenu;
+import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerState;
+import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
+import com.muddykat.engineeredcomputation.crafting.processor.DataProcessorState;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.era.EraDrive;
 import com.muddykat.engineeredcomputation.era.EraDriveGeometry;
@@ -86,50 +86,56 @@ import com.muddykat.engineeredcomputation.era.EraMachine;
 import com.muddykat.engineeredcomputation.era.NetworkPort;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockOrientation;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
-import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
-import com.muddykat.engineeredcomputation.network.CoveredCableBlock;
+import com.muddykat.engineeredcomputation.multiblock.drive.EraDriveMenu;
+import com.muddykat.engineeredcomputation.multiblock.drive.EraDriveState;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
-import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
-import com.muddykat.engineeredcomputation.pneumatic.PneumaticTubeBlock;
-import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationBlockEntity;
-import com.muddykat.engineeredcomputation.pneumatic.TubeCarriers;
+import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlock;
 import com.muddykat.engineeredcomputation.pneumatic.TubeNetwork;
-import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlock;
-import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlockEntity;
-import com.muddykat.engineeredcomputation.pneumatic.TubeStationMenu;
+import com.muddykat.engineeredcomputation.pneumatic.autotube.AutotubeBlock;
+import com.muddykat.engineeredcomputation.pneumatic.autotube.AutotubeBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.carrier.TubeCarriers;
+import com.muddykat.engineeredcomputation.pneumatic.pressurizer.PressurizerBlock;
+import com.muddykat.engineeredcomputation.pneumatic.pressurizer.PressurizerBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.station.ReceivingStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.station.TubeStationBlock;
+import com.muddykat.engineeredcomputation.pneumatic.station.TubeStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.station.TubeStationMenu;
+import com.muddykat.engineeredcomputation.pneumatic.tube.CoveredTubeBlock;
+import com.muddykat.engineeredcomputation.pneumatic.tube.PneumaticTubeBlock;
 import com.muddykat.engineeredcomputation.power.EnergyAccepterBlockEntity;
+import com.muddykat.engineeredcomputation.program.Program;
+import com.muddykat.engineeredcomputation.program.ProgramEntry;
+import com.muddykat.engineeredcomputation.program.ProgrammableItem;
 import com.muddykat.engineeredcomputation.registration.ECAdapters;
 import com.muddykat.engineeredcomputation.registration.ECBridges;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
 import com.muddykat.engineeredcomputation.registration.ECContent;
 import com.muddykat.engineeredcomputation.registration.ECCrafting;
+import com.muddykat.engineeredcomputation.registration.ECDataCells;
 import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.registration.ECPower;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
-import com.muddykat.engineeredcomputation.storage.CellContents;
-import com.muddykat.engineeredcomputation.storage.CellInventory;
-import com.muddykat.engineeredcomputation.storage.ECDataCells;
-import com.muddykat.engineeredcomputation.storage.EraDataCell;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
-import com.muddykat.engineeredcomputation.terminal.TeletypeBlockEntity;
-import com.muddykat.engineeredcomputation.terminal.TerminalDiskBlockEntity;
+import com.muddykat.engineeredcomputation.storage.cell.CellContents;
+import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
+import com.muddykat.engineeredcomputation.storage.cell.EraDataCell;
 import com.muddykat.engineeredcomputation.terminal.TerminalFeatures;
 import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
+import com.muddykat.engineeredcomputation.terminal.crafting.VideoTerminalMenu;
+import com.muddykat.engineeredcomputation.terminal.floppy.TerminalDiskBlockEntity;
+import com.muddykat.engineeredcomputation.terminal.teletype.TeletypeBlockEntity;
+import com.muddykat.engineeredcomputation.terminal.teletype.TeletypeMenu;
 
 @EventBusSubscriber(modid = EngineeredComputation.MODID, value = Dist.CLIENT)
 public final class VisualCheck
 {
 	private static final boolean ENABLED = Boolean.getBoolean("ec.visualcheck");
-	/** Each area's shots, in the order they run; {@link #ONLY} picks some. */
 	private static final List<String> CATEGORIES = List.of("cables", "pneumatics", "drives", "angles", "world", "guide",
 			"terminal", "adapters", "crafting", "power", "config");
-	/**
-	 * The categories to run, from -Pvisuals=adapters,terminal (ec.visualcheck.only); none or "all" runs every one. The
-	 * older ec.visualcheck.angles=true still means the model angles alone.
-	 */
+	/** Set with -Pvisuals; ec.visualcheck.angles=true is the older way to run only the angles. */
 	private static final Set<String> ONLY = categoriesToRun();
 	private static final List<String> ANGLE_DRIVES = List.of(System.getProperty("ec.visualcheck.drives", "").split(","))
 			.stream().filter(name -> !name.isBlank()).toList();
@@ -165,7 +171,7 @@ public final class VisualCheck
 			{
 				worldRequested = true;
 				mc.options.pauseOnLostFocus = false;
-				// A hidden window can be held to ~1 FPS by the compositor waiting on vsync, so shots would be stale.
+				// With vsync on, a hidden window can drop to about 1 FPS and take stale screenshots.
 				mc.getWindow().updateVsync(false);
 				createWorld(mc);
 			}
@@ -179,8 +185,7 @@ public final class VisualCheck
 			wait = 60;
 			queueSteps(mc);
 		}
-		// Kept flying: creative flight stops whenever the player touches ground after a teleport, and then they fall
-		// away from the camera position, or not, depending on timing.
+		// Flight switches off when a teleported player touches the ground, so it's turned back on every tick.
 		if(mc.player.getAbilities().mayfly)
 			mc.player.getAbilities().flying = true;
 		if(--wait>0||STEPS.isEmpty())
@@ -233,7 +238,7 @@ public final class VisualCheck
 		EngineeredComputation.LOGGER.info("Visual check: categories {}, running {}", CATEGORIES,
 				ONLY.isEmpty()? "all": ONLY);
 		onServer(mc, VisualCheck::buildScene, 120);
-		// In the order of a full run, each with the HUD as that run had it, so any can be left out.
+		// Each section sets the HUD itself, so any of them can be skipped.
 		section(mc, "cables", false, VisualCheck::queueCoveredCables);
 		section(mc, "pneumatics", false, VisualCheck::queuePneumatics);
 		section(mc, "drives", false, VisualCheck::queueCloseups);
@@ -242,6 +247,7 @@ public final class VisualCheck
 		section(mc, "drives", false, VisualCheck::queueTapeReels);
 		section(mc, "drives", false, VisualCheck::queueBanks);
 		section(mc, "drives", false, VisualCheck::queueCardVault);
+		section(mc, "drives", false, VisualCheck::queueStandaloneDrives);
 		section(mc, "drives", false, VisualCheck::queueDrumEra);
 		section(mc, "angles", false, VisualCheck::queueModelAngles);
 		section(mc, "world", false, VisualCheck::queueWorld);
@@ -266,7 +272,6 @@ public final class VisualCheck
 		return names.contains("all")? Set.of(): names;
 	}
 
-	/** Queues one area's shots, if it's one of the categories asked for, with the HUD shown or hidden first. */
 	private static void section(Minecraft mc, String category, boolean hud, Consumer<Minecraft> queue)
 	{
 		if(!CATEGORIES.contains(category))
@@ -309,6 +314,18 @@ public final class VisualCheck
 				STEPS.add(new Step(3, () -> mc.screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0)));
 			}
 		}
+		// The smallest machines' structure pages (40 and 44), where the wrench is closest to the view's edges.
+		STEPS.add(new Step(10, () -> {
+			mc.setScreen(GuideScreen.open(ComputerEra.FLOPPY));
+			for(int i = 0; i<39; i++)
+				mc.screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
+			hoverAbsolute(mc, 0, 0);
+		}));
+		for(int page = 40; page<=44; page++)
+		{
+			screenshot(mc, "ec_guide_era5_page_"+page, 1);
+			STEPS.add(new Step(3, () -> mc.screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0)));
+		}
 		STEPS.add(new Step(10, () -> {
 			mc.setScreen(GuideScreen.open(ComputerEra.DRUM));
 			for(int i = 0; i<13; i++)
@@ -345,27 +362,27 @@ public final class VisualCheck
 			if(player.containerMenu instanceof TerminalMenu menu)
 			{
 				for(int slot : new int[]{0, 1, 3, 4})
-					menu.getSlot(TerminalMenu.CRAFT_GRID_FIRST+slot).set(new ItemStack(Items.STONE));
+					menu.getSlot(VideoTerminalMenu.CRAFT_GRID_FIRST+slot).set(new ItemStack(Items.STONE));
 				menu.broadcastChanges();
 			}
 		}, 5);
 		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
 		screenshot(mc, "ec_terminal_crafting", 2);
-		STEPS.add(new Step(5, () -> hoverGui(mc, TerminalMenu.CRAFT_X+9, crafting.craftingY()+9)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, VideoTerminalMenu.CRAFT_X+9, crafting.craftingY()+9)));
 		screenshot(mc, "ec_terminal_linked_slot_tooltip", 2);
 		onServer(mc, (level, player) -> {
 			if(player.containerMenu instanceof TerminalMenu menu)
 			{
-				menu.getSlot(TerminalMenu.CRAFT_GRID_FIRST+8).set(new ItemStack(Items.DIAMOND));
+				menu.getSlot(VideoTerminalMenu.CRAFT_GRID_FIRST+8).set(new ItemStack(Items.DIAMOND));
 				menu.broadcastChanges();
 			}
 		}, 5);
-		STEPS.add(new Step(5, () -> hoverGui(mc, TerminalMenu.CRAFT_X+2*18+9, crafting.craftingY()+2*18+9)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, VideoTerminalMenu.CRAFT_X+2*18+9, crafting.craftingY()+2*18+9)));
 		screenshot(mc, "ec_terminal_linked_missing", 2);
 		onServer(mc, (level, player) -> {
 			if(player.containerMenu instanceof TerminalMenu menu)
 			{
-				menu.clickMenuButton(player, TerminalMenu.CLEAR_GRID);
+				menu.clickMenuButton(player, VideoTerminalMenu.CLEAR_GRID);
 				menu.setCarried(new ItemStack(Items.STONE, 64));
 				menu.broadcastChanges();
 			}
@@ -373,37 +390,37 @@ public final class VisualCheck
 		STEPS.add(new Step(5, () -> {
 			if(mc.screen instanceof AbstractContainerScreen<?> screen)
 			{
-				int x = screen.getGuiLeft()+TerminalMenu.CRAFT_X+9, y = screen.getGuiTop()+crafting.craftingY()+9;
+				int x = screen.getGuiLeft()+VideoTerminalMenu.CRAFT_X+9, y = screen.getGuiTop()+crafting.craftingY()+9;
 				screen.mouseClicked(x, y, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
 				for(int column = 1; column<3; column++)
 					screen.mouseDragged(x+column*18, y, GLFW.GLFW_MOUSE_BUTTON_RIGHT, 18, 0);
 				screen.mouseReleased(x+36, y, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
 			}
 		}));
-		STEPS.add(new Step(5, () -> hoverGui(mc, TerminalMenu.CRAFT_X+3*18+30, crafting.craftingY()+40)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, VideoTerminalMenu.CRAFT_X+3*18+30, crafting.craftingY()+40)));
 		screenshot(mc, "ec_terminal_linked_drag", 2);
 		onServer(mc, (level, player) -> {
 			if(player.containerMenu instanceof TerminalMenu menu)
 			{
 				menu.setCarried(ItemStack.EMPTY);
-				menu.clickMenuButton(player, TerminalMenu.CLEAR_GRID);
+				menu.clickMenuButton(player, VideoTerminalMenu.CLEAR_GRID);
 				for(int slot : new int[]{0, 1, 3, 4})
-					menu.getSlot(TerminalMenu.CRAFT_GRID_FIRST+slot).set(new ItemStack(Items.STONE));
+					menu.getSlot(VideoTerminalMenu.CRAFT_GRID_FIRST+slot).set(new ItemStack(Items.STONE));
 				menu.broadcastChanges();
 			}
 		}, 5);
 		onServer(mc, (level, player) -> {
 			if(player.containerMenu instanceof TerminalMenu menu)
 			{
-				menu.getSlot(TerminalMenu.CRAFT_GRID_FIRST+8).set(ItemStack.EMPTY);
+				menu.getSlot(VideoTerminalMenu.CRAFT_GRID_FIRST+8).set(ItemStack.EMPTY);
 				menu.broadcastChanges();
 			}
 		}, 5);
-		STEPS.add(new Step(5, () -> hoverGui(mc, TerminalMenu.LINK_X+8, crafting.craftingY()+27)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, VideoTerminalMenu.LINK_X+8, crafting.craftingY()+27)));
 		screenshot(mc, "ec_terminal_link_tooltip", 2);
-		STEPS.add(new Step(5, () -> clickGui(mc, TerminalMenu.LINK_X+8, crafting.craftingY()+27)));
+		STEPS.add(new Step(5, () -> clickGui(mc, VideoTerminalMenu.LINK_X+8, crafting.craftingY()+27)));
 		screenshot(mc, "ec_terminal_link_off", 2);
-		STEPS.add(new Step(5, () -> hoverGui(mc, TerminalMenu.CLEAR_X+5, crafting.craftingY()+5)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, VideoTerminalMenu.CLEAR_X+5, crafting.craftingY()+5)));
 		screenshot(mc, "ec_terminal_clear_tooltip", 2);
 		STEPS.add(new Step(5, () -> {
 			hoverGui(mc, 60, 22);
@@ -446,6 +463,96 @@ public final class VisualCheck
 		STEPS.add(new Step(5, () -> "pack".chars().forEach(c -> mc.screen.charTyped((char)c, 0))));
 		screenshot(mc, "ec_teletype_outlets_search", 2);
 		STEPS.add(new Step(10, () -> mc.setScreen(null)));
+		queueTeletypeCard(mc);
+	}
+
+	private static void queueTeletypeCard(Minecraft mc)
+	{
+		onServer(mc, (level, player) -> use(level, player, terminalPos(ComputerEra.PUNCHCARD)), 20);
+		STEPS.add(new Step(5, () -> hoverCardSlot(mc)));
+		screenshot(mc, "ec_teletype_card_slot", 2);
+		STEPS.add(new Step(10, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> {
+			if(level.getBlockEntity(terminalPos(ComputerEra.PUNCHCARD)) instanceof TeletypeBlockEntity teletype)
+				teletype.cardContainer().setItem(0, FilterCardItem.of(ProgramEntry.ofName("iron")));
+			use(level, player, terminalPos(ComputerEra.PUNCHCARD));
+		}, 20);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_teletype_card_filtered", 2);
+		STEPS.add(new Step(5, () -> hoverCardSlot(mc)));
+		screenshot(mc, "ec_teletype_card_tooltip", 2);
+		STEPS.add(new Step(5, () -> {
+			if(mc.screen instanceof AbstractContainerScreen<?> screen)
+			{
+				Slot card = screen.getMenu().getSlot(TeletypeMenu.CARD_SLOT);
+				clickGui(mc, card.x+8, card.y+8);
+			}
+		}));
+		STEPS.add(new Step(10, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_teletype_card_popup", 2);
+		STEPS.add(new Step(5, () -> {
+			var area = ((TerminalScreen<?>)mc.screen).extraAreas().stream().findFirst().orElse(null);
+			if(area!=null)
+				mc.screen.mouseClicked(area.getX()+100, area.getY()+26, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			for(int i = 0; i<4; i++)
+				mc.screen.keyPressed(GLFW.GLFW_KEY_BACKSPACE, 0, 0);
+			"red".chars().forEach(c -> mc.screen.charTyped((char)c, 0));
+		}));
+		STEPS.add(new Step(15, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_teletype_card_popup_typed", 2);
+		STEPS.add(new Step(5, () -> {
+			for(int i = 0; i<3; i++)
+				mc.screen.keyPressed(GLFW.GLFW_KEY_BACKSPACE, 0, 0);
+			mc.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
+		}));
+		STEPS.add(new Step(15, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_teletype_card_popup_empty", 2);
+		STEPS.add(new Step(5, () -> dragCardPopup(mc, -60, -90)));
+		STEPS.add(new Step(10, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_teletype_card_popup_moved", 2);
+		STEPS.add(new Step(5, () -> mc.screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0)));
+		STEPS.add(new Step(10, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_teletype_card_popup_closed", 2);
+		// Redstone on the slip should be faded, with the amount the slip will leave in red.
+		TerminalMenu.Layout requests = TerminalMenu.Layout.of(TerminalFeatures.REQUESTS);
+		STEPS.add(new Step(5, () -> hoverGui(mc, TerminalMenu.GRID_X+3*18+9, requests.gridY()+9)));
+		screenshot(mc, "ec_teletype_slipped_tooltip", 2);
+		// The insert only station's items should show separately, greyed out with a padlock.
+		STEPS.add(new Step(5, () -> hoverGui(mc, TerminalMenu.GRID_X+1*18+9, requests.gridY()+9)));
+		screenshot(mc, "ec_teletype_locked_tooltip", 2);
+		int lockButtonX = 195-7-11+5;
+		STEPS.add(new Step(5, () -> clickGui(mc, lockButtonX, 9)));
+		STEPS.add(new Step(10, () -> hoverGui(mc, lockButtonX, 9)));
+		screenshot(mc, "ec_teletype_locked_hidden", 2);
+		STEPS.add(new Step(5, () -> clickGui(mc, lockButtonX, 9)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		STEPS.add(new Step(10, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> {
+			if(level.getBlockEntity(terminalPos(ComputerEra.PUNCHCARD)) instanceof TeletypeBlockEntity teletype)
+				teletype.cardContainer().setItem(0, ItemStack.EMPTY);
+		}, 5);
+	}
+
+	private static void dragCardPopup(Minecraft mc, int byX, int byY)
+	{
+		if(!(mc.screen instanceof AbstractContainerScreen<?> screen))
+			return;
+		var area = ((TerminalScreen<?>)screen).extraAreas().stream().findFirst().orElse(null);
+		if(area==null)
+			return;
+		double fromX = area.getX()+20, fromY = area.getY()+5;
+		screen.mouseClicked(fromX, fromY, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		screen.mouseDragged(fromX+byX, fromY+byY, GLFW.GLFW_MOUSE_BUTTON_LEFT, byX, byY);
+		screen.mouseReleased(fromX+byX, fromY+byY, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+	}
+
+	private static void hoverCardSlot(Minecraft mc)
+	{
+		if(mc.screen instanceof AbstractContainerScreen<?> screen)
+		{
+			Slot card = screen.getMenu().getSlot(TeletypeMenu.CARD_SLOT);
+			hoverGui(mc, card.x+8, card.y+8);
+		}
 	}
 
 	private static void queueDriveScreens(Minecraft mc)
@@ -635,9 +742,166 @@ public final class VisualCheck
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
 		onServer(mc, (level, player) -> player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY), 5);
 		queueAdvancedStation(mc);
+		queuePressurizer(mc);
+		queueAutotube(mc);
 	}
 
-	/** An Advanced Tube Station with a Program Deck in, its screen (allow then block list), and its cards' screens. */
+	private static void queuePressurizer(Minecraft mc)
+	{
+		onServer(mc, (level, player) -> {
+			BlockPos at = pneumaticsPos().east(3).south();
+			level.setBlockAndUpdate(at, ECPneumatics.PRESSURIZER.get().defaultBlockState()
+					.setValue(PressurizerBlock.FACING, Direction.SOUTH));
+			BlockPos tube = at.north();
+			level.setBlockAndUpdate(tube, Block.updateFromNeighbourShapes(level.getBlockState(tube), level, tube));
+			player.teleportTo(level, at.getX()+1.8, at.getY()+0.6, at.getZ()+2.6, 145, 20);
+		}, 20);
+		screenshot(mc, "ec_pressurizer_cold", 2);
+		onServer(mc, (level, player) -> {
+			if(level.getBlockEntity(pneumaticsPos().east(3).south()) instanceof PressurizerBlockEntity pressurizer)
+			{
+				pressurizer.fuelContainer().setItem(0, new ItemStack(Items.COAL, 16));
+				pressurizer.draw();
+			}
+		}, 15);
+		screenshot(mc, "ec_pressurizer", 2);
+		onServer(mc, (level, player) -> use(level, player, pneumaticsPos().east(3).south()), 15);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_pressurizer_screen", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+	}
+
+	private static void queueAutotube(Minecraft mc)
+	{
+		onServer(mc, (level, player) -> {
+			BlockPos start = pneumaticsPos().south(8);
+			level.setBlockAndUpdate(start, Blocks.CHEST.defaultBlockState());
+			BlockPos junction = start.east(3);
+			for(BlockPos tube : List.of(start.east(2), junction, junction.north(), junction.south()))
+				level.setBlockAndUpdate(tube, ECPneumatics.TUBE.get().defaultBlockState());
+			level.setBlockAndUpdate(junction.north(2), ECPneumatics.TUBE_STATION.get().defaultBlockState()
+					.setValue(TubeStationBlock.FACING, Direction.NORTH));
+			level.setBlockAndUpdate(junction.north(3), Blocks.CHEST.defaultBlockState());
+			level.setBlockAndUpdate(junction.south(2), ECPneumatics.RECEIVING_STATION.get().defaultBlockState());
+			level.setBlockAndUpdate(start.east(), ECPneumatics.AUTOTUBE.get().defaultBlockState()
+					.setValue(AutotubeBlock.FACING, Direction.WEST));
+			for(BlockPos pos : List.of(start.east(), start.east(2), junction, junction.north(), junction.south()))
+				level.setBlockAndUpdate(pos, Block.updateFromNeighbourShapes(level.getBlockState(pos), level, pos));
+			level.setBlockAndUpdate(start.east(2), level.getBlockState(start.east(2))
+					.setValue(PneumaticTubeBlock.WINDOWED, true));
+			if(level.getBlockEntity(junction.north(2)) instanceof TubeStationBlockEntity station)
+				station.setTakesNewItems(true);
+			level.setBlockAndUpdate(start.east().above(), Blocks.BARREL.defaultBlockState());
+			if(level.getBlockEntity(start) instanceof ChestBlockEntity chest)
+				chest.setItem(0, new ItemStack(Items.COBBLESTONE, 64));
+			player.teleportTo(level, start.getX()+2.0, start.getY()+2.4, start.getZ()+6.0, 180, 32);
+		}, 30);
+		screenshot(mc, "ec_autotube", 2);
+		onServer(mc, (level, player) -> {
+			BlockPos start = pneumaticsPos().south(8);
+			player.teleportTo(level, start.getX()+1.4, start.getY()+0.9-player.getEyeHeight(), start.getZ()+1.9, 175, 5);
+		}, 15);
+		screenshot(mc, "ec_autotube_close", 2);
+		onServer(mc, (level, player) -> {
+			BlockPos chest = pneumaticsPos().south(10);
+			level.setBlockAndUpdate(chest, Blocks.CHEST.defaultBlockState());
+			level.setBlockAndUpdate(chest.east(2), ECPneumatics.TUBE.get().defaultBlockState());
+			level.setBlockAndUpdate(chest.east(), ECPneumatics.OBSERVING_AUTOTUBE.get().defaultBlockState()
+					.setValue(AutotubeBlock.FACING, Direction.WEST));
+			for(BlockPos pos : List.of(chest.east(), chest.east(2)))
+				level.setBlockAndUpdate(pos, Block.updateFromNeighbourShapes(level.getBlockState(pos), level, pos));
+			player.teleportTo(level, chest.getX()+1.5, chest.getY()+0.9-player.getEyeHeight(), chest.getZ()+2.0, 175, 5);
+		}, 15);
+		screenshot(mc, "ec_observing_autotube", 2);
+		onServer(mc, (level, player) -> {
+			BlockPos autotube = pneumaticsPos().south(8).east();
+			mc.options.hideGui = false;
+			player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ECContent.ASSEMBLY_WRENCH.get()));
+			player.teleportTo(level, autotube.getX()+14.5/16, autotube.getY()+0.85-player.getEyeHeight(),
+					autotube.getZ()+1.8, 180, 15);
+		}, 15);
+		screenshot(mc, "ec_autotube_wrench_arm", 2);
+		onServer(mc, (level, player) -> {
+			BlockPos autotube = pneumaticsPos().south(8).east();
+			AutotubeBlock.wrench(level, autotube, new Vec3(0.5, 15/16.0, 0.5));
+			player.teleportTo(level, autotube.getX()+0.5, autotube.getY()+0.85-player.getEyeHeight(),
+					autotube.getZ()+1.8, 180, 0);
+		}, 15);
+		screenshot(mc, "ec_autotube_wrench_cap", 2);
+		onServer(mc, (level, player) -> {
+			BlockPos tubes = pneumaticsPos().south(13);
+			BlockPos cables = tubes.south(2);
+			for(int x = 0; x<3; x++)
+			{
+				level.setBlockAndUpdate(tubes.east(x), ECPneumatics.TUBE.get().defaultBlockState());
+				level.setBlockAndUpdate(cables.east(x), ECCables.block().get().defaultBlockState());
+			}
+			for(int x = 0; x<3; x++)
+				for(BlockPos pos : List.of(tubes.east(x), cables.east(x)))
+					level.setBlockAndUpdate(pos, Block.updateFromNeighbourShapes(level.getBlockState(pos), level, pos));
+			ConnectorPorts.wrench(level, tubes.east(), new Vec3(14/16.0, 0.5, 0.5));
+			ConnectorPorts.wrench(level, cables.east(), new Vec3(14/16.0, 0.5, 0.5));
+			player.teleportTo(level, tubes.getX()+1.5, tubes.getY()+0.4, tubes.getZ()+4.6, 180, 32);
+		}, 15);
+		screenshot(mc, "ec_connector_caps", 2);
+		onServer(mc, (level, player) -> {
+			BlockPos tube = pneumaticsPos().south(13).east();
+			player.teleportTo(level, tube.getX()+12.5/16, tube.getY()+1.8-player.getEyeHeight(),
+					tube.getZ()+11.5/16+1.1, 180, 49.8F);
+		}, 15);
+		screenshot(mc, "ec_connector_wrench_cap", 2);
+		onServer(mc, (level, player) -> {
+			BlockPos tubes = pneumaticsPos().south(13);
+			ConnectorPorts.wrench(level, tubes.east(), new Vec3(12.5/16, 0.5, 0.5));
+			ConnectorPorts.wrench(level, tubes.south(2).east(), new Vec3(10.5/16, 0.5, 0.5));
+			player.teleportTo(level, tubes.getX()+1.5, tubes.getY()+0.4, tubes.getZ()+4.6, 180, 32);
+		}, 15);
+		screenshot(mc, "ec_connector_reopened", 2);
+		// Capping the branch makes the tube straight, but it should keep its junction box to hold the cap.
+		onServer(mc, (level, player) -> {
+			BlockPos middle = pneumaticsPos().south(13).east();
+			level.setBlockAndUpdate(middle.south(), ECPneumatics.TUBE.get().defaultBlockState());
+			level.setBlockAndUpdate(middle.south(), Block.updateFromNeighbourShapes(level.getBlockState(middle.south()),
+					level, middle.south()));
+			ConnectorPorts.wrench(level, middle, new Vec3(0.5, 0.5, 14/16.0));
+			player.teleportTo(level, middle.getX()+0.5, middle.getY()+1.8-player.getEyeHeight(), middle.getZ()+2.2,
+					180, 40);
+		}, 15);
+		screenshot(mc, "ec_connector_cap_on_run", 2);
+		// Breaking the branch should remove the cap and leave a straight tube.
+		onServer(mc, (level, player) -> level.setBlockAndUpdate(pneumaticsPos().south(13).east().south(),
+				Blocks.AIR.defaultBlockState()), 15);
+		screenshot(mc, "ec_connector_neighbour_gone", 2);
+		onServer(mc, (level, player) -> {
+			mc.options.hideGui = true;
+			player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+		}, 5);
+		onServer(mc, (level, player) -> {
+			BlockPos start = pneumaticsPos().south(8);
+			player.teleportTo(level, start.getX()+2.0, start.getY()+2.4, start.getZ()+6.0, 180, 32);
+			if(level.getBlockEntity(start.east()) instanceof AutotubeBlockEntity autotube)
+			{
+				autotube.setAmount(8);
+				autotube.fire();
+			}
+		}, 3);
+		screenshot(mc, "ec_autotube_firing", 2);
+		onServer(mc, (level, player) -> {
+			player.setShiftKeyDown(true);
+			use(level, player, pneumaticsPos().south(8).east());
+			player.setShiftKeyDown(false);
+		}, 15);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_autotube_screen", 2);
+		STEPS.add(new Step(5, () -> clickGui(mc, 8+80, 40)));
+		STEPS.add(new Step(10, () -> hoverGui(mc, 8+80, 40)));
+		screenshot(mc, "ec_autotube_screen_set", 2);
+		STEPS.add(new Step(5, () -> clickGui(mc, 176-8-12, 52+7)));
+		STEPS.add(new Step(10, () -> hoverGui(mc, 176-8-12, 52+7)));
+		screenshot(mc, "ec_autotube_screen_split", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+	}
+
 	private static void queueAdvancedStation(Minecraft mc)
 	{
 		ItemStack deck = new ItemStack(ECCatalogue.PROGRAM_DECK.get());
@@ -671,12 +935,11 @@ public final class VisualCheck
 		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
 		screenshot(mc, "ec_filter_card_screen", 2);
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
-		// A blank card beside a punched (filtering) one in the hotbar, the punched one's tooltip showing.
 		onServer(mc, (level, player) -> {
 			player.getInventory().setItem(0, new ItemStack(ECCatalogue.FILTER_CARD.get()));
 			player.getInventory().setItem(1, FilterCardItem.of(ProgramEntry.of(new ItemStack(Items.COBBLESTONE))));
 		}, 5);
-		// The player is in creative, so the inventory opens as the creative one: its hotbar is at y 112.
+		// A creative player gets the creative inventory, whose hotbar is at y 112.
 		STEPS.add(new Step(5, () -> mc.setScreen(new InventoryScreen(mc.player))));
 		STEPS.add(new Step(5, () -> hoverGui(mc, 9+18+8, 112+8)));
 		screenshot(mc, "ec_filter_card_tooltip", 2);
@@ -847,6 +1110,50 @@ public final class VisualCheck
 				CraftingComputerMenu.DISPLAY_Y+17)));
 		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
 		screenshot(mc, "ec_crafting_computer_tree", 2);
+		int cancelX = CraftingComputerMenu.DISPLAY_X+CraftingComputerMenu.DISPLAY_WIDTH-4-9+4;
+		int cancelY = CraftingComputerMenu.DISPLAY_Y+3+4;
+		STEPS.add(new Step(5, () -> hoverGui(mc, cancelX-14, cancelY)));
+		screenshot(mc, "ec_crafting_computer_elapsed", 2);
+		STEPS.add(new Step(5, () -> hoverGui(mc, cancelX, cancelY)));
+		screenshot(mc, "ec_crafting_computer_cancel", 2);
+		STEPS.add(new Step(5, () -> clickGui(mc, cancelX, cancelY)));
+		STEPS.add(new Step(1, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_crafting_computer_cancelling", 0);
+		STEPS.add(new Step(20, () -> {
+		}));
+		screenshot(mc, "ec_crafting_computer_cancelled", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+	}
+
+	private static void queueStandaloneDrives(Minecraft mc)
+	{
+		onServer(mc, (level, player) -> {
+			drive(level, EraDrive.DISK_PROCESSOR).getCellSlots().setStackInSlot(0,
+					new ItemStack(ECDataCells.cellsOf(ComputerEra.DISK).get(1).get()));
+			var processor = drive(level, EraDrive.FLOPPY_PROCESSOR).getCellSlots();
+			processor.setStackInSlot(0, new ItemStack(ECDataCells.cellsOf(ComputerEra.FLOPPY).get(2).get()));
+			processor.setStackInSlot(1, new ItemStack(ECDataCells.terminalDisks().get(0).get()));
+			var bay = drive(level, EraDrive.COMPACT_FLOPPY_BAY).getCellSlots();
+			for(int slot : new int[]{0, 1, 3})
+				bay.setStackInSlot(slot, new ItemStack(ECDataCells.terminalDisks().get(slot).get()));
+		}, 10);
+		for(EraDrive drive : List.of(EraDrive.DISK_PROCESSOR, EraDrive.FLOPPY_PROCESSOR, EraDrive.COMPACT_FLOPPY_BAY))
+		{
+			BlockPos size = drive.geometry().size();
+			double midX = size.getX()/2.0;
+			String name = "ec_"+drive.blockName();
+			camera(mc, name+"_front", drive, midX, size.getY()/2.0-0.6, size.getZ()+2.2+size.getY()/2.0, 180, 8);
+			camera(mc, name+"_angle", drive, midX+2.4+size.getX()/2.0, size.getY()/2.0, size.getZ()+2.4, 135, 15);
+			camera(mc, name+"_back", drive, midX, 0.4, -2.0-size.getY()/2.0, 0, 12);
+		}
+		camera(mc, "ec_era5_floppy_processor_bays", EraDrive.FLOPPY_PROCESSOR, 0.5, 0.9, 3.1, 180, 10);
+		camera(mc, "ec_era5_compact_floppy_bay_bays", EraDrive.COMPACT_FLOPPY_BAY, 0.5, 0.8, 2.3, 180, 15);
+		onServer(mc, (level, player) -> use(level, player, driveOrigin(EraDrive.FLOPPY_PROCESSOR)
+				.offset(EraDrive.FLOPPY_PROCESSOR.geometry().trigger())), 20);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_era5_floppy_processor_screen", 2);
+		STEPS.add(new Step(5, () -> hoverGui(mc, 89-9*3+2*18+8, EraDriveMenu.CELLS_Y+8)));
+		screenshot(mc, "ec_era5_floppy_processor_slot_tooltip", 2);
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
 	}
 
@@ -946,7 +1253,6 @@ public final class VisualCheck
 		screenshot(mc, "ec_adapter_exporter_screen", 2);
 		STEPS.add(new Step(25, () -> clickGui(mc, 176-8-12, 17+13)));
 		screenshot(mc, "ec_adapter_exporter_off", 2);
-		// The filter's allow / block list toggle, left of the filter slot: switched to a block list, then back.
 		STEPS.add(new Step(25, () -> clickGui(mc, 4+5, 29+5)));
 		STEPS.add(new Step(5, () -> hoverGui(mc, 4+5, 29+5)));
 		screenshot(mc, "ec_adapter_exporter_block_list", 2);
@@ -1041,6 +1347,18 @@ public final class VisualCheck
 		screenshot(mc, "ec_vault_lift", 2);
 		STEPS.add(new Step(10, () -> {
 		}));
+		// Each deck should rest against the step behind it.
+		onServer(mc, (level, player) -> {
+			var slots = drive(level, ComputerEra.PUNCHCARD).getCellSlots();
+			for(int slot = 0; slot<slots.getSlots(); slot++)
+			{
+				slots.extractItem(slot, 1, false);
+				slots.insertItem(slot, new ItemStack(ECCatalogue.decks().get(slot).get()), false);
+			}
+		}, 40);
+		camera(mc, "ec_vault_decks_above", ComputerEra.PUNCHCARD, 3.9, 1.2, 1.2, 100, 40);
+		camera(mc, "ec_vault_decks_side", ComputerEra.PUNCHCARD, 4.0, 0.8, 2.2, 120, 30);
+		camera(mc, "ec_vault_decks_angled", ComputerEra.PUNCHCARD, 2.6, 0.6, 3.0, 135, 25);
 		camera(mc, "ec_vault_back", ComputerEra.PUNCHCARD, 1.5, 0.6, -2.4, 0, 25);
 		camera(mc, "ec_vault_under", ComputerEra.PUNCHCARD, 1.5, -2.9, 4.0, 180, -35);
 	}
@@ -1211,6 +1529,12 @@ public final class VisualCheck
 			player.teleportTo(level, bridge.getX()+1.8, bridge.getY()-0.6, bridge.getZ()+2.4, 145, 20);
 		}, 15);
 		screenshot(mc, "ec_storage_bridge", 2);
+		// The back should be vents, not a cable port, since cables only join the sides.
+		onServer(mc, (level, player) -> {
+			BlockPos bridge = bridgePos();
+			player.teleportTo(level, bridge.getX()-0.8, bridge.getY()-0.6, bridge.getZ()-1.4, -34, 20);
+		}, 15);
+		screenshot(mc, "ec_storage_bridge_back", 2);
 	}
 
 	private static ItemStack filled(ItemStack cell, boolean full)
@@ -1264,7 +1588,7 @@ public final class VisualCheck
 		base = player.blockPosition().above(FLOAT_HEIGHT);
 		level.setDayTime(6000);
 		level.setWeatherParameters(100000, 0, false, false);
-		for(BlockPos pos : BlockPos.betweenClosed(base.offset(-4, 0, -16), base.offset(60, 8, 4)))
+		for(BlockPos pos : BlockPos.betweenClosed(base.offset(-4, 0, -16), base.offset(90, 8, 4)))
 			level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
 
 		for(EraDrive drive : EraDrive.values())
@@ -1360,9 +1684,22 @@ public final class VisualCheck
 			chest.setItem(3, new ItemStack(Items.REDSTONE, 40));
 		}
 		TubeStationBlockEntity station = (TubeStationBlockEntity)level.getBlockEntity(receiver.east(2));
+		BlockPos lockedStation = receiver.east().north();
+		level.setBlockAndUpdate(lockedStation.north(), Blocks.CHEST.defaultBlockState());
+		level.setBlockAndUpdate(lockedStation, ECPneumatics.ADVANCED_TUBE_STATION.get().defaultBlockState()
+				.setValue(TubeStationBlock.FACING, Direction.NORTH));
+		if(level.getBlockEntity(lockedStation.north()) instanceof ChestBlockEntity chest)
+		{
+			chest.setItem(0, new ItemStack(Items.COBBLESTONE, 64));
+			chest.setItem(1, new ItemStack(Items.REDSTONE, 16));
+		}
+		TubeStationBlockEntity locked = (TubeStationBlockEntity)level.getBlockEntity(lockedStation);
+		locked.setInsertOnly(true);
+		locked.setName("Overflow");
 		ItemStack deck = new ItemStack(ECCatalogue.decks().get(0).get());
 		CardDeckItem.setDeck(deck, CardDeck.EMPTY.with(new CatalogueCard(GlobalPos.of(level.dimension(),
-				receiver.east(2)), station.label(), station.tally(), level.getGameTime())));
+				receiver.east(2)), station.label(), station.tally(), level.getGameTime())).with(new CatalogueCard(
+				GlobalPos.of(level.dimension(), lockedStation), locked.label(), locked.tally(), level.getGameTime())));
 		level.setBlockAndUpdate(receiver.east().above(), ECPneumatics.RECEIVING_STATION.get().defaultBlockState());
 		((ReceivingStationBlockEntity)level.getBlockEntity(receiver.east().above())).setName("Packing Room");
 		level.setBlockAndUpdate(receiver.east().below(), ECPneumatics.RECEIVING_STATION.get().defaultBlockState());
@@ -1466,7 +1803,7 @@ public final class VisualCheck
 	private static void screenshot(Minecraft mc, String name, int waitAfter)
 	{
 		STEPS.add(new Step(waitAfter, () -> {
-			// Where the camera was, from the scene's base, to tell a moved camera from a changed scene.
+			// Logged relative to the scene, so a moved camera can be told apart from a changed scene.
 			if(mc.player!=null&&base!=null)
 				EngineeredComputation.LOGGER.debug("Visual check: {} from ({}, {}, {}) facing {}/{}{}", name,
 						mc.player.getX()-base.getX(), mc.player.getEyeY()-base.getY(), mc.player.getZ()-base.getZ(),
@@ -1476,11 +1813,6 @@ public final class VisualCheck
 		}));
 	}
 
-	/**
-	 * An Energy Accepter on the disk pack network with power switched on: the terminal unpaid (402), the accepter's
-	 * screen unpaid then fed, and the terminal's storage bar tooltip with the network's power. Power goes back off
-	 * after.
-	 */
 	private static void queuePower(Minecraft mc)
 	{
 		TerminalMenu.Layout crafting = TerminalMenu.Layout.of(TerminalFeatures.CRAFTING);

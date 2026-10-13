@@ -20,14 +20,15 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import com.muddykat.engineeredcomputation.multiblock.era.EraDriveState;
-import com.muddykat.engineeredcomputation.pneumatic.ReceivingStationBlockEntity;
-import com.muddykat.engineeredcomputation.pneumatic.StationFilter;
-import com.muddykat.engineeredcomputation.pneumatic.TubeCarriers;
+import com.muddykat.engineeredcomputation.multiblock.drive.EraDriveState;
 import com.muddykat.engineeredcomputation.pneumatic.TubeNetwork;
-import com.muddykat.engineeredcomputation.pneumatic.TubeStationBlockEntity;
-import com.muddykat.engineeredcomputation.storage.CellContents;
+import com.muddykat.engineeredcomputation.pneumatic.carrier.TubeCarriers;
+import com.muddykat.engineeredcomputation.pneumatic.pressurizer.Pressure;
+import com.muddykat.engineeredcomputation.pneumatic.station.ReceivingStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.station.StationFilter;
+import com.muddykat.engineeredcomputation.pneumatic.station.TubeStationBlockEntity;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
+import com.muddykat.engineeredcomputation.storage.cell.CellContents;
 import com.muddykat.engineeredcomputation.terminal.TerminalStats;
 
 public final class CatalogueDesk
@@ -44,10 +45,15 @@ public final class CatalogueDesk
 	{
 	}
 
+	/**
+	 * Locked shows only what insert only stations have, this is kept apart from contents because it can't be requested.
+	 */
 	public record View(@Nullable BlockPos home, @Nullable BlockPos outlet, Map<ItemKey, Long> contents,
-			Set<ItemKey> unreachable, List<Source> sources, TerminalStats stats, List<BlockPos> outlets)
+			Map<ItemKey, Long> locked, Set<ItemKey> unreachable, List<Source> sources, TerminalStats stats,
+			List<BlockPos> outlets)
 	{
-		static final View EMPTY = new View(null, null, Map.of(), Set.of(), List.of(), TerminalStats.EMPTY, List.of());
+		static final View EMPTY = new View(null, null, Map.of(), Map.of(), Set.of(), List.of(), TerminalStats.EMPTY,
+				List.of());
 	}
 
 	public CatalogueDesk(Level level, BlockPos teletype, Supplier<BlockPos> chosenOutlet)
@@ -133,9 +139,7 @@ public final class CatalogueDesk
 			return items;
 		TubeNetwork network = TubeNetwork.of(level, home);
 		ItemKey key = ItemKey.of(items);
-		// Stations already holding the item first (most first), then ones whose filter card asks for it, then the
-		// catch-alls: stations taking new items, and block lists. A station with a card takes only what its filter
-		// allows, held items included.
+		// Prefer stations already holding the item, then ones that has a filter for it, then look for open stations.
 		List<Source> holding = new ArrayList<>();
 		List<Source> asking = new ArrayList<>();
 		List<Source> taking = new ArrayList<>();
@@ -166,7 +170,7 @@ public final class CatalogueDesk
 			while(room>0&&!left.isEmpty())
 			{
 				ItemStack carried = left.split(Math.min(room, left.getMaxStackSize()));
-				TubeCarriers.of(serverLevel).launch(serverLevel, carried, route);
+				TubeCarriers.of(serverLevel).send(carried, route);
 				room -= carried.getCount();
 			}
 			if(left.isEmpty())
@@ -180,11 +184,11 @@ public final class CatalogueDesk
 	{
 		BlockPos home = home(level, teletype);
 		if(home==null)
-			return new View(null, null, Map.of(), Set.of(), List.of(),
+			return new View(null, null, Map.of(), Map.of(), Set.of(), List.of(),
 					TerminalStats.ofCatalogue(0, 0, 0, 0, 0, false, true, false), List.of());
 		TubeNetwork network = TubeNetwork.of(level, home);
 		if(network.isTooLarge())
-			return new View(home, home, Map.of(), Set.of(), List.of(),
+			return new View(home, home, Map.of(), Map.of(), Set.of(), List.of(),
 					TerminalStats.ofCatalogue(0, 0, 0, 0, 0, true, false, false), List.of(home));
 		BlockPos chosen = chosenOutlet.get();
 		BlockPos outlet = chosen!=null&&network.getEnds().contains(chosen)
@@ -200,16 +204,18 @@ public final class CatalogueDesk
 		}
 
 		Map<ItemKey, Long> contents = new HashMap<>();
+		Map<ItemKey, Long> locked = new HashMap<>();
 		Set<ItemKey> reachable = new HashSet<>();
 		List<Source> sources = new ArrayList<>();
 		boolean coming = level instanceof ServerLevel serverLevel&&TubeCarriers.of(serverLevel).getCarriers().stream()
 				.anyMatch(carrier -> carrier.getDestination().equals(outlet));
 		for(CatalogueCard card : cards(network).values())
 		{
-			for(CellContents.Entry entry : card.tally().entries())
-				contents.merge(entry.key(), entry.count(), Long::sum);
 			TubeStationBlockEntity station = Catalogue.station(level, network, card);
-			if(station==null||network.route(card.station().pos(), outlet).isEmpty())
+			boolean insertOnly = station!=null&&station.isInsertOnly();
+			for(CellContents.Entry entry : card.tally().entries())
+				(insertOnly? locked: contents).merge(entry.key(), entry.count(), Long::sum);
+			if(insertOnly||station==null||network.route(card.station().pos(), outlet).isEmpty())
 				continue;
 			sources.add(new Source(station, card.tally()));
 			card.tally().entries().forEach(entry -> reachable.add(entry.key()));
@@ -217,8 +223,9 @@ public final class CatalogueDesk
 		}
 		Set<ItemKey> unreachable = new HashSet<>(contents.keySet());
 		unreachable.removeAll(reachable);
-		return new View(home, outlet, contents, unreachable, sources, TerminalStats.ofCatalogue(filed, capacity,
-				contents.size(), catalogues.size(), sources.size(), false, false, coming), outlets());
+		return new View(home, outlet, contents, locked, unreachable, sources, TerminalStats.ofCatalogue(filed, capacity,
+				contents.size(), catalogues.size(), sources.size(), false, false, coming,
+				!Pressure.high(level, network)), outlets());
 	}
 
 	private Map<GlobalPos, CatalogueCard> cards(TubeNetwork network)

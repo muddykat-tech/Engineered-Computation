@@ -1,0 +1,9 @@
+Pressurizers
+
+A tube network runs at low pressure on its own. Each carrier a station sends holds up to {carrier_size_unpressured} items, and the station has a {carrier_ticks} tick delay before sending the next.
+
+A Pressurizer anywhere on the network raises it to high pressure while it has fuel. Carriers then send {carrier_size_pressured}, and stations send them with a {carrier_pressured_ticks} tick delay. Autotubes are not affected by pressure.
+
+Right-click it to add coal or charcoal; hoppers can feed it too. Valid fuel items provide 128 high pressure carriers each. Tubes can connect to it on any side but its front.
+
+The teletype's catalogue tooltip shows whether its network is at high or low pressure.

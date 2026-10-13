@@ -5,6 +5,7 @@ import java.util.Map;
 
 import net.minecraft.world.item.Item;
 
+import com.muddykat.engineeredcomputation.client.guide.page.GuidePage;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 
 record Guide(ComputerEra era, List<GuidePage> pages, Map<Item, Integer> recipePages)

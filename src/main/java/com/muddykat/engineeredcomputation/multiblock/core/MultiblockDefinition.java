@@ -18,8 +18,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
@@ -126,7 +130,30 @@ public final class MultiblockDefinition<S extends MultiblockState>
 		for(int i = 0; i<placed.size(); i++)
 			level.markAndNotifyBlock(placed.get(i), level.getChunkAt(placed.get(i)), replaced.get(i), partState,
 					Block.UPDATE_ALL, 512);
+		sendToWatchers(serverLevel, placed);
 		return true;
+	}
+
+	/**
+	 * Sends the formed blocks to nearby players straight away, because some servers miss the usual update and players
+	 * will see casings until they rejoin.
+	 */
+	private static void sendToWatchers(ServerLevel level, List<BlockPos> placed)
+	{
+		for(BlockPos pos : placed)
+		{
+			List<ServerPlayer> watching = level.getChunkSource().chunkMap.getPlayers(new ChunkPos(pos), false);
+			if(watching.isEmpty())
+				continue;
+			Packet<?> block = new ClientboundBlockUpdatePacket(level, pos);
+			Packet<?> data = level.getBlockEntity(pos) instanceof MultiblockPartBlockEntity part? part.getUpdatePacket(): null;
+			for(ServerPlayer player : watching)
+			{
+				player.connection.send(block);
+				if(data!=null)
+					player.connection.send(data);
+			}
+		}
 	}
 
 	public void disassemble(Level level, MultiblockPartBlockEntity broken)

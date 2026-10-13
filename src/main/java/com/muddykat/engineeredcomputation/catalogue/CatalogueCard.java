@@ -10,7 +10,7 @@ import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
-import com.muddykat.engineeredcomputation.storage.CellContents;
+import com.muddykat.engineeredcomputation.storage.cell.CellContents;
 
 public record CatalogueCard(GlobalPos station, Component label, CellContents tally, long talliedAt)
 {

@@ -15,11 +15,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
+import com.muddykat.engineeredcomputation.connector.ConnectorPorts;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockDefinition;
-import com.muddykat.engineeredcomputation.network.CoveredCableBlock;
-import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
-import com.muddykat.engineeredcomputation.pneumatic.CoveredTubeBlock;
+import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlock;
+import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.autotube.AutotubeBlock;
+import com.muddykat.engineeredcomputation.pneumatic.tube.CoveredTubeBlock;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 
 public class AssemblyWrenchItem extends Item
@@ -40,9 +43,25 @@ public class AssemblyWrenchItem extends Item
 				takeCover(level, context.getClickedPos(), context.getPlayer());
 			return InteractionResult.sidedSuccess(level.isClientSide);
 		}
+		if(clicked.getBlock() instanceof AutotubeBlock||clicked.getBlock() instanceof ConnectorPorts.Connector)
+			return ConnectorPorts.wrench(level, context.getClickedPos(),
+					context.getClickLocation().subtract(Vec3.atLowerCornerOf(context.getClickedPos())))
+					? InteractionResult.sidedSuccess(level.isClientSide): InteractionResult.PASS;
+		return InteractionResult.PASS;
+	}
+
+	/**
+	 * Forms here rather than in useOn, because NeoForge treats useOn as placing blocks and fires a place event for
+	 * every part.
+	 */
+	@Override
+	public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context)
+	{
+		Level level = context.getLevel();
+		BlockState clicked = level.getBlockState(context.getClickedPos());
 		boolean isTemplateBlock = ECMultiblocks.formable().stream()
 				.anyMatch(definition -> clicked.is(definition.templateBlock()));
-		if(!isTemplateBlock)
+		if(!isTemplateBlock||context.getPlayer()!=null&&!context.getPlayer().getAbilities().mayBuild)
 			return InteractionResult.PASS;
 		if(level.isClientSide)
 			return InteractionResult.SUCCESS;

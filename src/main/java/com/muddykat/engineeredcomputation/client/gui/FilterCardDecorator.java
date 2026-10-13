@@ -5,10 +5,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.IItemDecorator;
 
-import com.muddykat.engineeredcomputation.adapter.ProgramEntry;
 import com.muddykat.engineeredcomputation.catalogue.FilterCardItem;
+import com.muddykat.engineeredcomputation.program.ProgramEntry;
 
-/** A Filter Card's filter drawn small in the bottom right of the card's icon (a tag's items in turn). */
 public final class FilterCardDecorator implements IItemDecorator
 {
 	private static final float SCALE = 0.5F;
@@ -21,7 +20,7 @@ public final class FilterCardDecorator implements IItemDecorator
 		if(icon.isEmpty())
 			return false;
 		graphics.pose().pushPose();
-		// In front of the card (items draw ~150 deep), scaled into the slot's bottom-right quarter.
+		// Items draw about 150 deep, so 160 should put the filter in front of the card.
 		graphics.pose().translate(x+8, y+8, 160);
 		graphics.pose().scale(SCALE, SCALE, SCALE);
 		graphics.renderItem(icon, 0, 0);

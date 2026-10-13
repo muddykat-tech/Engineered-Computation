@@ -19,6 +19,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
+import com.muddykat.engineeredcomputation.client.guide.page.GuidePage;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.registration.ECContent;
 
@@ -48,11 +49,11 @@ public abstract class GuideScreen extends Screen
 
 	protected abstract int contentY();
 
-	abstract int textColour();
+	public abstract int textColour();
 
-	abstract int linkColour(boolean hovered);
+	public abstract int linkColour(boolean hovered);
 
-	void drawSlot(GuiGraphics graphics, int x, int y, int size)
+	public void drawSlot(GuiGraphics graphics, int x, int y, int size)
 	{
 		if(size==18)
 			ECGui.slot(graphics, x, y);
@@ -60,7 +61,7 @@ public abstract class GuideScreen extends Screen
 			ECGui.sunken(graphics, x, y, size, size);
 	}
 
-	void drawArrow(GuiGraphics graphics, int x, int y)
+	public void drawArrow(GuiGraphics graphics, int x, int y)
 	{
 		int colour = 0xFF000000|textColour();
 		graphics.fill(x, y-1, x+11, y+1, colour);
@@ -75,12 +76,12 @@ public abstract class GuideScreen extends Screen
 		page = viewStart(page);
 	}
 
-	Font font()
+	public Font font()
 	{
 		return font;
 	}
 
-	void goTo(int target)
+	public void goTo(int target)
 	{
 		int start = viewStart(target);
 		if(start!=page)
@@ -148,7 +149,7 @@ public abstract class GuideScreen extends Screen
 	{
 	}
 
-	void renderStack(GuiGraphics graphics, ItemStack stack, int x, int y, int mouseX, int mouseY)
+	public void renderStack(GuiGraphics graphics, ItemStack stack, int x, int y, int mouseX, int mouseY)
 	{
 		if(stack.isEmpty())
 			return;
@@ -185,14 +186,14 @@ public abstract class GuideScreen extends Screen
 		});
 	}
 
-	void drawTitle(GuiGraphics graphics, Component title, int x, int y)
+	public void drawTitle(GuiGraphics graphics, Component title, int x, int y)
 	{
 		Component bold = title.copy().withStyle(ChatFormatting.BOLD);
 		int width = Math.min(font.width(bold), GuidePage.WIDTH);
 		drawFitted(graphics, bold, x+(GuidePage.WIDTH-width)/2, y, GuidePage.WIDTH, textColour());
 	}
 
-	void drawFitted(GuiGraphics graphics, Component text, int x, int y, int maxWidth, int colour)
+	public void drawFitted(GuiGraphics graphics, Component text, int x, int y, int maxWidth, int colour)
 	{
 		int width = font.width(text);
 		if(width<=maxWidth)

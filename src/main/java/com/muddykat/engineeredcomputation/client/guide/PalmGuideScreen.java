@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
+import com.muddykat.engineeredcomputation.client.guide.page.GuidePage;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 
 final class PalmGuideScreen extends GuideScreen
@@ -83,19 +84,19 @@ final class PalmGuideScreen extends GuideScreen
 	}
 
 	@Override
-	int textColour()
+	public int textColour()
 	{
 		return INK;
 	}
 
 	@Override
-	int linkColour(boolean hovered)
+	public int linkColour(boolean hovered)
 	{
 		return hovered? LINK_HOVERED: LINK;
 	}
 
 	@Override
-	void drawSlot(GuiGraphics graphics, int x, int y, int size)
+	public void drawSlot(GuiGraphics graphics, int x, int y, int size)
 	{
 		graphics.fill(x, y, x+size, y+size, 0xFF000000|FADED);
 		graphics.fill(x+1, y+1, x+size-1, y+size-1, SLOT_FACE);

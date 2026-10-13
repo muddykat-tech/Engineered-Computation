@@ -1,0 +1,19 @@
+Autotubes
+
+An Autotube sends items into the tubes when it gets a redstone signal. Place it against an inventory, such as a chest, with its intake facing it.
+
+Each time it recieves a redstone pulse, it will take items from the inventory and sends them into the tube network. The stack size can be set while sneak right-clicking it with an empty hand.
+
+When an item is sent into the network they have a priority in which they will attempt to deliver to.
+
+In order, this would be an advanced tube station with a filter for them, a tube station nearby. If no Tube Station will take the items, they then go to a Receiving Station or another Autotube.
+
+Destinations are handled via round-robin, if stack split is enabled, an odd split will go to the nearest first.
+
+An Autotube can also send items straight into an inventory or another Autotube next to it, on any side but its intake. These count as the nearest. Engineered Computation machines, such as a Floppy Disk Workstation, don't count as inventories.
+
+To cut a connection, right-click its tube arm with the Assembly Wrench. A cap closes the port, and nothing will go through it. Right-click the cap with the wrench to open it again. The intake can't be cut.
+
+If nothing on the network has room, the items stay in the inventory.
+
+An Observing Autotube is an upgrade that also fires automatically when the inventory it's connected with changes, such as when items are added or taken. It will still activate on redstone pulses.

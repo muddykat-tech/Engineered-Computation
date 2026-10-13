@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "engineered_computation:autotube"
+    },
+    {
+      "item": "minecraft:observer"
+    },
+    {
+      "item": "engineered_computation:vacuum_tube"
+    }
+  ],
+  "result": {
+    "id": "engineered_computation:observing_autotube",
+    "count": 1
+  }
+}

@@ -16,22 +16,22 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
-import com.muddykat.engineeredcomputation.network.ECPayloads;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECAdapters;
 import com.muddykat.engineeredcomputation.registration.ECBridges;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECCatalogue;
-import com.muddykat.engineeredcomputation.registration.ECCrafting;
 import com.muddykat.engineeredcomputation.registration.ECContent;
+import com.muddykat.engineeredcomputation.registration.ECCrafting;
+import com.muddykat.engineeredcomputation.registration.ECDataCells;
 import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
+import com.muddykat.engineeredcomputation.registration.ECPayloads;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.registration.ECPower;
 import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
-import com.muddykat.engineeredcomputation.storage.ECDataCells;
 
 @Mod(EngineeredComputation.MODID)
 public class EngineeredComputation {
@@ -76,10 +76,13 @@ public class EngineeredComputation {
             }).build());
 
     public EngineeredComputation(IEventBus modEventBus, ModContainer modContainer) {
+        LOGGER.info("Engineered Computation Starting");
         modContainer.registerConfig(ModConfig.Type.SERVER, ECConfig.SPEC);
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
+
+        LOGGER.info("EC Initialization");
 
         ECContent.init();
         ECDataCells.init();
@@ -93,6 +96,9 @@ public class EngineeredComputation {
         ECCrafting.init();
         ECPneumatics.init();
         ECCatalogue.init();
+
+        LOGGER.info("EC Registration");
+
         ECRegistrationHolder.register(modEventBus);
         ECDataComponents.register(modEventBus);
         ECMenuTypes.register(modEventBus);
@@ -106,5 +112,7 @@ public class EngineeredComputation {
         ECPneumatics.register(modEventBus);
         ECPayloads.register(modEventBus);
         StorageNetwork.register();
+
+        LOGGER.info("EC Loaded");
     }
 }

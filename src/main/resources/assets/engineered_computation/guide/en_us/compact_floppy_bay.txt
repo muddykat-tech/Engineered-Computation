@@ -1,0 +1,5 @@
+Compact Floppy Bay
+
+The Compact Floppy Bay holds four 3½-inch floppies. It needs a floppy era processor on the network, such as the Floppy Disk Processor or Floppy Disk Workstation.
+
+Sneak-right-click a bay with a disk to put it in, or with an empty hand to take it out. Right-click elsewhere to open its slots.

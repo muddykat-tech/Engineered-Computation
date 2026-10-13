@@ -27,16 +27,11 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import com.muddykat.engineeredcomputation.crafting.Pattern;
-import com.muddykat.engineeredcomputation.crafting.PatternFillPayload;
-import com.muddykat.engineeredcomputation.crafting.PatternFloppyMenu;
+import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
+import com.muddykat.engineeredcomputation.crafting.pattern.PatternFillPayload;
+import com.muddykat.engineeredcomputation.crafting.pattern.PatternFloppyMenu;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 
-/**
- * JEI's [+] on any recipe, into the held pattern floppy (PatternFloppyMenu.fill). A crafting recipe becomes a
- * crafting pattern, laid out as JEI shows it; anything else a processing pattern of its item inputs and outputs, with
- * counts, the same items merged into one slot, and an ingredient JEI shows as a tag kept as that tag.
- */
 final class PatternTransfer implements IUniversalRecipeTransferHandler<PatternFloppyMenu>
 {
 	private final IRecipeTransferHandlerHelper helper;
@@ -76,7 +71,6 @@ final class PatternTransfer implements IUniversalRecipeTransferHandler<PatternFl
 		return null;
 	}
 
-	/** JEI's crafting grid, slot for slot; the server works out the output. */
 	@Nullable
 	private static Pattern crafting(IRecipeSlotsView recipeSlots)
 	{
@@ -93,17 +87,16 @@ final class PatternTransfer implements IUniversalRecipeTransferHandler<PatternFl
 		Slots outputs = Slots.of(recipeSlots.getSlotViews(RecipeIngredientRole.OUTPUT));
 		if(inputs.stacks().size()>Pattern.INPUTS)
 			return null;
-		// Outputs past the pattern's last are a recipe's extras (chance byproducts and the like): left off.
+		// Extra outputs past the pattern's last slot are chance byproducts, so they're left off.
 		return new Pattern(Pattern.Mode.ABSTRACT, inputs.stacks(), outputs.stacks(), inputs.tags(), outputs.tags());
 	}
 
-	/** The item JEI shows in a slot right now (so a cycling ingredient lands as what the player saw), if any. */
+	/** Uses the ingredient JEI is showing right now, so a cycling one lands as what the player saw. */
 	static ItemStack shown(IRecipeSlotView slot)
 	{
 		return slot.getDisplayedItemStack().or(() -> slot.getItemStacks().findFirst()).orElse(ItemStack.EMPTY).copy();
 	}
 
-	/** Slots' items, the same item (and tag) merged into one with the counts added up. */
 	private record Slots(List<ItemStack> stacks, Map<Integer, TagKey<Item>> tags)
 	{
 		static Slots of(List<IRecipeSlotView> views)

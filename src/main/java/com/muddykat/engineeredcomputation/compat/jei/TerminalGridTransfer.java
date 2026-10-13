@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -26,36 +27,36 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
-import com.muddykat.engineeredcomputation.terminal.CraftingGrid;
-import com.muddykat.engineeredcomputation.terminal.GridFillPayload;
-import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
+import com.muddykat.engineeredcomputation.terminal.crafting.CraftingGrid;
+import com.muddykat.engineeredcomputation.terminal.crafting.GridFillPayload;
+import com.muddykat.engineeredcomputation.terminal.crafting.VideoTerminalMenu;
 
-/**
- * JEI's [+] on a crafting recipe, into a terminal's crafting grid (the server lays it out: TerminalMenu.fillGrid).
- * Slots the network - or, for an unlinked grid, the player's inventory too - can't fill are marked red, but the
- * transfer still goes ahead: a linked slot is only a link, and the rest of the recipe is laid out regardless.
- */
-final class TerminalGridTransfer implements IRecipeTransferHandler<TerminalMenu, RecipeHolder<CraftingRecipe>>
+/** Missing items are marked red but the transfer still happens, since a linked slot only needs a link. */
+final class TerminalGridTransfer<M extends VideoTerminalMenu>
+		implements IRecipeTransferHandler<M, RecipeHolder<CraftingRecipe>>
 {
 	private final IRecipeTransferHandlerHelper helper;
+	private final Class<M> menuClass;
+	private final Supplier<MenuType<M>> menuType;
 
-	TerminalGridTransfer(IRecipeTransferHandlerHelper helper)
+	TerminalGridTransfer(IRecipeTransferHandlerHelper helper, Class<M> menuClass, Supplier<MenuType<M>> menuType)
 	{
 		this.helper = helper;
+		this.menuClass = menuClass;
+		this.menuType = menuType;
 	}
 
 	@Override
-	public Class<? extends TerminalMenu> getContainerClass()
+	public Class<? extends M> getContainerClass()
 	{
-		return TerminalMenu.class;
+		return menuClass;
 	}
 
 	@Override
-	public Optional<MenuType<TerminalMenu>> getMenuType()
+	public Optional<MenuType<M>> getMenuType()
 	{
-		return Optional.of(ECMenuTypes.TERMINAL.get());
+		return Optional.of(menuType.get());
 	}
 
 	@Override
@@ -67,7 +68,7 @@ final class TerminalGridTransfer implements IRecipeTransferHandler<TerminalMenu,
 	@Override
 	@Nullable
 	public IRecipeTransferError transferRecipe(
-			IRecipeTransferContext<RecipeHolder<CraftingRecipe>, TerminalMenu> context, boolean doTransfer)
+			IRecipeTransferContext<RecipeHolder<CraftingRecipe>, M> context, boolean doTransfer)
 	{
 		IRecipeTransferError error = transfer(context.getContainer(), context.getRecipeSlots(), context.getPlayer(),
 				context.isMaxTransfer(), doTransfer);
@@ -81,18 +82,16 @@ final class TerminalGridTransfer implements IRecipeTransferHandler<TerminalMenu,
 	@Deprecated
 	@SuppressWarnings("removal")
 	@Nullable
-	public IRecipeTransferError transferRecipe(TerminalMenu menu, RecipeHolder<CraftingRecipe> recipe,
+	public IRecipeTransferError transferRecipe(M menu, RecipeHolder<CraftingRecipe> recipe,
 			IRecipeSlotsView recipeSlots, Player player, boolean maxTransfer, boolean doTransfer)
 	{
 		return transfer(menu, recipeSlots, player, maxTransfer, doTransfer);
 	}
 
 	@Nullable
-	private IRecipeTransferError transfer(TerminalMenu menu, IRecipeSlotsView recipeSlots, Player player,
+	private IRecipeTransferError transfer(VideoTerminalMenu menu, IRecipeSlotsView recipeSlots, Player player,
 			boolean maxTransfer, boolean doTransfer)
 	{
-		if(!menu.getFeatures().crafting())
-			return helper.createInternalError();
 		List<IRecipeSlotView> inputs = recipeSlots.getSlotViews(RecipeIngredientRole.INPUT);
 		if(inputs.size()>CraftingGrid.SIZE)
 			return helper.createInternalError();
@@ -113,8 +112,7 @@ final class TerminalGridTransfer implements IRecipeTransferHandler<TerminalMenu,
 		return missing.isEmpty()? null: new MissingItemsError(missing, linked);
 	}
 
-	/** Counts one of any of {@code stacks} as used, if there's one left (in the network, or the inventory too). */
-	private static boolean reserve(List<ItemStack> stacks, Map<ItemKey, Long> available, TerminalMenu menu,
+	private static boolean reserve(List<ItemStack> stacks, Map<ItemKey, Long> available, VideoTerminalMenu menu,
 			Player player, boolean linked)
 	{
 		for(ItemStack stack : stacks)

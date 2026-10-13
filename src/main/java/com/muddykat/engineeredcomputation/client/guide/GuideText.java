@@ -17,7 +17,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
-import com.muddykat.engineeredcomputation.item.GuideTexts;
+import com.muddykat.engineeredcomputation.guide.GuideTexts;
 
 public final class GuideText
 {

@@ -3,12 +3,10 @@ package com.muddykat.engineeredcomputation.adapter;
 import net.minecraft.world.item.ItemStack;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
+import com.muddykat.engineeredcomputation.program.Program;
+import com.muddykat.engineeredcomputation.program.ProgramFloppyItem;
 import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 
-/**
- * What an adapter moves: with an allow list, what the held item (or Program Floppy) matches; with a block list
- * ({@code blocking}), everything else - so an empty block list blocks nothing.
- */
 public record AdapterFilter(ItemStack held, boolean blocking)
 {
 	public static boolean isProgram(ItemStack stack)

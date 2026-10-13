@@ -13,6 +13,13 @@ import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
+import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerState;
+import com.muddykat.engineeredcomputation.crafting.order.CraftingOrder;
+import com.muddykat.engineeredcomputation.crafting.order.OrderSummary;
+import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
+import com.muddykat.engineeredcomputation.crafting.pattern.PatternOffer;
+import com.muddykat.engineeredcomputation.crafting.pattern.ProvidedPattern;
+import com.muddykat.engineeredcomputation.crafting.processor.DataProcessorState;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.storage.ItemKey;

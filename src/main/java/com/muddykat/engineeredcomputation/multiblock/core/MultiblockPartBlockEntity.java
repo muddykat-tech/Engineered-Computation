@@ -33,6 +33,7 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 	private MultiblockState state;
 	private boolean disassembling;
 	private CompoundTag clientSyncData = new CompoundTag();
+	private boolean drawn;
 
 	public MultiblockPartBlockEntity(BlockPos pos, BlockState blockState)
 	{
@@ -195,19 +196,27 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 	@Override
 	public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider registries)
 	{
+		BlockPos before = posInMultiblock;
 		super.onDataPacket(net, pkt, registries);
-		onClientPositionKnown();
+		onClientPositionKnown(before);
 	}
 
 	@Override
 	public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries)
 	{
+		BlockPos before = posInMultiblock;
 		super.handleUpdateTag(tag, registries);
-		onClientPositionKnown();
+		onClientPositionKnown(before);
 	}
 
-	private void onClientPositionKnown()
+	/**
+	 * Only redraws when the part's position changes, because each redraw rebuilds the chunk and makes animations stutter
+	 */
+	private void onClientPositionKnown(BlockPos before)
 	{
+		if(drawn&&posInMultiblock.equals(before))
+			return;
+		drawn = true;
 		requestModelDataUpdate();
 		if(level!=null&&level.isClientSide)
 			level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 8);

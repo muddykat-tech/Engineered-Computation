@@ -13,10 +13,10 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 
-import com.muddykat.engineeredcomputation.network.CoveredCableBlock;
-import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
-import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
+import com.muddykat.engineeredcomputation.connector.ConnectorBlockEntity;
+import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlock;
+import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlockEntity;
+import com.muddykat.engineeredcomputation.network.cable.NetworkCableBlock;
 
 public final class ECCables
 {
@@ -39,6 +39,10 @@ public final class ECCables
 					.mapColor(MapColor.NONE).strength(0.6F).sound(SoundType.COPPER).noOcclusion()
 					.isValidSpawn((state, level, pos, entity) -> false).isRedstoneConductor((state, level, pos) -> false)
 					.isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)));
+	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ConnectorBlockEntity>> CABLE_ENTITY =
+			ECRegistrationHolder.BLOCK_ENTITIES.register("network_cable", () -> BlockEntityType.Builder.of(
+					(pos, state) -> new ConnectorBlockEntity(ECCables.CABLE_ENTITY.get(), pos, state), BLOCK.get())
+					.build(null));
 	public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CoveredCableBlockEntity>> COVERED_ENTITY =
 			ECRegistrationHolder.BLOCK_ENTITIES.register("covered_network_cable", () -> BlockEntityType.Builder.of(
 					CoveredCableBlockEntity::new, COVERED.get(), CLEAR_COVERED.get()).build(null));
@@ -75,7 +79,9 @@ public final class ECCables
 	{
 		modEventBus.addListener(RegisterCapabilitiesEvent.class, event -> event.registerBlock(
 				ECCapabilities.NETWORK_MEMBER,
-				(level, pos, state, blockEntity, context) -> NetworkCableBlock.NETWORK_MEMBER,
+				(level, pos, state, blockEntity, side) ->
+						side!=null&&blockEntity instanceof ConnectorBlockEntity connector&&connector.isCut(side)
+								? null: NetworkCableBlock.NETWORK_MEMBER,
 				BLOCK.get(), COVERED.get(), CLEAR_COVERED.get()));
 		NeoForge.EVENT_BUS.addListener(CoveredCableBlock::onRightClickBlock);
 	}

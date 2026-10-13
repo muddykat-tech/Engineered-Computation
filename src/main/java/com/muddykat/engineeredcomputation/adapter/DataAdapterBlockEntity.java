@@ -23,15 +23,14 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
-import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
+import com.muddykat.engineeredcomputation.network.cable.NetworkCableBlock;
 import com.muddykat.engineeredcomputation.registration.ECAdapters;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
 
 public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 {
-	/** Synced to the menu: status, items per move, ticks between, on/off, block list. */
 	static final int DATA_COUNT = 5;
 
 	private final SimpleContainer filter = new SimpleContainer(1)
@@ -48,7 +47,6 @@ public class DataAdapterBlockEntity extends BlockEntity implements MenuProvider
 	private int ticks;
 	private int cooldown;
 	private boolean enabled = true;
-	/** Whether the filter lists what not to move (a block list) rather than what to move (an allow list). */
 	private boolean blocking;
 	private AdapterStatus status = AdapterStatus.SERVICE_UNAVAILABLE;
 

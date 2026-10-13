@@ -18,7 +18,7 @@ import net.neoforged.neoforge.client.model.BakedModelWrapper;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.common.util.TriState;
 
-import com.muddykat.engineeredcomputation.network.CoveredCableBlockEntity;
+import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlockEntity;
 
 public class CoveredCableModel extends BakedModelWrapper<BakedModel>
 {

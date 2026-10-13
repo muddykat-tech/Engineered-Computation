@@ -4,11 +4,13 @@ Pneumatic Tubes carry items between stations.
 
 To add or remove a tube's window, sneak while right-clicking it with an empty hand, or craft one tube into the other.
 
-To tint a window, right-click it with a dye. The dye won't be consumed. Windowed tubes placed with a dye in the off hand will be tinted.
+To tint a window, right-click it with a dye. The dye won't be consumed. Windowed tubes placed with a dye in the offhand will be tinted.
 
 To hide a tube, sneak while placing a block on it to cover it. Breaking a covered tube, or using the Assembly Wrench on it will remove the cover.
 
-Place a Tube Station against an inventory, such as a chest, with its hatch facing it. It will send that inventory's items when requested, one stack per carrier. Right-click it to name it, and to choose whether it takes new item types.
+Place a Tube Station against an inventory, such as a chest, with its hatch facing it. It will pull that inventory's items when requested by the network, this is done via a carrier. How much each carrier holds, and how often they can be sent, depends on the network's pressure (see Pressurizers). These stations can also be named, and configured on whether it takes new item types.
+
+To stop a tube joining connecting to something unwanted, right-click the connection with the Assembly Wrench. This will close that side with a cap, you can then Right-click the cap with the wrench again to undo this. Covering a tube will keep these settings.
 
 Items are routed to Receiving Stations. Right-click one to retrieve items, name it, or set it to eject items through its front into an inventory, or onto the ground if there's none. Hoppers can also pull items out of it. If the tray is full, items will wait in the tube until there's room.
 

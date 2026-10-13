@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " T ",
+    "IFI",
+    "IPI"
+  ],
+  "key": {
+    "T": {
+      "item": "engineered_computation:pneumatic_tube"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "F": {
+      "item": "minecraft:furnace"
+    },
+    "P": {
+      "item": "minecraft:piston"
+    }
+  },
+  "result": {
+    "id": "engineered_computation:pressurizer",
+    "count": 1
+  }
+}

@@ -26,13 +26,26 @@ import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.EngineeredComputation;
+import com.muddykat.engineeredcomputation.connector.ConnectorBlockEntity;
+import com.muddykat.engineeredcomputation.connector.ConnectorPorts;
 import com.muddykat.engineeredcomputation.gametest.TestCategory;
-import com.muddykat.engineeredcomputation.network.ECCapabilities;
-import com.muddykat.engineeredcomputation.network.NetworkCableBlock;
 import com.muddykat.engineeredcomputation.network.StorageBridgeBlock;
+import com.muddykat.engineeredcomputation.network.cable.NetworkCableBlock;
+import com.muddykat.engineeredcomputation.pneumatic.carrier.Carrier;
+import com.muddykat.engineeredcomputation.pneumatic.carrier.TubeCarriers;
+import com.muddykat.engineeredcomputation.pneumatic.pressurizer.PressurizerBlock;
+import com.muddykat.engineeredcomputation.pneumatic.pressurizer.PressurizerBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.station.ReceivingStationBlock;
+import com.muddykat.engineeredcomputation.pneumatic.station.ReceivingStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.station.TubeStationBlock;
+import com.muddykat.engineeredcomputation.pneumatic.station.TubeStationBlockEntity;
+import com.muddykat.engineeredcomputation.pneumatic.tube.CoveredTubeBlock;
+import com.muddykat.engineeredcomputation.pneumatic.tube.PneumaticTubeBlock;
 import com.muddykat.engineeredcomputation.registration.ECBridges;
 import com.muddykat.engineeredcomputation.registration.ECCables;
+import com.muddykat.engineeredcomputation.registration.ECCapabilities;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
@@ -67,6 +80,16 @@ public final class PneumaticGameTests
 	}
 
 	private static Line line(GameTestHelper helper, int cobblestone)
+	{
+		Line line = lowPressureLine(helper, cobblestone);
+		BlockPos pressurizer = place(helper, 4, 1, 2, ECPneumatics.PRESSURIZER.get().defaultBlockState()
+				.setValue(PressurizerBlock.FACING, Direction.SOUTH));
+		((PressurizerBlockEntity)helper.getLevel().getBlockEntity(pressurizer)).fuelContainer()
+				.setItem(0, new ItemStack(Items.COAL, 64));
+		return line;
+	}
+
+	private static Line lowPressureLine(GameTestHelper helper, int cobblestone)
 	{
 		BlockPos chest = place(helper, 1, 1, 1, Blocks.CHEST.defaultBlockState());
 		BlockPos station = place(helper, 2, 1, 1, station(Direction.WEST));
@@ -113,6 +136,76 @@ public final class PneumaticGameTests
 					"tray should hold all 100 cobblestone");
 			helper.assertTrue(line.stationEntity(level).getPendingRequests()==0, "request should be met");
 		});
+	}
+
+	@GameTest(template = TEMPLATE)
+	public static void lowPressureCarriersAreSmallAndSpacedOut(GameTestHelper helper)
+	{
+		ServerLevel level = helper.getLevel();
+		Line line = lowPressureLine(helper, 20);
+		check(helper, line.stationEntity(level).request(COBBLESTONE, 20, line.receiver()), "request should be taken");
+		helper.runAfterDelay(3, () -> {
+			List<Carrier> flying = carriersTo(level, line.receiver());
+			check(helper, flying.size()==1&&flying.get(0).getItems().getCount()==ECConfig.carrierItems(false),
+					"a low pressure carrier should hold "+ECConfig.carrierItems(false));
+			helper.runAfterDelay(ECConfig.carrierTicks(false)/2, () -> {
+				check(helper, carriersTo(level, line.receiver()).size()==1,
+						"the next carrier left before the low pressure wait was up");
+				helper.succeedWhen(() -> helper.assertTrue(line.receiverEntity(level).getTray()
+						.countItem(Items.COBBLESTONE)==20, "the tray should get all 20 in the end"));
+			});
+		});
+	}
+
+	@GameTest(template = TEMPLATE)
+	public static void sentItemsLeaveAsPressureAllows(GameTestHelper helper)
+	{
+		ServerLevel level = helper.getLevel();
+		Line line = lowPressureLine(helper, 0);
+		List<BlockPos> route = TubeNetwork.of(level, line.station()).route(line.station(), line.receiver());
+		TubeCarriers.of(level).send(new ItemStack(Items.COBBLESTONE, 20), route);
+		helper.runAfterDelay(1, () -> {
+			int size = ECConfig.carrierItems(false);
+			check(helper, carriersTo(level, line.receiver()).stream().mapToInt(c -> c.getItems().getCount()).sum()==size
+					&&TubeCarriers.of(level).waitingAt(line.station())==20-size,
+					"the first low pressure carrier should take "+size+" and leave the rest waiting");
+			helper.succeedWhen(() -> helper.assertTrue(line.receiverEntity(level).getTray()
+					.countItem(Items.COBBLESTONE)==20, "all 20 should arrive in the end"));
+		});
+	}
+
+	@GameTest(template = TEMPLATE)
+	public static void aPressurizerBurnsFuelForHighPressure(GameTestHelper helper)
+	{
+		ServerLevel level = helper.getLevel();
+		Line line = line(helper, 64);
+		PressurizerBlockEntity pressurizer = (PressurizerBlockEntity)level.getBlockEntity(
+				helper.absolutePos(new BlockPos(4, 1, 2)));
+		check(helper, level.getBlockState(pressurizer.getBlockPos()).getValue(PressurizerBlock.LIT),
+				"a fuelled Pressurizer should be lit");
+		check(helper, line.stationEntity(level).request(COBBLESTONE, 64, line.receiver()), "request should be taken");
+		helper.runAfterDelay(3, () -> {
+			List<Carrier> flying = carriersTo(level, line.receiver());
+			check(helper, flying.size()==1&&flying.get(0).getItems().getCount()==64,
+					"a high pressure carrier should take the whole stack");
+			check(helper, pressurizer.fuelContainer().getItem(0).getCount()==63
+							&&pressurizer.getCharge()==ECConfig.carriersPerFuel()-1,
+					"the carrier should have burned a coal and drawn a charge from it");
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = TEMPLATE)
+	public static void aPressurizerOnlyBurnsCoal(GameTestHelper helper)
+	{
+		ServerLevel level = helper.getLevel();
+		BlockPos at = place(helper, 3, 1, 3, ECPneumatics.PRESSURIZER.get().defaultBlockState());
+		PressurizerBlockEntity pressurizer = (PressurizerBlockEntity)level.getBlockEntity(at);
+		check(helper, pressurizer.fuelContainer().canPlaceItem(0, new ItemStack(Items.CHARCOAL))
+				&&!pressurizer.fuelContainer().canPlaceItem(0, new ItemStack(Items.OAK_LOG)),
+				"it should take coal and charcoal, and nothing else");
+		check(helper, !pressurizer.hasPressure()&&!pressurizer.draw(), "an empty Pressurizer gave pressure");
+		helper.succeed();
 	}
 
 	@GameTest(template = TEMPLATE)
@@ -403,7 +496,7 @@ public final class PneumaticGameTests
 	public static void aCoveredTubeStillCarries(GameTestHelper helper)
 	{
 		ServerLevel level = helper.getLevel();
-		Line line = line(helper, 10);
+		Line line = lowPressureLine(helper, 10);
 		BlockPos middle = helper.absolutePos(new BlockPos(4, 1, 1));
 		level.setBlockAndUpdate(middle, level.getBlockState(middle).setValue(PneumaticTubeBlock.WINDOWED, true)
 				.setValue(PneumaticTubeBlock.TINT, PneumaticTubeBlock.tintOf(DyeColor.GREEN)));
@@ -447,6 +540,64 @@ public final class PneumaticGameTests
 		level.getBlockState(pos).onDestroyedByPlayer(level, pos, player, true, level.getFluidState(pos));
 		check(helper, level.getBlockState(pos).is(ECPneumatics.TUBE.get()), "the tube should stay");
 		helper.assertItemEntityPresent(Items.OAK_PLANKS, new BlockPos(3, 1, 3), 1.5);
+		helper.succeed();
+	}
+
+	@GameTest(template = TEMPLATE)
+	public static void theWrenchCutsAndReopensATube(GameTestHelper helper)
+	{
+		ServerLevel level = helper.getLevel();
+		Line line = line(helper, 10);
+		BlockPos tube = helper.absolutePos(new BlockPos(4, 1, 1));
+		check(helper, ConnectorPorts.wrench(level, tube, new Vec3(14/16.0, 0.5, 0.5)), "wrenching the arm did nothing");
+		check(helper, ConnectorBlockEntity.isCut(level, tube, Direction.EAST), "the arm's side should be cut");
+		check(helper, !level.getBlockState(tube).getValue(PneumaticTubeBlock.CONNECTIONS.get(Direction.EAST))
+				&&!level.getBlockState(tube.east()).getValue(PneumaticTubeBlock.CONNECTIONS.get(Direction.WEST)),
+				"the tubes still join across the cut");
+		check(helper, !line.stationEntity(level).request(COBBLESTONE, 10, line.receiver()),
+				"a request went through the cut");
+		check(helper, ConnectorPorts.wrench(level, tube, new Vec3(12.5/16, 0.5, 0.5)), "wrenching the cap did nothing");
+		check(helper, !ConnectorBlockEntity.isCut(level, tube, Direction.EAST)
+				&&level.getBlockState(tube).getValue(PneumaticTubeBlock.CONNECTIONS.get(Direction.EAST)),
+				"the reopened side should join again");
+		check(helper, line.stationEntity(level).request(COBBLESTONE, 10, line.receiver()),
+				"a request should go through the reopened tube");
+		helper.succeed();
+	}
+
+	@GameTest(template = TEMPLATE)
+	public static void aCutGoesWithItsNeighbour(GameTestHelper helper)
+	{
+		ServerLevel level = helper.getLevel();
+		line(helper, 0);
+		BlockPos tube = helper.absolutePos(new BlockPos(4, 1, 1));
+		ConnectorPorts.wrench(level, tube, new Vec3(14/16.0, 0.5, 0.5));
+		level.setBlockAndUpdate(tube.east(), Blocks.AIR.defaultBlockState());
+		check(helper, !ConnectorBlockEntity.isCut(level, tube, Direction.EAST),
+				"the cut stayed with nothing left to cut off");
+		level.setBlockAndUpdate(tube.east(), tube());
+		check(helper, level.getBlockState(tube).getValue(PneumaticTubeBlock.CONNECTIONS.get(Direction.EAST)),
+				"a tube put back where the cut one was should join");
+		helper.succeed();
+	}
+
+	@GameTest(template = TEMPLATE)
+	public static void aCutOutlastsACover(GameTestHelper helper)
+	{
+		ServerLevel level = helper.getLevel();
+		Line line = line(helper, 10);
+		BlockPos tube = helper.absolutePos(new BlockPos(4, 1, 1));
+		ConnectorPorts.wrench(level, tube, new Vec3(14/16.0, 0.5, 0.5));
+		check(helper, CoveredTubeBlock.cover(level, tube, Blocks.STONE.defaultBlockState()), "the tube wasn't covered");
+		check(helper, ConnectorBlockEntity.isCut(level, tube, Direction.EAST)
+				&&level.getCapability(ECCapabilities.TUBE_MEMBER, tube, Direction.EAST)==null,
+				"covering the tube lost its cut");
+		check(helper, !ConnectorPorts.wrench(level, tube, new Vec3(14/16.0, 0.5, 0.5)),
+				"the wrench cut a covered tube rather than leaving it to take the cover off");
+		CoveredTubeBlock.uncover(level, tube);
+		check(helper, ConnectorBlockEntity.isCut(level, tube, Direction.EAST), "uncovering the tube lost its cut");
+		check(helper, !line.stationEntity(level).request(COBBLESTONE, 10, line.receiver()),
+				"a request went through the cut");
 		helper.succeed();
 	}
 

@@ -7,13 +7,9 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 
 import com.muddykat.engineeredcomputation.era.ComputerEra;
-import com.muddykat.engineeredcomputation.storage.CellInventory;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
+import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
 
-/**
- * What a terminal shows about its network: storage use, why it might be locked, and (while power is enabled) its cost
- * in RF per tick and the RF its Energy Accepters hold.
- */
 public record TerminalStats(long usedBytes, long totalBytes, long usedTypes, long totalTypes, int cells, int lockBits,
 		long powerCost, long powerStored, long powerCapacity)
 {
@@ -22,6 +18,7 @@ public record TerminalStats(long usedBytes, long totalBytes, long usedTypes, lon
 	private static final int NO_OUTLET = 1<<28;
 	private static final int POWER_ON = 1<<27;
 	private static final int UNPOWERED = 1<<26;
+	private static final int LOW_PRESSURE = 1<<25;
 	private static final int NO_PROCESSOR = 8;
 
 	public static final TerminalStats EMPTY = new TerminalStats(0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -66,10 +63,6 @@ public record TerminalStats(long usedBytes, long totalBytes, long usedTypes, lon
 		return new TerminalStats(usedBytes, totalBytes, usedTypes, totalTypes, cells, lockBits, 0, 0, 0);
 	}
 
-	/**
-	 * These stats with the network's power: whether power is enabled and paid, its cost, and its accepters' RF (all 0
-	 * while power is disabled).
-	 */
 	public TerminalStats withPower(boolean enabled, boolean powered, long cost, long stored, long capacity)
 	{
 		if(!enabled)
@@ -84,7 +77,6 @@ public record TerminalStats(long usedBytes, long totalBytes, long usedTypes, lon
 		return (lockBits&POWER_ON)!=0;
 	}
 
-	/** Whether power is enabled and the network can't pay for its machines (402). */
 	public boolean unpowered()
 	{
 		return (lockBits&UNPOWERED)!=0;
@@ -93,8 +85,20 @@ public record TerminalStats(long usedBytes, long totalBytes, long usedTypes, lon
 	public static TerminalStats ofCatalogue(int cards, int capacity, int kinds, int catalogues, int reachable,
 			boolean tooLarge, boolean noOutlet, boolean carriersComing)
 	{
-		int lockBits = (tooLarge? TOO_LARGE: 0)|(noOutlet? NO_OUTLET: 0)|(carriersComing? PROCESSING: 0);
+		return ofCatalogue(cards, capacity, kinds, catalogues, reachable, tooLarge, noOutlet, carriersComing, false);
+	}
+
+	public static TerminalStats ofCatalogue(int cards, int capacity, int kinds, int catalogues, int reachable,
+			boolean tooLarge, boolean noOutlet, boolean carriersComing, boolean lowPressure)
+	{
+		int lockBits = (tooLarge? TOO_LARGE: 0)|(noOutlet? NO_OUTLET: 0)|(carriersComing? PROCESSING: 0)
+				|(lowPressure? LOW_PRESSURE: 0);
 		return new TerminalStats(cards, capacity, kinds, reachable, catalogues, lockBits, 0, 0, 0);
+	}
+
+	public boolean lowPressure()
+	{
+		return (lockBits&LOW_PRESSURE)!=0;
 	}
 
 	public boolean noOutlet()

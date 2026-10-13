@@ -5,3 +5,5 @@ Network Cables connect drives and terminals into a storage network.
 Cables hold no storage. They connect automatically to any terminal or cable they touch, and to a drive at its network port. All eras use the same cable.
 
 To hide a cable, sneak while placing a block on it to cover it. Breaking a covered cable, or using the Assembly Wrench on it will remove the cover.
+
+To stop a cable joining something it touches, right-click that arm with the Assembly Wrench. Right-click it with the wrench again to join it. Covering a cable keeps these settings.

@@ -11,10 +11,9 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import com.muddykat.engineeredcomputation.adapter.ProgramEditPayload;
-import com.muddykat.engineeredcomputation.adapter.ProgramFloppyScreen;
+import com.muddykat.engineeredcomputation.client.screen.program.ProgramFloppyScreen;
+import com.muddykat.engineeredcomputation.program.ProgramEditPayload;
 
-/** Items dragged from JEI onto a program floppy's entries, as if set with the item in hand. */
 final class ProgramGhostHandler implements IGhostIngredientHandler<ProgramFloppyScreen>
 {
 	@Override
