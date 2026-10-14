@@ -12,9 +12,11 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.BakedModelWrapper;
@@ -68,6 +70,12 @@ public class CappedModel extends BakedModelWrapper<BakedModel>
 				quads.addAll(Minecraft.getInstance().getModelManager().getModel(cap(caps, face))
 						.getQuads(state, null, rand, ModelData.EMPTY, RenderType.solid()));
 		return quads;
+	}
+
+	@Override
+	public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data)
+	{
+		return super.getModelData(level, pos, state, BlockEntityModelData.orFromBlockEntity(level, pos, data, ConnectorBlockEntity.CUT));
 	}
 
 	@Override

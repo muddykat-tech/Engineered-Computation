@@ -69,7 +69,7 @@ final class TapeReels
 	{
 		boolean present = (part.getClientSyncData().getInt(EraDriveState.FILLED_SLOTS)&1)!=0;
 		int tierBits = part.getClientSyncData().getInt(EraDriveState.CELL_TIERS)&0xF;
-		double now = AnimationClock.now(partialTick);
+		double now = AnimationClock.now(part.getLevel(), partialTick);
 		State state = states.computeIfAbsent(part, p -> {
 			State initial = new State();
 			initial.present = present;

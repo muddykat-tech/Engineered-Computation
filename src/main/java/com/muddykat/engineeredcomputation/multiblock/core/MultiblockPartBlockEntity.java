@@ -97,6 +97,14 @@ public class MultiblockPartBlockEntity extends BlockEntity implements Multiblock
 
 	public CompoundTag getClientSyncData()
 	{
+		// Structure files (Ponder scenes) hold the saved state but no sync data, and scenes change the state as they
+		// play; a real client never has the state.
+		if(state!=null)
+		{
+			CompoundTag fromState = new CompoundTag();
+			state.writeSyncData(fromState);
+			return fromState;
+		}
 		return clientSyncData;
 	}
 

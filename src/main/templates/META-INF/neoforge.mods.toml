@@ -97,6 +97,14 @@ ${mod_name}, a storage mod designed around retro computing themes rather than sc
     ordering="NONE"
     side="CLIENT"
 
+# Optional: Ponder scenes for the mod's machines, when Ponder is installed.
+[[dependencies.${mod_id}]]
+    modId="ponder"
+    type="optional"
+    versionRange="[1.0.80,)"
+    ordering="NONE"
+    side="CLIENT"
+
 # Optional: the guides open a Patchouli handbook, with multiblock previews, when Patchouli is installed.
 [[dependencies.${mod_id}]]
     modId="patchouli"

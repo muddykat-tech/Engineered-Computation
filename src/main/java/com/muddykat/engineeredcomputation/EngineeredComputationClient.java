@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
@@ -58,6 +59,7 @@ import com.muddykat.engineeredcomputation.client.screen.terminal.TeletypeScreen;
 import com.muddykat.engineeredcomputation.client.screen.terminal.TypewriterScreen;
 import com.muddykat.engineeredcomputation.client.screen.terminal.UniscopeScreen;
 import com.muddykat.engineeredcomputation.client.screen.terminal.VideoTerminalScreen;
+import com.muddykat.engineeredcomputation.compat.ponder.PonderCompat;
 import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternFloppyItem;
 import com.muddykat.engineeredcomputation.network.cable.CoveredCableBlock;
@@ -95,6 +97,10 @@ public class EngineeredComputationClient {
         CarrierRenderer.register();
         AnimationClock.register();
         WrenchPortOutline.register();
+
+        if (ModList.get().isLoaded("ponder")) {
+            PonderCompat.register(modEventBus);
+        }
     }
 
     private void registerItemProperties(FMLClientSetupEvent event) {

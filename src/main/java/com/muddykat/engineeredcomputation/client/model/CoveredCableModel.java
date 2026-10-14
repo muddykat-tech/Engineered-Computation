@@ -10,8 +10,10 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.BakedModelWrapper;
@@ -50,6 +52,12 @@ public class CoveredCableModel extends BakedModelWrapper<BakedModel>
 		if(showsCable&&(renderType==null||super.getRenderTypes(state, rand, data).contains(renderType)))
 			quads.addAll(super.getQuads(state, side, rand, data, renderType));
 		return quads;
+	}
+
+	@Override
+	public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data)
+	{
+		return super.getModelData(level, pos, state, BlockEntityModelData.orFromBlockEntity(level, pos, data, CoveredCableBlockEntity.COVER));
 	}
 
 	@Override

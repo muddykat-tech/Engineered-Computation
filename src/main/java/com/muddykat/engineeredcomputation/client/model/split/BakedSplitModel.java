@@ -18,10 +18,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
+import com.muddykat.engineeredcomputation.client.model.BlockEntityModelData;
 import com.muddykat.engineeredcomputation.multiblock.core.MultiblockPartBlockEntity;
 
 public final class BakedSplitModel implements BakedModel
@@ -53,6 +55,12 @@ public final class BakedSplitModel implements BakedModel
 	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand)
 	{
 		return getQuads(state, side, rand, ModelData.EMPTY, null);
+	}
+
+	@Override
+	public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data)
+	{
+		return BlockEntityModelData.orFromBlockEntity(level, pos, data, MultiblockPartBlockEntity.MODEL_OFFSET);
 	}
 
 	@Override

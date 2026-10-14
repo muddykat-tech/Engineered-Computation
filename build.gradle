@@ -41,6 +41,15 @@ repositories {
             includeGroup "vazkii.patchouli"
         }
     }
+    // Ponder and the Flywheel renderer it needs, an optional integration.
+    maven {
+        name = "Create"
+        url = "https://maven.createmod.net"
+        content {
+            includeGroup "net.createmod.ponder"
+            includeGroup "dev.engine-room.flywheel"
+        }
+    }
     maven {
         url "https://cursemaven.com"
     }
@@ -122,6 +131,10 @@ dependencies {
     compileOnly "vazkii.patchouli:Patchouli:${minecraft_version}-${patchouli_version}-NEOFORGE:api"
     localRuntime "vazkii.patchouli:Patchouli:${minecraft_version}-${patchouli_version}-NEOFORGE"
     gametestCompileOnly "vazkii.patchouli:Patchouli:${minecraft_version}-${patchouli_version}-NEOFORGE:api"
+    // Ponder is optional: when it's installed, items with scenes can be pondered.
+    compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
+    localRuntime "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
+    localRuntime "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
     implementation "curse.maven:iron-generators-446489:8679261"
     implementation "curse.maven:inzhefop-core-434516:8702521"
 }

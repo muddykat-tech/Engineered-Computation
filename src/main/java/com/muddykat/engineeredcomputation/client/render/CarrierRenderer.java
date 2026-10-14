@@ -14,11 +14,12 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -48,7 +49,7 @@ public final class CarrierRenderer
 		NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.Clone.class, event -> CarrierFlights.clear());
 	}
 
-	private static boolean isWindowed(ClientLevel level, BlockPos pos)
+	private static boolean isWindowed(BlockGetter level, BlockPos pos)
 	{
 		BlockState state = level.getBlockState(pos);
 
@@ -67,37 +68,52 @@ public final class CarrierRenderer
 
 		double time = level.getGameTime()+event.getPartialTick().getGameTimeDeltaPartialTick(false);
 		Vec3 camera = event.getCamera().getPosition();
-		PoseStack pose = event.getPoseStack();
 		MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
 		VertexConsumer consumer = buffers.getBuffer(Sheets.cutoutBlockSheet());
-		BakedModel model = mc.getModelManager().getModel(ModelResourceLocation.standalone(MODEL));
-		List<BakedQuad> quads = DriveRenderer.allQuads(model);
 
 		for(CarrierFlights.Flight flight : flights)
 		{
 			BlockPos[] path = flight.path();
 			if(path.length<2)
 				continue;
-			double progress = Math.clamp((time-flight.launched())/Carrier.TICKS_PER_BLOCK, 0, path.length-1);
-			int step = Math.min((int)progress, path.length-2);
-			Vec3 from = Vec3.atCenterOf(path[step]);
-			Vec3 to = Vec3.atCenterOf(path[step+1]);
-			Vec3 at = from.lerp(to, progress-step);
-			if(at.distanceToSqr(camera)>RANGE*RANGE||!isWindowed(level, BlockPos.containing(at)))
-				continue;
-			Direction heading = Direction.getNearest(to.x-from.x, to.y-from.y, to.z-from.z);
-			pose.pushPose();
-			pose.translate(at.x-camera.x, at.y-camera.y, at.z-camera.z);
-			if(heading.getAxis()==Direction.Axis.X)
-				pose.mulPose(Axis.YP.rotationDegrees(90));
-			else if(heading.getAxis()==Direction.Axis.Y)
-				pose.mulPose(Axis.XP.rotationDegrees(90));
-			pose.translate(-0.5, -0.5, -0.5);
-			int light = LevelRenderer.getLightColor(level, BlockPos.containing(at));
-			for(BakedQuad quad : quads)
-				consumer.putBulkData(pose.last(), quad, 1, 1, 1, 1, light, OverlayTexture.NO_OVERLAY);
-			pose.popPose();
+			double travelled = (time-flight.launched())/Carrier.TICKS_PER_BLOCK;
+			if(at(path, travelled).distanceToSqr(camera)<=RANGE*RANGE)
+				draw(level, path, travelled, camera, event.getPoseStack(), consumer);
 		}
 		buffers.endBatch(Sheets.cutoutBlockSheet());
+	}
+
+	/** Where a carrier is after travelling the given number of blocks along its path. */
+	public static Vec3 at(BlockPos[] path, double travelled)
+	{
+		double progress = Math.clamp(travelled, 0, path.length-1);
+		int step = Math.min((int)progress, path.length-2);
+		return Vec3.atCenterOf(path[step]).lerp(Vec3.atCenterOf(path[step+1]), progress-step);
+	}
+
+	/** Draws a carrier relative to origin, if the tube it's in has a window to see it through. */
+	public static void draw(BlockAndTintGetter level, BlockPos[] path, double travelled, Vec3 origin, PoseStack pose,
+			VertexConsumer consumer)
+	{
+		Vec3 at = at(path, travelled);
+		BlockPos in = BlockPos.containing(at);
+		if(!isWindowed(level, in))
+			return;
+		int step = Math.min((int)Math.clamp(travelled, 0, path.length-1), path.length-2);
+		BlockPos from = path[step], to = path[step+1];
+		Direction heading = Direction.getNearest(to.getX()-from.getX(), to.getY()-from.getY(), to.getZ()-from.getZ());
+		List<BakedQuad> quads = DriveRenderer.allQuads(Minecraft.getInstance().getModelManager()
+				.getModel(ModelResourceLocation.standalone(MODEL)));
+		pose.pushPose();
+		pose.translate(at.x-origin.x, at.y-origin.y, at.z-origin.z);
+		if(heading.getAxis()==Direction.Axis.X)
+			pose.mulPose(Axis.YP.rotationDegrees(90));
+		else if(heading.getAxis()==Direction.Axis.Y)
+			pose.mulPose(Axis.XP.rotationDegrees(90));
+		pose.translate(-0.5, -0.5, -0.5);
+		int light = LevelRenderer.getLightColor(level, in);
+		for(BakedQuad quad : quads)
+			consumer.putBulkData(pose.last(), quad, 1, 1, 1, 1, light, OverlayTexture.NO_OVERLAY);
+		pose.popPose();
 	}
 }
