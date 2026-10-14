@@ -1,0 +1,29 @@
+{
+  "name": "Teletype Terminal",
+  "icon": "engineered_computation:era1_terminal",
+  "category": "engineered_computation:era1",
+  "sortnum": 6,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The teletype is where items are requested and put away. To connect it to a tube network, place it against a Receiving Station.$(br2)Click an item to add a stack to the request slip under the grid, or right-click to add one. Click a line on the slip to remove it, or right-click it for one fewer. When the slip is ready, press the send button"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "beside it and the stations holding each item send them through the tubes. Anything that can't be sent stays on the slip.$(br2)\"To:\" under the slip sets the destination. Click it for a searchable list of every Receiving Station on the tube network, or scroll over it to step through them.$(br2)To put items away, click them onto the grid, or shift-click them in your inventory. They"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "go through the tubes to a station that already holds that item, otherwise to one set to take new items. If no station will take them, they won't be sent.$(br2)To narrow down the items shown, place a Filter Card in the card slot to the right of your inventory. Only the items it matches will be shown. Click the card to edit its filter, or right-click it to take it out.$(br2)Items whose stations can't be"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reached are greyed out and show their last tally. While carriers are traveling, the teletype shows 102."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:era1_terminal"
+    }
+  ]
+}

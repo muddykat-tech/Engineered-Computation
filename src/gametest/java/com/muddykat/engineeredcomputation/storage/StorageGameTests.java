@@ -73,7 +73,6 @@ import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
 import com.muddykat.engineeredcomputation.storage.cell.CellContents;
 import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
-import com.muddykat.engineeredcomputation.storage.cell.UuidDataCell;
 import com.muddykat.engineeredcomputation.terminal.TerminalAction;
 import com.muddykat.engineeredcomputation.terminal.TerminalContentsPayload;
 import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
@@ -370,7 +369,7 @@ public final class StorageGameTests
 	{
 		List<String> missing = new ArrayList<>();
 		for(var item : ECRegistrationHolder.ITEMS.getEntries())
-			if(!(item.get() instanceof UuidDataCell)&&helper.getLevel().getRecipeManager().byKey(item.getId()).isEmpty())
+			if(helper.getLevel().getRecipeManager().byKey(item.getId()).isEmpty())
 				missing.add(item.getId().getPath());
 		check(helper, missing.isEmpty(), "no recipe loaded for "+missing);
 		helper.succeed();

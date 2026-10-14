@@ -10,18 +10,31 @@ import net.minecraft.world.item.ItemStack;
 import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
-record UuidCellData(ItemStack stack, @Nullable CellStorage storage) implements CellData
+record UuidCellData(ItemStack stack, CellStorage storage) implements CellData
 {
-	boolean readable()
+	/**
+	 * Moves contents saved on the stack by older versions into cell storage. Only done where the stack's holder is told
+	 * to save, or the world could keep the old stack and migrate it again under a new id.
+	 */
+	static void migrate(ItemStack stack, CellStorage storage)
 	{
-		return storage!=null;
+		CellContents contents = stack.get(ECDataComponents.CELL_CONTENTS.get());
+		stack.remove(ECDataComponents.CELL_CONTENTS.get());
+		if(contents==null||contents.types()==0)
+			return;
+		UUID id = stack.get(ECDataComponents.CELL_UUID.get());
+		if(id==null)
+			id = UUID.randomUUID();
+		storage.setContents(id, contents, stack.getItem());
+		stack.set(ECDataComponents.CELL_UUID.get(), id);
+		stack.set(ECDataComponents.CELL_SUMMARY.get(), new CellSummary(contents.types(), contents.totalCount()));
 	}
 
 	@Nullable
 	private CellStorage.Cell cell()
 	{
 		UUID id = stack.get(ECDataComponents.CELL_UUID.get());
-		return id==null||storage==null? null: storage.find(id);
+		return id==null? null: storage.find(id);
 	}
 
 	@Override
@@ -53,18 +66,25 @@ record UuidCellData(ItemStack stack, @Nullable CellStorage storage) implements C
 			cell.collect(into);
 	}
 
+	/** An emptied cell drops its id so it stacks and compares equal to a new one again. */
 	@Override
 	public void set(ItemKey key, long amount)
 	{
-		if(storage==null)
-			throw new IllegalStateException("UUID cell contents only exist on the server");
 		UUID id = stack.get(ECDataComponents.CELL_UUID.get());
 		if(id==null)
 		{
 			id = UUID.randomUUID();
 			stack.set(ECDataComponents.CELL_UUID.get(), id);
 		}
-		storage.set(id, key, amount);
+		storage.set(id, key, amount, stack.getItem());
+		CellStorage.Cell cell = storage.find(id);
+		if(cell==null)
+		{
+			stack.remove(ECDataComponents.CELL_UUID.get());
+			stack.remove(ECDataComponents.CELL_SUMMARY.get());
+		}
+		else
+			stack.set(ECDataComponents.CELL_SUMMARY.get(), new CellSummary(cell.types(), cell.totalCount()));
 	}
 
 	@Override

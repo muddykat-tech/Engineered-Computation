@@ -1,0 +1,26 @@
+{
+  "name": "Data Adapters",
+  "icon": "engineered_computation:era4_data_importer",
+  "category": "engineered_computation:era4",
+  "sortnum": 5,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A Data Importer pulls items from an inventory it faces, into the storage network it's connected to. A Data Exporter will pull items from the network into that inventory instead.$(br2)Adapters only connect to a Network Cable, on their back.$(br2)Importer's have a green light whilst exporter have Orange."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Right-click an adapter to open its settings. Its filter slot takes any item to filter by. With no filter, an importer imports everything and an exporter exports nothing. A status code provides information on what it's doing, see Error Codes in any guide book.$(br2)The button left of the filter slot switches the filter between an allow list and a block list, this works with a Program Floppy card as well."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Each era's adapters are faster. The transfer rate is configurable in their GUI."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:era4_data_importer",
+      "recipe2": "engineered_computation:era4_data_exporter"
+    }
+  ]
+}

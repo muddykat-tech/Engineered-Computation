@@ -1,0 +1,21 @@
+{
+  "name": "Energy Accepter",
+  "icon": "engineered_computation:energy_accepter",
+  "category": "engineered_computation:basics",
+  "sortnum": 5,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "If the server has power enabled, networks need RF to run. To power a network, connect an Energy Accepter to it and feed it RF. It accepts RF and Network Cables on any side.$(br2)Each machine on the network costs RF per tick, set in the server config. The Energy Accepter's screen and the terminal's storage bar show the"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "network's cost and stored RF. Several Energy Accepters on one network share their RF.$(br2)A network without enough RF will stop and show a 402 error until it has power again. No items are lost when out of power."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:energy_accepter"
+    }
+  ]
+}

@@ -21,7 +21,7 @@ import static com.muddykat.engineeredcomputation.storage.persist.GrowthScenarios
 /** Stress Tests for the indexed file method, ensures that it grows past its live data under each workload;
  * results go to [indexed-growth].
  **/
-@TestCategory({"storage", "stress"})
+@TestCategory("persistence")
 @GameTestHolder(EngineeredComputation.MODID)
 @PrefixGameTestTemplate(false)
 public final class IndexedFileGrowthGameTests

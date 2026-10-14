@@ -1,0 +1,32 @@
+{
+  "name": "Advanced Data Processor",
+  "icon": "engineered_computation:processor_casing",
+  "category": "engineered_computation:era5",
+  "sortnum": 9,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Advanced Data Processor runs abstract patterns: anything another machine makes, like smelting. Build it from three Processor Casings stacked in a column, then right-click the bottom one with the Assembly Wrench. Its network port is low on its back.$(br2)It holds up to nine abstract Pattern Floppies. Its top sends"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "a recipe's inputs into the machine it faces, and its bottom takes the results back, from what it faces or from a hopper or pipe.$(br2)Only results returned through the processor count, and it only takes in what an order is waiting for. Items reaching storage another way, like a farm's importer, are never counted as an order's results.$(br2)The network needs a Crafting Computer to run orders."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Without one, the processor will show 424."
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "block.engineered_computation.era5_data_processor",
+      "multiblock_id": "engineered_computation:era5_data_processor",
+      "enable_visualize": true,
+      "text": "Wrench the front of the casing on the bottom row to form."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:processor_casing"
+    }
+  ]
+}

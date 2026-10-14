@@ -20,23 +20,46 @@ public final class CellInventory implements ItemStorage
 	private final Runnable onChanged;
 	private final CellData data;
 
-	private CellInventory(ItemStack stack, EraDataCell cell, Runnable onChanged)
+	private CellInventory(ItemStack stack, EraDataCell cell, Runnable onChanged, CellData data)
 	{
 		this.stack = stack;
 		this.cell = cell;
 		this.onChanged = onChanged;
-		this.data = cell instanceof UuidDataCell? new UuidCellData(stack, CellStorage.get()): new ComponentCellData(stack);
+		this.data = data;
 	}
 
+	/**
+	 * For a cell whose holder saves when {@code onChanged} runs. A cell from an older version, with its contents on the
+	 * stack, has them moved into cell storage here.
+	 */
 	@Nullable
 	public static CellInventory of(ItemStack stack, Runnable onChanged)
 	{
-		return stack.getItem() instanceof EraDataCell cell? new CellInventory(stack, cell, onChanged): null;
+		if(!(stack.getItem() instanceof EraDataCell cell))
+			return null;
+		CellStorage storage = CellStorage.get();
+		if(storage==null)
+			return peek(stack);
+		boolean migrating = stack.has(ECDataComponents.CELL_CONTENTS.get());
+		if(migrating)
+			UuidCellData.migrate(stack, storage);
+		CellInventory inventory = new CellInventory(stack, cell, onChanged, new UuidCellData(stack, storage));
+		if(migrating)
+			onChanged.run();
+		return inventory;
 	}
 
-	public boolean isReadable()
+	/** For reading only: never changes the stack, so it's safe where nothing would save the stack's holder. */
+	@Nullable
+	public static CellInventory peek(ItemStack stack)
 	{
-		return !(data instanceof UuidCellData uuid)||uuid.readable();
+		if(!(stack.getItem() instanceof EraDataCell cell))
+			return null;
+		CellStorage storage = CellStorage.get();
+		CellData data = stack.has(ECDataComponents.CELL_CONTENTS.get())? new ComponentCellData(stack)
+				: storage!=null? new UuidCellData(stack, storage): new SummaryCellData(stack);
+		return new CellInventory(stack, cell, () -> {
+		}, data);
 	}
 
 	public ItemStack getStack()
@@ -90,8 +113,7 @@ public final class CellInventory implements ItemStorage
 
 	public static CellContents getContents(ItemStack stack)
 	{
-		CellInventory inventory = of(stack, () -> {
-		});
+		CellInventory inventory = peek(stack);
 		return inventory==null? CellContents.EMPTY: inventory.getContents();
 	}
 

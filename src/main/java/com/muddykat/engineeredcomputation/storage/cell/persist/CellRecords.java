@@ -1,4 +1,4 @@
-package com.muddykat.engineeredcomputation.storage.persist;
+package com.muddykat.engineeredcomputation.storage.cell.persist;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,7 +18,7 @@ import net.minecraft.resources.RegistryOps;
 
 import com.muddykat.engineeredcomputation.storage.cell.CellContents;
 
-final class CellRecords
+public final class CellRecords
 {
 	private static final String CELLS = "cells";
 	private static final String ID = "id";
@@ -26,12 +26,12 @@ final class CellRecords
 
 	private final RegistryOps<Tag> ops;
 
-	CellRecords(HolderLookup.Provider registries)
+	public CellRecords(HolderLookup.Provider registries)
 	{
 		this.ops = registries.createSerializationContext(NbtOps.INSTANCE);
 	}
 
-	CompoundTag encodeAll(Map<UUID, CellContents> cells)
+	public CompoundTag encodeAll(Map<UUID, CellContents> cells)
 	{
 		ListTag list = new ListTag();
 		cells.forEach((id, contents) -> {
@@ -44,7 +44,7 @@ final class CellRecords
 		return tag;
 	}
 
-	void decodeAll(CompoundTag tag, Map<UUID, CellContents> into)
+	public void decodeAll(CompoundTag tag, Map<UUID, CellContents> into)
 	{
 		for(Tag entry : tag.getList(CELLS, Tag.TAG_COMPOUND))
 		{
@@ -53,26 +53,26 @@ final class CellRecords
 		}
 	}
 
-	CompoundTag encode(CellContents contents)
+	public CompoundTag encode(CellContents contents)
 	{
 		CompoundTag tag = new CompoundTag();
 		tag.put(ITEMS, CellContents.CODEC.encodeStart(ops, contents).getOrThrow());
 		return tag;
 	}
 
-	CellContents decode(CompoundTag tag)
+	public CellContents decode(CompoundTag tag)
 	{
 		return CellContents.CODEC.parse(ops, tag.get(ITEMS)).getOrThrow();
 	}
 
-	static byte[] compress(CompoundTag tag) throws IOException
+	public static byte[] compress(CompoundTag tag) throws IOException
 	{
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		NbtIo.writeCompressed(tag, out);
 		return out.toByteArray();
 	}
 
-	static CompoundTag decompress(byte[] data) throws IOException
+	public static CompoundTag decompress(byte[] data) throws IOException
 	{
 		return NbtIo.readCompressed(new ByteArrayInputStream(data), NbtAccounter.unlimitedHeap());
 	}

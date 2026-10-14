@@ -1,0 +1,13 @@
+{
+  "name": "Components",
+  "icon": "engineered_computation:guide_edition_1",
+  "category": "engineered_computation:basics",
+  "sortnum": 1,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Relay$(br)Vacuum Tube$(br)Transistor$(br)Integrated Circuit$(br)Microprocessor"
+    }
+  ]
+}

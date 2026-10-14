@@ -1,0 +1,46 @@
+{
+  "block.floppy_35.insert": {
+    "subtitle": "subtitles.engineered_computation.block.floppy.insert",
+    "sounds": [
+      {
+        "name": "engineered_computation:block/floppy/floppy_35_insert_1",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "engineered_computation:block/floppy/floppy_35_insert_2",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "block.floppy_35.eject": {
+    "subtitle": "subtitles.engineered_computation.block.floppy.eject",
+    "sounds": [
+      {
+        "name": "engineered_computation:block/floppy/floppy_35_eject",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "block.floppy_525.insert": {
+    "subtitle": "subtitles.engineered_computation.block.floppy.insert",
+    "sounds": [
+      {
+        "name": "engineered_computation:block/floppy/floppy_35_insert_1",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "engineered_computation:block/floppy/floppy_35_insert_2",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "block.floppy_525.eject": {
+    "subtitle": "subtitles.engineered_computation.block.floppy.eject",
+    "sounds": [
+      {
+        "name": "engineered_computation:block/floppy/floppy_35_eject",
+        "attenuation_distance": 10
+      }
+    ]
+  }
+}

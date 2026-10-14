@@ -1,0 +1,25 @@
+{
+  "name": "block.engineered_computation.era4_disk_processor",
+  "icon": "engineered_computation:era4_casing",
+  "category": "engineered_computation:era4",
+  "sortnum": 3,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:multiblock",
+      "name": "block.engineered_computation.era4_disk_processor",
+      "multiblock_id": "engineered_computation:era4_disk_processor",
+      "enable_visualize": true,
+      "text": "Cell slots: 1$(br2)Wrench the front of the middle casing on the bottom row to form."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Disk Pack Processor",
+      "text": "The Disk Pack Processor is the Disk Pack Mainframe's processor cabinet on its own, without the Mainframe's disk unit or terminal. Build it from Disk Pack Casings and form it with the Assembly Wrench. Connect it with cable at its network port, low on its back.$(br2)Like the Mainframe, it lets a network use Disk Pack storage, and the storage of every older era, through Disk Banks and Storage Bridges. It holds one"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "disk pack: right-click it to open its slot. It has no screen of its own, so pair it with a terminal to reach it."
+    }
+  ]
+}

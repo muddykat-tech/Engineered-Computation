@@ -1,0 +1,28 @@
+{
+  "name": "Crafting Computer",
+  "icon": "engineered_computation:era5_casing",
+  "category": "engineered_computation:era5",
+  "sortnum": 8,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Crafting Computer runs crafting orders on the network. Build it from Floppy Disk Era casings and form it with the Assembly Wrench. Connect it with cable at its network port, low on its back.$(br2)It has eight pattern bays on its front, four down each side. To insert a direct Pattern Floppy, sneak while right-clicking a bay with it. To"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "remove it, sneak while right-clicking the bay with an empty hand. It crafts direct patterns itself, and runs abstract patterns through Advanced Data Processors on the same network.$(br2)It runs up to eight orders at once, abstract orders included. Add more Crafting Computers to run more orders. Breaking a Crafting Computer while it's running will return each order's items to storage where possible, otherwise drop them"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "in the world."
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "block.engineered_computation.era5_crafting_computer",
+      "multiblock_id": "engineered_computation:era5_crafting_computer",
+      "enable_visualize": true,
+      "text": "Wrench the front of the right casing on the bottom row to form."
+    }
+  ]
+}

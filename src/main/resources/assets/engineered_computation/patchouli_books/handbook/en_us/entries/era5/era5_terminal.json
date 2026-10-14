@@ -1,0 +1,36 @@
+{
+  "name": "Floppy Disk Terminal",
+  "icon": "engineered_computation:era5_terminal",
+  "category": "engineered_computation:era5",
+  "sortnum": 5,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "This terminal does everything the Video Terminal does, and has two storage bays for the smaller 3½-inch floppies (see Terminal Disks).$(br2)It can also view and order recipes from a Crafting Computer on the network."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:era5_terminal"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Terminal Disks",
+      "text": "The Floppy Disk Terminal has two bays below its keyboard for 3½-inch floppies (1k, 2k, 4k and 8k).$(br2)Right-click the bays to open them. Their disks join the terminal's network like a drive's cells. The terminal runs them itself, with no workstation needed, but they are the only storage it runs. The bays don't take the larger floppy cells. The Floppy Disk Processor and the Compact"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Floppy Bay take 3½-inch floppies too."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:floppy_35_cell_1k",
+      "recipe2": "engineered_computation:floppy_35_cell_2k"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:floppy_35_cell_4k",
+      "recipe2": "engineered_computation:floppy_35_cell_8k"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "block.engineered_computation.era4_disk_bank",
+  "icon": "engineered_computation:era4_casing",
+  "category": "engineered_computation:era4",
+  "sortnum": 2,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:multiblock",
+      "name": "block.engineered_computation.era4_disk_bank",
+      "multiblock_id": "engineered_computation:era4_disk_bank",
+      "enable_visualize": true,
+      "text": "Cell slots: 1$(br2)Wrench the front of the left casing on the bottom row to form."
+    }
+  ]
+}

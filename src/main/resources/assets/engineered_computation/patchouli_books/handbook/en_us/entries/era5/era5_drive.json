@@ -1,0 +1,26 @@
+{
+  "name": "block.engineered_computation.era5_drive",
+  "icon": "engineered_computation:era5_casing",
+  "category": "engineered_computation:era5",
+  "sortnum": 1,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:multiblock",
+      "name": "block.engineered_computation.era5_drive",
+      "multiblock_id": "engineered_computation:era5_drive",
+      "enable_visualize": true,
+      "text": "Cell slots: 2$(br2)Wrench the front of the middle casing on the bottom row to form."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Built-in Terminal",
+      "text": "This drive has its own terminal. Right-click its screen or keyboard to browse the network's storage.$(br2)Right-click any other part of the drive to access its cells."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Storage Bay",
+      "text": "The drawers under this drive's desk are a storage bay with nine slots. Right-click the drawers to open it."
+    }
+  ]
+}

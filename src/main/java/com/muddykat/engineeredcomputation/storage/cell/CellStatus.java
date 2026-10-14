@@ -14,8 +14,7 @@ public enum CellStatus
 
 	public static CellStatus of(ItemStack stack)
 	{
-		CellInventory cell = CellInventory.of(stack, () -> {
-		});
+		CellInventory cell = CellInventory.peek(stack);
 		if(cell==null)
 			return EMPTY;
 		boolean bytes = cell.isBytesFull(), types = cell.isTypesFull();

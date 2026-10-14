@@ -2,6 +2,7 @@ package com.muddykat.engineeredcomputation.terminal.floppy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import com.muddykat.engineeredcomputation.network.NetworkMember;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
 import com.muddykat.engineeredcomputation.storage.StorageHost;
+import com.muddykat.engineeredcomputation.storage.cell.CellBaySlots;
 import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
 import com.muddykat.engineeredcomputation.storage.cell.CellStatus;
 import com.muddykat.engineeredcomputation.storage.cell.EraDataCell;
@@ -32,7 +34,8 @@ public class TerminalDiskBlockEntity extends CraftingTerminalBlockEntity impleme
 {
 	public static final int SLOTS = 2;
 
-	private final ItemStackHandler disks = createDiskSlots(this::slotsChanged);
+	private final ItemStackHandler disks = createDiskSlots(this::slotsChanged, this::diskMoved);
+	private boolean quiet;
 	private int syncedStatus = -1;
 	private final StorageHost host = new StorageHost()
 	{
@@ -68,9 +71,9 @@ public class TerminalDiskBlockEntity extends CraftingTerminalBlockEntity impleme
 		super(ECTerminals.TERMINAL_DISKS.get(), pos, state);
 	}
 
-	public static ItemStackHandler createDiskSlots(Runnable onChanged)
+	public static ItemStackHandler createDiskSlots(Runnable onChanged, BiConsumer<ItemStack, Boolean> onMoved)
 	{
-		return new ItemStackHandler(SLOTS)
+		return new CellBaySlots(SLOTS)
 		{
 			@Override
 			public boolean isItemValid(int slot, ItemStack stack)
@@ -85,11 +88,23 @@ public class TerminalDiskBlockEntity extends CraftingTerminalBlockEntity impleme
 			}
 
 			@Override
-			protected void onContentsChanged(int slot)
+			protected void contentsChanged(int slot)
 			{
 				onChanged.run();
 			}
+
+			@Override
+			protected void cellMoved(ItemStack cell, boolean inserted)
+			{
+				onMoved.accept(cell, inserted);
+			}
 		};
+	}
+
+	private void diskMoved(ItemStack disk, boolean inserted)
+	{
+		if(!quiet)
+			CellBaySlots.play(level, worldPosition, disk, inserted);
 	}
 
 	public ItemStackHandler getDisks()
@@ -127,6 +142,7 @@ public class TerminalDiskBlockEntity extends CraftingTerminalBlockEntity impleme
 
 	public void dropDisks(Level level, BlockPos pos)
 	{
+		quiet = true;
 		for(int slot = 0; slot<SLOTS; slot++)
 		{
 			ItemStack disk = disks.getStackInSlot(slot);
@@ -136,6 +152,7 @@ public class TerminalDiskBlockEntity extends CraftingTerminalBlockEntity impleme
 				disks.setStackInSlot(slot, ItemStack.EMPTY);
 			}
 		}
+		quiet = false;
 	}
 
 	private void diskContentsChanged()

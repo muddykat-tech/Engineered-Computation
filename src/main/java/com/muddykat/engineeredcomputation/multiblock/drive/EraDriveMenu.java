@@ -90,9 +90,11 @@ public class EraDriveMenu extends AbstractContainerMenu
 		BlockPos pos = buf.readBlockPos();
 		if(buf.readBoolean())
 			return forTerminalDisks(id, playerInventory, TerminalDiskBlockEntity.createDiskSlots(() -> {
+			}, (cell, inserted) -> {
 			}), pos);
 		EraDrive drive = buf.readEnum(EraDrive.class);
 		return forDrive(id, playerInventory, drive, EraDriveState.createCellSlots(drive, () -> {
+		}, (cell, inserted) -> {
 		}), pos);
 	}
 

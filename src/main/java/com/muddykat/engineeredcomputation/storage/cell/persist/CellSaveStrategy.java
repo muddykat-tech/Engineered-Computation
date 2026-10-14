@@ -1,4 +1,4 @@
-package com.muddykat.engineeredcomputation.storage.persist;
+package com.muddykat.engineeredcomputation.storage.cell.persist;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -15,7 +15,7 @@ public interface CellSaveStrategy extends Closeable
 	/** Cells in {@code dirty} that are missing from {@code live} have been destroyed. */
 	SaveResult save(Map<UUID, CellContents> live, Set<UUID> dirty) throws IOException;
 
-	/** Reads everything back from disk, ignoring what this instance currently has in memory. */
+	/** Reads everything back from disk, ignoring what this instance holds in memory. */
 	Map<UUID, CellContents> load() throws IOException;
 
 	DiskUsage usage() throws IOException;

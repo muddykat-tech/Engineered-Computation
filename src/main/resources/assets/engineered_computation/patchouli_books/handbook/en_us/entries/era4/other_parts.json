@@ -1,0 +1,28 @@
+{
+  "name": "Other Parts",
+  "icon": "engineered_computation:relay",
+  "category": "engineered_computation:era4",
+  "sortnum": 7,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Some recipes in this guide need parts from other eras. Their recipes are listed here."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:relay",
+      "recipe2": "engineered_computation:vacuum_tube"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:transistor",
+      "recipe2": "engineered_computation:era1_casing"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:era2_casing",
+      "recipe2": "engineered_computation:era3_casing"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -73,6 +74,7 @@ import com.muddykat.engineeredcomputation.catalogue.deck.ProgramDeckItem;
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.client.guide.GuideScreen;
 import com.muddykat.engineeredcomputation.client.screen.terminal.TerminalScreen;
+import com.muddykat.engineeredcomputation.compat.patchouli.PatchouliCompat;
 import com.muddykat.engineeredcomputation.connector.ConnectorPorts;
 import com.muddykat.engineeredcomputation.crafting.CraftingNetwork;
 import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerMenu;
@@ -134,7 +136,14 @@ public final class VisualCheck
 {
 	private static final boolean ENABLED = Boolean.getBoolean("ec.visualcheck");
 	private static final List<String> CATEGORIES = List.of("cables", "pneumatics", "drives", "angles", "world", "guide",
-			"terminal", "adapters", "crafting", "power", "config");
+			"handbook", "terminal", "adapters", "crafting", "power", "config");
+	/** Handbook entries and the page each shot opens at: plain text, long text, multiblocks, recipes and the codes. */
+	private static final List<Map.Entry<String, Integer>> HANDBOOK_SHOTS = List.of(Map.entry("basics/wrench", 0),
+			Map.entry("basics/network", 0), Map.entry("basics/cells", 0), Map.entry("basics/codes", 0),
+			Map.entry("basics/codes", 2), Map.entry("era1/era1", 0), Map.entry("era1/era1", 2),
+			Map.entry("era1/pressurizer", 0), Map.entry("era2/era2", 0), Map.entry("era2/era2_drive", 0),
+			Map.entry("era4/era4_drive", 0), Map.entry("era5/era5", 0), Map.entry("era5/crafting_computer", 0),
+			Map.entry("era5/memory", 0));
 	/** Set with -Pvisuals; ec.visualcheck.angles=true is the older way to run only the angles. */
 	private static final Set<String> ONLY = categoriesToRun();
 	private static final List<String> ANGLE_DRIVES = List.of(System.getProperty("ec.visualcheck.drives", "").split(","))
@@ -252,6 +261,7 @@ public final class VisualCheck
 		section(mc, "angles", false, VisualCheck::queueModelAngles);
 		section(mc, "world", false, VisualCheck::queueWorld);
 		section(mc, "guide", true, VisualCheck::queueGuides);
+		section(mc, "handbook", true, VisualCheck::queueHandbook);
 		section(mc, "terminal", true, VisualCheck::queueTerminals);
 		section(mc, "drives", true, VisualCheck::queueDriveScreens);
 		section(mc, "terminal", true, VisualCheck::queueConsoleClicks);
@@ -297,6 +307,33 @@ public final class VisualCheck
 		}, 80);
 		screenshot(mc, "ec_03_world_night_torches", 5);
 		onServer(mc, (level, player) -> level.setDayTime(6000), 20);
+	}
+
+	/** Exports the Patchouli handbook from the guides, reloads it, then pictures it. */
+	private static void queueHandbook(Minecraft mc)
+	{
+		STEPS.add(new Step(5, () -> {
+			try
+			{
+				HandbookExport.export(mc);
+			}
+			catch(IOException e)
+			{
+				throw new UncheckedIOException(e);
+			}
+			mc.reloadResourcePacks();
+		}));
+		STEPS.add(new Step(200, () -> {
+		}));
+		STEPS.add(new Step(20, PatchouliCompat::openLanding));
+		screenshot(mc, "ec_handbook_landing", 2);
+		for(Map.Entry<String, Integer> shot : HANDBOOK_SHOTS)
+		{
+			STEPS.add(new Step(20, () -> PatchouliCompat.openEntry(
+					ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, shot.getKey()), shot.getValue())));
+			screenshot(mc, "ec_handbook_"+shot.getKey().replace('/', '_')+"_"+shot.getValue(), 2);
+		}
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
 	}
 
 	private static void queueGuides(Minecraft mc)

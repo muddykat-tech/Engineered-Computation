@@ -30,6 +30,8 @@ public final class TestCategories
 {
 	private static final String PROPERTY = "ec.tests";
 
+	private static final Set<String> OPT_IN = Set.of("persistence");
+
 	private TestCategories()
 	{
 	}
@@ -53,7 +55,15 @@ public final class TestCategories
 		String asked = System.getProperty(PROPERTY, "").trim().toLowerCase(Locale.ROOT);
 		if(asked.isEmpty())
 		{
-			EngineeredComputation.LOGGER.info("[tests] running all {} tests", tests.size());
+			Set<String> optInOnly = new TreeSet<>();
+			OPT_IN.forEach(category -> optInOnly.addAll(categories.getOrDefault(category, Set.of())));
+			categories.forEach((category, classes) -> {
+				if(!OPT_IN.contains(category))
+					optInOnly.removeAll(classes);
+			});
+			tests.removeIf(test -> optInOnly.contains(classOfTest.get(test.testName())));
+			EngineeredComputation.LOGGER.info("[tests] running all {} tests except the opt-in categories {} "
+					+"(ask for them with -Ptests)", tests.size(), OPT_IN);
 			return;
 		}
 		Set<String> wanted = Arrays.stream(asked.split(",")).map(String::trim).filter(s -> !s.isEmpty())

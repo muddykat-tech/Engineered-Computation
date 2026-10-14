@@ -1,0 +1,35 @@
+{
+  "name": "Pneumatic Tubes",
+  "icon": "engineered_computation:pneumatic_tube",
+  "category": "engineered_computation:era1",
+  "sortnum": 2,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Pneumatic Tubes carry items between stations.$(br2)To add or remove a tube's window, sneak while right-clicking it with an empty hand, or craft one tube into the other.$(br2)To tint a window, right-click it with a dye. The dye won't be consumed. Windowed tubes placed with a dye in the"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "offhand will be tinted.$(br2)To hide a tube, sneak while placing a block on it to cover it. Breaking a covered tube, or using the Assembly Wrench on it will remove the cover.$(br2)Place a Tube Station against an inventory, such as a chest, with its hatch facing it. It will pull that inventory's items when requested by the network, this is done via a carrier. How much each carrier holds, and how often they can be"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "sent, depends on the network's pressure (see Pressurizers). These stations can also be named, and configured on whether it takes new item types.$(br2)To stop a tube joining connecting to something unwanted, right-click the connection with the Assembly Wrench. This will close that side with a cap, you can then Right-click the cap with the wrench again to undo this. Covering a tube will keep"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "these settings.$(br2)Items are routed to Receiving Stations. Right-click one to retrieve items, name it, or set it to eject items through its front into an inventory, or onto the ground if there's none. Hoppers can also pull items out of it. If the tray is full, items will wait in the tube until there's room.$(br2)If a tube is broken while an item is in transit, the item will spill out at the break."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:pneumatic_tube",
+      "recipe2": "engineered_computation:windowed_pneumatic_tube"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:tube_station",
+      "recipe2": "engineered_computation:receiving_station"
+    }
+  ]
+}

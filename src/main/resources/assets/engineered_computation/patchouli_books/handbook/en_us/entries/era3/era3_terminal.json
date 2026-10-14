@@ -1,0 +1,17 @@
+{
+  "name": "Uniscope Terminal",
+  "icon": "engineered_computation:era3_terminal",
+  "category": "engineered_computation:era3",
+  "sortnum": 2,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Uniscope adds a search bar over the grid. Type part of a name to filter, or start with @ to filter by mod."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:era3_terminal"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Magnetic Tape Era",
+  "icon": "engineered_computation:transistor",
+  "category": "engineered_computation:era3",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Reels of magnetic tape have a very large capacity, but are read sequentially. In this mod, tape is bulk storage for a few item types, as it has the lowest item variety.$(br2)Memory: $(ec_memory:era3)$(br)Part: $(ec_part:era3)"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:transistor",
+      "recipe2": "engineered_computation:era3_casing"
+    }
+  ]
+}

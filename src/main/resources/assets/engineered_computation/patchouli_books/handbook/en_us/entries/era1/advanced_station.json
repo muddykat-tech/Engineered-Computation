@@ -1,0 +1,21 @@
+{
+  "name": "Advanced Tube Stations",
+  "icon": "engineered_computation:advanced_tube_station",
+  "category": "engineered_computation:era1",
+  "sortnum": 8,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "An Advanced Tube Station is an upgrade that allows the use of a Filter Card or a Program Deck to filter incoming items to that station.$(br2)Switch on Insert only in its screen to make it a store you can only add to: items can still be sent to it, but none can be requested from it. Teletypes show what it holds separately, greyed out with a"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "padlock."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:advanced_tube_station"
+    }
+  ]
+}

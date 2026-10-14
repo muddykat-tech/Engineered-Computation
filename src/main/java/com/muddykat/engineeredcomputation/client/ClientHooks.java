@@ -1,8 +1,10 @@
 package com.muddykat.engineeredcomputation.client;
 
 import net.minecraft.client.Minecraft;
+import net.neoforged.fml.ModList;
 
 import com.muddykat.engineeredcomputation.client.guide.GuideScreen;
+import com.muddykat.engineeredcomputation.compat.patchouli.PatchouliCompat;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 
 public final class ClientHooks
@@ -11,8 +13,12 @@ public final class ClientHooks
 	{
 	}
 
-	public static void openGuide(ComputerEra era)
+	/** With Patchouli installed the guides open its handbook, unless {@code classic} asks for the edition itself. */
+	public static void openGuide(ComputerEra era, boolean classic)
 	{
-		Minecraft.getInstance().setScreen(GuideScreen.open(era));
+		if(!classic&&ModList.get().isLoaded("patchouli"))
+			PatchouliCompat.openHandbook(era);
+		else
+			Minecraft.getInstance().setScreen(GuideScreen.open(era));
 	}
 }

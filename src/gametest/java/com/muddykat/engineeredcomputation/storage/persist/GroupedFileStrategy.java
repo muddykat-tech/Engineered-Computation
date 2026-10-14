@@ -18,6 +18,8 @@ import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 
 import com.muddykat.engineeredcomputation.storage.cell.CellContents;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellRecords;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellSaveStrategy;
 
 /**
  * One gzip NBT file per group, rewritten whole when any cell in it changes, same way that SavedData per group does things.

@@ -10,11 +10,13 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import com.muddykat.engineeredcomputation.compat.patchouli.PatchouliCompat;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECAdapters;
@@ -31,7 +33,9 @@ import com.muddykat.engineeredcomputation.registration.ECPayloads;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.registration.ECPower;
 import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
+import com.muddykat.engineeredcomputation.registration.ECSounds;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
+import com.muddykat.engineeredcomputation.storage.cell.CellStorage;
 
 @Mod(EngineeredComputation.MODID)
 public class EngineeredComputation {
@@ -66,8 +70,6 @@ public class EngineeredComputation {
                         output.accept(ECCatalogue.PROGRAM_DECK.get());
                     }
                     ECDataCells.cellsOf(era).forEach(cell -> output.accept(cell.get()));
-                    if (ECDataCells.uuidCells().containsKey(era))
-                        output.accept(ECDataCells.uuidCells().get(era).get());
                     if (era == ComputerEra.FLOPPY) {
                         ECDataCells.terminalDisks().forEach(disk -> output.accept(disk.get()));
                         output.accept(ECAdapters.PROGRAM_FLOPPY.get());
@@ -113,7 +115,11 @@ public class EngineeredComputation {
         ECCrafting.register(modEventBus);
         ECPneumatics.register(modEventBus);
         ECPayloads.register(modEventBus);
+        ECSounds.register(modEventBus);
         StorageNetwork.register();
+        if (ModList.get().isLoaded("patchouli"))
+            PatchouliCompat.register(modEventBus);
+        CellStorage.register();
 
         LOGGER.info("EC Loaded");
     }

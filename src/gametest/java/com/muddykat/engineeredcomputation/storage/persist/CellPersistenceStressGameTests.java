@@ -21,9 +21,10 @@ import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.gametest.TestCategory;
 import com.muddykat.engineeredcomputation.network.NetworkStressGameTests;
 import com.muddykat.engineeredcomputation.storage.StorageGameTests;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellSaveStrategy;
 
 // Times each save strategy over the same changes; results go to the log under [cell-persist]. */
-@TestCategory({"storage", "stress"})
+@TestCategory("persistence")
 @GameTestHolder(EngineeredComputation.MODID)
 @PrefixGameTestTemplate(false)
 public final class CellPersistenceStressGameTests

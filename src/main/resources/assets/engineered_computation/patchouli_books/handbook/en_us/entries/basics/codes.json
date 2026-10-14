@@ -1,0 +1,21 @@
+{
+  "name": "Error Codes",
+  "icon": "engineered_computation:guide_edition_1",
+  "category": "engineered_computation:basics",
+  "sortnum": 8,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(l)$(ec_code:102)$()$(br)A crafting order is running, or carriers are on their way.$(br2)$(l)$(ec_code:200)$()$(br)Moving items.$(br2)$(l)$(ec_code:204)$()$(br)Storage is empty.$(br2)$(l)$(ec_code:404)$()$(br)Nothing matches the search or filter."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)$(ec_code:409)$()$(br)Mixed hardware on one network.$(br2)$(l)$(ec_code:413)$()$(br)Network is over 4,096 blocks.$(br2)$(l)$(ec_code:402)$()$(br)The network doesn't have enough RF for its machines.$(br2)$(l)$(ec_code:424)$()$(br)Something it needs isn't on the network, likely a processor or a Crafting Computer. A teletype needs a Receiving Station against it."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(l)$(ec_code:503)$()$(br)No cells, cable or inventory. For a teletype, no Tabulator Machine on its tubes.$(br2)$(l)$(ec_code:507)$()$(br)Insufficient Storage."
+    }
+  ]
+}

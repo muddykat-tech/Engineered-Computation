@@ -1,0 +1,19 @@
+{
+  "name": "Disk Pack Memory",
+  "icon": "engineered_computation:disk_pack_cell_8k",
+  "category": "engineered_computation:era4",
+  "sortnum": 6,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:disk_pack_cell_8k",
+      "recipe2": "engineered_computation:disk_pack_cell_16k"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:disk_pack_cell_24k",
+      "recipe2": "engineered_computation:disk_pack_cell_32k"
+    }
+  ]
+}

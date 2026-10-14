@@ -1,0 +1,12 @@
+Engineered Computation sound credits
+
+block/floppy/floppy_35_insert_1.ogg
+    "Inserting 3.5 inch floppy-disk into floppy disk drive" by micropolis
+    https://freesound.org/s/637057/
+block/floppy/floppy_35_insert_2.ogg
+    "Floppy Disk Insert" by JoBot__ (Compaq Deskpro drive)
+    https://freesound.org/s/795758/
+block/floppy/floppy_35_eject.ogg
+    "floppy_eject.ogg" by asiekierka (Amiga 600 drive), then
+    "Taking 3.5-inch floppy-disk from floppy disk drive" by micropolis
+    https://freesound.org/s/628245/ and https://freesound.org/s/637058/

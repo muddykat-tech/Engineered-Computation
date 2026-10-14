@@ -39,6 +39,10 @@ import com.muddykat.engineeredcomputation.storage.StorageGameTests;
 import com.muddykat.engineeredcomputation.storage.cell.CellContents;
 import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
 import com.muddykat.engineeredcomputation.storage.cell.EraDataCell;
+import com.muddykat.engineeredcomputation.storage.cell.persist.BulkCellFile;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellRecords;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellSaveStrategy;
+import com.muddykat.engineeredcomputation.storage.cell.persist.IndexedCellFile;
 
 public final class CellLayout
 {
@@ -91,7 +95,7 @@ public final class CellLayout
 				BlockPos master = StorageGameTests.world(origin, DRIVE.geometry().master(), FACING);
 				for(int slot = 0; slot<drive.getCellSlots().getSlots(); slot++)
 				{
-					ItemStack stack = new ItemStack(ECDataCells.uuidCells().get(ComputerEra.FLOPPY).get());
+					ItemStack stack = new ItemStack(ECDataCells.cellsOf(ComputerEra.FLOPPY).getLast().get());
 					drive.getCellSlots().setStackInSlot(slot, stack);
 					UUID id = layout.fillUuidCell(drive.getCellSlots().getStackInSlot(slot));
 					layout.place(id, "drive_"+master.getX()+"_"+master.getY()+"_"+master.getZ(), "network_"+row,
@@ -133,7 +137,7 @@ public final class CellLayout
 
 	private CellContents randomContents()
 	{
-		EraDataCell type = ECDataCells.uuidCells().get(ComputerEra.FLOPPY).get();
+		EraDataCell type = ECDataCells.cellsOf(ComputerEra.FLOPPY).getLast().get();
 		int types = 8+random.nextInt(type.getTotalTypes()-8);
 		Map<ItemKey, Long> amounts = new LinkedHashMap<>();
 		int start = random.nextInt(items.length-types);
@@ -189,8 +193,9 @@ public final class CellLayout
 				new GroupedFileStrategy("per chunk", root.resolve("chunk"), registries, chunk::get),
 				new RegionFileStrategy(root.resolve("indexed_original").resolve("cells.ecc"),
 						RegionFileStrategy.Options.NONE, registries),
-				new RegionFileStrategy(root.resolve("indexed").resolve("cells.ecc"), registries),
-				new GroupedFileStrategy("bulk file", root.resolve("bulk"), registries, id -> "cells"));
+				IndexedCellFile.open(root.resolve("indexed").resolve("cells.ecc"), IndexedCellFile.DEFAULT_SECTOR,
+						new CellRecords(registries)),
+				new BulkCellFile(root.resolve("bulk").resolve("cells.dat"), new CellRecords(registries)));
 	}
 
 	public static Path tempDir() throws IOException

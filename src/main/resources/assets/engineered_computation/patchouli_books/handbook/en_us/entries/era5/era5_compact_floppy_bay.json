@@ -1,0 +1,21 @@
+{
+  "name": "block.engineered_computation.era5_compact_floppy_bay",
+  "icon": "engineered_computation:era5_casing",
+  "category": "engineered_computation:era5",
+  "sortnum": 4,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:multiblock",
+      "name": "block.engineered_computation.era5_compact_floppy_bay",
+      "multiblock_id": "engineered_computation:era5_compact_floppy_bay",
+      "enable_visualize": true,
+      "text": "Cell slots: 4$(br2)Wrench the front of the casing on the bottom row to form."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Compact Floppy Bay",
+      "text": "The Compact Floppy Bay holds four 3½-inch floppies. It needs a floppy era processor on the network, such as the Floppy Disk Processor or Floppy Disk Workstation.$(br2)Sneak-right-click a bay with a disk to put it in, or with an empty hand to take it out. Right-click elsewhere to open its slots."
+    }
+  ]
+}

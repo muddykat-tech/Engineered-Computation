@@ -18,6 +18,8 @@ import java.util.UUID;
 import net.minecraft.core.HolderLookup;
 
 import com.muddykat.engineeredcomputation.storage.cell.CellContents;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellRecords;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellSaveStrategy;
 
 /**
  * One file laid out like Minecraft's region files: a header of fixed-size slots (cell id, first sector, sector count,

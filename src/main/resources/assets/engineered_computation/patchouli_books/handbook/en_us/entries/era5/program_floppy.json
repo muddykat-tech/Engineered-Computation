@@ -1,0 +1,21 @@
+{
+  "name": "Program Floppy",
+  "icon": "engineered_computation:program_floppy",
+  "category": "engineered_computation:era5",
+  "sortnum": 7,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A Program Floppy holds a filter of up to nine entries, each an item, a tag or a name, for example `c:ingots` for all ingots.$(br2)To program it, right-click while holding it, then click an entry while holding an item, or select an entry and type a tag. To filter by name, click the Tag button to switch it to Name first, names are matched"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "against item IDs. Only supported in Floppy Disk Era Data Importers and Exporters."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:program_floppy"
+    }
+  ]
+}

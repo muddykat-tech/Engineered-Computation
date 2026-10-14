@@ -105,21 +105,14 @@ public class EraDataCell extends Item
 	@Override
 	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag)
 	{
-		CellInventory inventory = CellInventory.of(stack, () -> {
-		});
+		CellInventory inventory = CellInventory.peek(stack);
 		if(inventory==null)
 			return;
-		// quick and dirty method for UUID Test Cells, this will go back to the normal byte / byte view later on
-		if(!inventory.isReadable())
-			lines.add(Component.translatable("tooltip.engineered_computation.cell.uuid").withStyle(ChatFormatting.GRAY));
-		else
-		{
-			lines.add(Component.translatable("tooltip.engineered_computation.cell.bytes",
-					ByteSize.format(inventory.getUsedBytes()), ByteSize.format(inventory.getTotalBytes()))
-					.withStyle(ChatFormatting.GRAY));
-			lines.add(Component.translatable("tooltip.engineered_computation.cell.types",
-					inventory.getTypes(), inventory.getTotalTypes()).withStyle(ChatFormatting.GRAY));
-		}
+		lines.add(Component.translatable("tooltip.engineered_computation.cell.bytes",
+				ByteSize.format(inventory.getUsedBytes()), ByteSize.format(inventory.getTotalBytes()))
+				.withStyle(ChatFormatting.GRAY));
+		lines.add(Component.translatable("tooltip.engineered_computation.cell.types",
+				inventory.getTypes(), inventory.getTotalTypes()).withStyle(ChatFormatting.GRAY));
 		lines.add(Component.translatable("tooltip.engineered_computation.cell.role."
 				+inventory.getRole().name().toLowerCase(Locale.ROOT)).withStyle(ChatFormatting.DARK_AQUA));
 		if(inventory.getPriority()!=0)

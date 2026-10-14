@@ -19,6 +19,7 @@ import com.muddykat.engineeredcomputation.catalogue.deck.FilterDeck;
 import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
 import com.muddykat.engineeredcomputation.program.Program;
 import com.muddykat.engineeredcomputation.storage.cell.CellContents;
+import com.muddykat.engineeredcomputation.storage.cell.CellSummary;
 import com.muddykat.engineeredcomputation.storage.cell.EraDataCell;
 
 public final class ECDataComponents
@@ -36,6 +37,11 @@ public final class ECDataComponents
 			REGISTER.registerComponentType("cell_uuid", builder -> builder
 					.persistent(UUIDUtil.CODEC)
 					.networkSynchronized(UUIDUtil.STREAM_CODEC));
+
+	public static final DeferredHolder<DataComponentType<?>, DataComponentType<CellSummary>> CELL_SUMMARY =
+			REGISTER.registerComponentType("cell_summary", builder -> builder
+					.persistent(CellSummary.CODEC)
+					.networkSynchronized(CellSummary.STREAM_CODEC));
 
 	public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PRIORITY =
 			REGISTER.registerComponentType("priority", builder -> builder

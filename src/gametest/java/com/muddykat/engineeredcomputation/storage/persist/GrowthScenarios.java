@@ -22,6 +22,7 @@ import net.minecraft.world.item.Items;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.storage.cell.CellContents;
 import com.muddykat.engineeredcomputation.storage.cell.EraDataCell;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellSaveStrategy;
 
 /** Workloads that grow, shrink and fragment cell storage, works for any file save strategy. */
 final class GrowthScenarios

@@ -11,6 +11,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.neoforged.fml.ModList;
 
 import com.muddykat.engineeredcomputation.client.ClientHooks;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
@@ -34,7 +35,7 @@ public class GuideItem extends Item
 	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand)
 	{
 		if(level.isClientSide)
-			ClientHooks.openGuide(era);
+			ClientHooks.openGuide(era, player.isSecondaryUseActive());
 		return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
 	}
 
@@ -43,5 +44,8 @@ public class GuideItem extends Item
 	{
 		lines.add(Component.translatable("tooltip.engineered_computation.guide.covers", era.displayName())
 				.withStyle(ChatFormatting.GRAY));
+		if(ModList.get().isLoaded("patchouli"))
+			lines.add(Component.translatable("tooltip.engineered_computation.guide.classic")
+					.withStyle(ChatFormatting.DARK_GRAY));
 	}
 }

@@ -1,0 +1,17 @@
+{
+  "name": "Typewriter Terminal",
+  "icon": "engineered_computation:era2_terminal",
+  "category": "engineered_computation:era2",
+  "sortnum": 3,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Typewriter Terminal shows the storage grid, like the teletype."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:era2_terminal"
+    }
+  ]
+}

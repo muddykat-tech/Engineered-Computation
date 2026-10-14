@@ -1,0 +1,21 @@
+{
+  "name": "block.engineered_computation.era4_drive",
+  "icon": "engineered_computation:era4_casing",
+  "category": "engineered_computation:era4",
+  "sortnum": 1,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:multiblock",
+      "name": "block.engineered_computation.era4_drive",
+      "multiblock_id": "engineered_computation:era4_drive",
+      "enable_visualize": true,
+      "text": "Cell slots: 1$(br2)Wrench the front of the middle casing on the bottom row to form."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Built-in Terminal",
+      "text": "This drive has its own terminal. Right-click its screen or keyboard to browse the network's storage.$(br2)Right-click any other part of the drive to access its cells."
+    }
+  ]
+}

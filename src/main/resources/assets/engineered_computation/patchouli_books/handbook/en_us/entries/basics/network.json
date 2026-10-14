@@ -1,0 +1,22 @@
+{
+  "name": "Storage Networks",
+  "icon": "engineered_computation:guide_edition_1",
+  "category": "engineered_computation:basics",
+  "sortnum": 2,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A terminal shows the contents of every drive connected to it.$(br2)Network Cables connect blocks to the network.$(br2)Every drive has one network port, usually low on its back, and only connects there. A network is limited to 4,096 blocks."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Using a Terminal",
+      "text": "Left-click an item to take a stack, right-click to take half, and shift-click to move a stack to your inventory.$(br2)To store items, click the grid while holding them (right-click will store one), or shift-click them in your inventory. The bar under the grid shows how full the cells are.$(br2)Later terminals add features. The Typewriter shows the grid only. The Uniscope adds a"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "search bar. The Video Terminal and Floppy Disk Terminal add a crafting grid, and the Floppy Disk Terminal has its own internal storage."
+    }
+  ]
+}

@@ -135,12 +135,12 @@ public final class MultiblockDefinition<S extends MultiblockState>
 	}
 
 	/**
-	 * Sends the formed blocks to nearby players straight away, because some servers miss the usual update and players
-	 * will see casings until they rejoin.
+	 * Sends changed blocks to nearby players straight away, because some servers miss the usual update and players
+	 * keep seeing the old blocks until they rejoin.
 	 */
-	private static void sendToWatchers(ServerLevel level, List<BlockPos> placed)
+	private static void sendToWatchers(ServerLevel level, List<BlockPos> changed)
 	{
-		for(BlockPos pos : placed)
+		for(BlockPos pos : changed)
 		{
 			List<ServerPlayer> watching = level.getChunkSource().chunkMap.getPlayers(new ChunkPos(pos), false);
 			if(watching.isEmpty())
@@ -181,13 +181,17 @@ public final class MultiblockDefinition<S extends MultiblockState>
 			master.getState().onDisassemble(master.getContext());
 
 		Rotation rotation = MultiblockOrientation.rotationFor(facing);
+		List<BlockPos> restored = new ArrayList<>();
 		for(int i = 0; i<positions.size(); i++)
 		{
 			BlockPos pos = positions.get(i);
 			if(pos.equals(broken.getBlockPos())||!level.getBlockState(pos).is(partBlock()))
 				continue;
 			level.setBlockAndUpdate(pos, template.blocks().get(i).state().rotate(rotation));
+			restored.add(pos);
 		}
+		restored.add(broken.getBlockPos());
+		sendToWatchers(serverLevel, restored);
 	}
 
 	@Nullable

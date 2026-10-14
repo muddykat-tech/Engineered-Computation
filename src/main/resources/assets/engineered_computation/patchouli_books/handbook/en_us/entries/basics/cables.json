@@ -1,0 +1,21 @@
+{
+  "name": "Network Cables",
+  "icon": "engineered_computation:network_cable",
+  "category": "engineered_computation:basics",
+  "sortnum": 3,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Network Cables connect drives and terminals into a storage network.$(br2)Cables hold no storage. They connect automatically to any terminal or cable they touch, and to a drive at its network port. All eras use the same cable.$(br2)To hide a cable, sneak while placing a block on it to cover"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "it. Breaking a covered cable, or using the Assembly Wrench on it will remove the cover.$(br2)To stop a cable joining something it touches, right-click that arm with the Assembly Wrench. Right-click it with the wrench again to join it. Covering a cable keeps these settings."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:network_cable"
+    }
+  ]
+}

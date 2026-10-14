@@ -1,0 +1,21 @@
+{
+  "name": "Filter Cards",
+  "icon": "engineered_computation:filter_card",
+  "category": "engineered_computation:era1",
+  "sortnum": 9,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A Filter Card is a punch card designed to filter incoming items to an advanced tube station. These can be made by dyeing a blank Catalogue Card orange.$(br2)You can right-click an item onto a filter card to set the filter, or you can open it and set it in the GUI, it also supports tag based filters."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "A card can also filter by name. Open it, click the Tag button to switch it to Name, then type part of a name, the filter is set as you type. Like the terminal search, `iron` matches every item with iron in its name, and `@mod` every item from said mod. Advanced Tube Stations, which can't see item names, match the text against item IDs instead.$(br2)A Filter Card in a Teletype Terminal's card slot filters the items it shows."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:filter_card"
+    }
+  ]
+}

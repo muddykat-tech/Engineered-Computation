@@ -2,6 +2,7 @@ package com.muddykat.engineeredcomputation.multiblock.drive;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.IntPredicate;
 import java.util.function.Supplier;
 
@@ -47,10 +48,10 @@ import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.storage.Archivist;
 import com.muddykat.engineeredcomputation.storage.StorageHost;
 import com.muddykat.engineeredcomputation.storage.StorageRole;
+import com.muddykat.engineeredcomputation.storage.cell.CellBaySlots;
 import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
 import com.muddykat.engineeredcomputation.storage.cell.CellStatus;
 import com.muddykat.engineeredcomputation.storage.cell.EraDataCell;
-import com.muddykat.engineeredcomputation.storage.cell.UuidDataCell;
 import com.muddykat.engineeredcomputation.terminal.TerminalFeatures;
 import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
 import com.muddykat.engineeredcomputation.terminal.crafting.CraftingGrid;
@@ -73,6 +74,7 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 	private final CraftingGrid craftingGrid;
 	private int syncedStatus = -1;
 	private int archiveCountdown;
+	private boolean quiet;
 
 	public static final int ARCHIVE_TICKS = 10;
 	public static final int ARCHIVE_ITEMS = 128;
@@ -82,7 +84,7 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 		this.drive = drive;
 		this.era = drive.era();
 		this.host = host;
-		this.cellSlots = createCellSlots(drive, host::syncToClient);
+		this.cellSlots = createCellSlots(drive, host::syncToClient, this::cellMoved);
 		this.storageBay = drive.geometry().storageZones().isEmpty()? null: new SimpleContainer(STORAGE_BAY_SLOTS)
 		{
 			@Override
@@ -96,9 +98,9 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 				? new CraftingGrid(host::setChanged): null;
 	}
 
-	static ItemStackHandler createCellSlots(EraDrive drive, Runnable onChanged)
+	static ItemStackHandler createCellSlots(EraDrive drive, Runnable onChanged, BiConsumer<ItemStack, Boolean> onMoved)
 	{
-		return new ItemStackHandler(drive.slots())
+		return new CellBaySlots(drive.slots())
 		{
 			@Override
 			public void deserializeNBT(HolderLookup.Provider registries, CompoundTag tag)
@@ -127,11 +129,24 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 			}
 
 			@Override
-			protected void onContentsChanged(int slot)
+			protected void contentsChanged(int slot)
 			{
 				onChanged.run();
 			}
+
+			@Override
+			protected void cellMoved(ItemStack cell, boolean inserted)
+			{
+				onMoved.accept(cell, inserted);
+			}
 		};
+	}
+
+	private void cellMoved(ItemStack cell, boolean inserted)
+	{
+		MultiblockContext ctx = host.context();
+		if(!quiet&&ctx!=null)
+			CellBaySlots.play(ctx.level(), ctx.masterPos(), cell, inserted);
 	}
 
 	public static boolean fitsBay(EraDrive drive, int slot, ItemStack stack)
@@ -318,6 +333,7 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 	public void onDisassemble(MultiblockContext ctx)
 	{
 		BlockPos masterPos = ctx.masterPos();
+		quiet = true;
 		for(int i = 0; i<cellSlots.getSlots(); i++)
 		{
 			ItemStack stack = cellSlots.getStackInSlot(i);
@@ -327,6 +343,7 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 				cellSlots.setStackInSlot(i, ItemStack.EMPTY);
 			}
 		}
+		quiet = false;
 		if(storageBay!=null)
 			Containers.dropContents(ctx.level(), masterPos, storageBay);
 		if(craftingGrid!=null)
@@ -364,8 +381,6 @@ public class EraDriveState implements MultiblockState, NetworkMember, StorageHos
 			return ECCatalogue.tierOf(stack.getItem());
 		List<? extends Supplier<EraDataCell>> tiers = drive.isCompactSlot(slot)? ECDataCells.terminalDisks()
 				: ECDataCells.cellsOf(era);
-		if(stack.getItem() instanceof UuidDataCell)
-			return tiers.size()-1;
 		for(int tier = 0; tier<tiers.size(); tier++)
 			if(stack.is(tiers.get(tier).get()))
 				return tier;

@@ -1,0 +1,21 @@
+{
+  "name": "Assembly Wrench",
+  "icon": "engineered_computation:assembly_wrench",
+  "category": "engineered_computation:basics",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Assembly Wrench forms the hardware for the storage systems.$(br2)Each era has its own casings. To form a drive, place its casings in the drive's structure, then right-click it with the Assembly Wrench.$(br2)It also cuts connections. Right-click a cable OR tube connection to cap that side."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Right-click the cap to reconnect it again."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:assembly_wrench"
+    }
+  ]
+}

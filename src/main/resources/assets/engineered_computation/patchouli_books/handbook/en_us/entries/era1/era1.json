@@ -1,0 +1,22 @@
+{
+  "name": "Analogue Era",
+  "icon": "engineered_computation:relay",
+  "category": "engineered_computation:era1",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Relays, punch cards and pneumatic tubes.$(br2)In this era, all items are still stored in generic chests or other inventories, however, these can be connected via Tube Stations and a network of Pneumatic Tubes linked via a Tabulator Machine and a Teletype Typewriter to create a central storage hub and network."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The Tabulator Machine's holds Card Decks comprised of set Punch Cards, these cards are used to mark the location of a Tube Station to the network.$(br2)Memory: $(ec_memory:era1)$(br)Part: $(ec_part:era1)"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:relay",
+      "recipe2": "engineered_computation:era1_casing"
+    }
+  ]
+}

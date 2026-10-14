@@ -1,5 +1,6 @@
 package com.muddykat.engineeredcomputation;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -10,6 +11,8 @@ import com.muddykat.engineeredcomputation.adapter.AdapterKind;
 import com.muddykat.engineeredcomputation.adapter.AdapterSpeed;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.era.EraDrive;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellSaveMode;
+import com.muddykat.engineeredcomputation.storage.cell.persist.IndexedCellFile;
 
 public final class ECConfig
 {
@@ -84,6 +87,23 @@ public final class ECConfig
 					"Processing patterns run through Advanced Data Processors, at their machines' own pace.")
 			.translation(KEY+"craftingTicks")
 			.defineInRange("craftingTicks", 10, 1, 1200);
+
+	public static final ModConfigSpec.EnumValue<CellSaveMode> CELL_SAVE_MODE = BUILDER.pop()
+			.comment("How memory cell contents are saved, in the world's data/engineered_computation folder. Only change these settings if you know what you're doing.")
+			.translation(KEY+"section.storage").push("storage")
+			.comment("INDEXED rewrites only the cells that changed since the last save, and is normally the best choice.",
+					"BULK rewrites every cell into one file whenever any of them changed since the last save. If you need to save space it has a smaller save footprint, but it writes far more to disk on each save, and more the more cells the world has.",
+					"Changing this moves the saved cells over to the new mode the next time the world loads.")
+			.translation(KEY+"cellSaveMode")
+			.defineEnum("saveMode", CellSaveMode.INDEXED);
+
+	public static final ModConfigSpec.ConfigValue<Integer> SECTOR_SIZE = BUILDER
+			.comment("Sector size of the INDEXED file, in bytes. Smaller sectors waste less space per cell, but when storage cells fill, they need to move around on the file more often, and this can leave small gaps behind. (this is cleaned automatically on world load or via command)",
+					"Larger sectors give each cell more room to grow in place, but waste far more space, for example using 1024 or more can bloat the file size by 2-3 times.",
+					"I'd leave this at the default of 128 if you don't know what you're doing.",
+					"Changes to this value are applied on world load, or if you run /engineeredcomputation cells compact.")
+			.translation(KEY+"sectorSize")
+			.defineInList("sectorSize", IndexedCellFile.DEFAULT_SECTOR, Arrays.asList(64, 128, 256, 512, 1024, 2048, 4096));
 
 	public static final ModConfigSpec SPEC = BUILDER.pop().build();
 
@@ -207,6 +227,16 @@ public final class ECConfig
 	public static int carriersPerFuel()
 	{
 		return SPEC.isLoaded()? CARRIERS_PER_FUEL.getAsInt(): CARRIERS_PER_FUEL.getDefault();
+	}
+
+	public static CellSaveMode cellSaveMode()
+	{
+		return SPEC.isLoaded()? CELL_SAVE_MODE.get(): CELL_SAVE_MODE.getDefault();
+	}
+
+	public static int sectorSize()
+	{
+		return SPEC.isLoaded()? SECTOR_SIZE.get(): SECTOR_SIZE.getDefault();
 	}
 
 	public static int cost(String key)

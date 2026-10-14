@@ -1,0 +1,17 @@
+{
+  "name": "Where Items Go",
+  "icon": "engineered_computation:guide_edition_1",
+  "category": "engineered_computation:basics",
+  "sortnum": 7,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Each type of memory has a strength, and the network stores items where they fit best.$(br2)Disk packs hold the most item types, so new item types go there first. Magnetic tape holds only two types, but in huge amounts: the tape drive will gradually move the largest stocks (16 stacks or more) onto its reel, and move them back"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "when they run low. Tape only takes a new item type when nothing else has room. Servers can turn this archiving off in the settings.$(br2)To set a cell's priority, click the number under it in its drive's screen to raise it, or right-click to lower it. Higher priority cells are filled first and emptied last, and the tape drive never takes items from a cell with a higher priority than its reel."
+    }
+  ]
+}

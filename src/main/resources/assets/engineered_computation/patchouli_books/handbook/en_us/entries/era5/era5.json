@@ -1,0 +1,18 @@
+{
+  "name": "Floppy Disk Era",
+  "icon": "engineered_computation:microprocessor",
+  "category": "engineered_computation:era5",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Floppy disks have a larger capacity and decent item variety, good for general use.$(br2)The Floppy Disk Workstation and the Floppy Disk Processor are this era's processors. Floppy Banks and Compact Floppy Bays need one on the network.$(br2)Memory: $(ec_memory:era5)$(br)Part: $(ec_part:era5)"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:microprocessor",
+      "recipe2": "engineered_computation:era5_casing"
+    }
+  ]
+}

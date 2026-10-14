@@ -1,0 +1,16 @@
+{
+  "name": "block.engineered_computation.era5_floppy_bank",
+  "icon": "engineered_computation:era5_casing",
+  "category": "engineered_computation:era5",
+  "sortnum": 2,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:multiblock",
+      "name": "block.engineered_computation.era5_floppy_bank",
+      "multiblock_id": "engineered_computation:era5_floppy_bank",
+      "enable_visualize": true,
+      "text": "Cell slots: 4$(br2)Wrench the front of the casing on the bottom row to form."
+    }
+  ]
+}

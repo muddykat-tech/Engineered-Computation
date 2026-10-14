@@ -1,0 +1,19 @@
+{
+  "name": "guide.engineered_computation.section.decks",
+  "icon": "engineered_computation:card_deck_8",
+  "category": "engineered_computation:era1",
+  "sortnum": 7,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:card_deck_8",
+      "recipe2": "engineered_computation:card_deck_16"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:card_deck_32",
+      "recipe2": "engineered_computation:card_deck_64"
+    }
+  ]
+}

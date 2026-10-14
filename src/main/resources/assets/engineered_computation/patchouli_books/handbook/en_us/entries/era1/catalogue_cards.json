@@ -1,0 +1,21 @@
+{
+  "name": "Catalogue Cards",
+  "icon": "engineered_computation:catalogue_card",
+  "category": "engineered_computation:era1",
+  "sortnum": 5,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "To punch a blank Catalogue Card with a station's location, right-click the Tube Station with it. The card will be labelled with the station's name, or the inventory's if it has none.$(br2)Card Decks store punched cards. Right-click while holding a deck to open it, or right-click a card onto the deck to file it. Right-clicking"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "a deck with an empty hand will take the last card out. Bigger decks hold more cards.$(br2)Put the decks in a Tabulator Machine on the same tube network as their stations. Every second, the Tabulator Machine retallies each card's station and updates its label. A card whose station is out of reach keeps its last tally."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:catalogue_card"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Drum Memory Era",
+  "icon": "engineered_computation:vacuum_tube",
+  "category": "engineered_computation:era2",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Spinning magnetic drums hold data on their surface.$(br2)The Drum Computer, inspired by the Bendix G-15, is this era's processor. It holds one drum, and allows other drum storage on the network such as the Drum Bank, inspired by the FASTRAND II, which holds two drums. This era also adds the first Data Importers and Exporters."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Memory: $(ec_memory:era2)$(br)Part: $(ec_part:era2)"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:vacuum_tube",
+      "recipe2": "engineered_computation:era2_casing"
+    }
+  ]
+}

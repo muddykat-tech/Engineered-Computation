@@ -1,0 +1,19 @@
+{
+  "name": "Magnetic Drum Memory",
+  "icon": "engineered_computation:magnetic_drum_cell_256b",
+  "category": "engineered_computation:era2",
+  "sortnum": 5,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:magnetic_drum_cell_256b",
+      "recipe2": "engineered_computation:magnetic_drum_cell_512b"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:magnetic_drum_cell_1k",
+      "recipe2": "engineered_computation:magnetic_drum_cell_2k"
+    }
+  ]
+}

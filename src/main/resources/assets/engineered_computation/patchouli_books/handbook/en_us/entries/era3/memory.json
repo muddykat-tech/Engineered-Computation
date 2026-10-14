@@ -1,0 +1,19 @@
+{
+  "name": "Magnetic Tape Memory",
+  "icon": "engineered_computation:magnetic_tape_cell_512k",
+  "category": "engineered_computation:era3",
+  "sortnum": 4,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:magnetic_tape_cell_512k",
+      "recipe2": "engineered_computation:magnetic_tape_cell_1m"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:magnetic_tape_cell_2m",
+      "recipe2": "engineered_computation:magnetic_tape_cell_4m"
+    }
+  ]
+}

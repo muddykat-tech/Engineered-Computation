@@ -1,0 +1,23 @@
+{
+  "name": "Floppy Disk Memory",
+  "icon": "engineered_computation:floppy_disk_cell_16k",
+  "category": "engineered_computation:era5",
+  "sortnum": 12,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:floppy_disk_cell_16k",
+      "recipe2": "engineered_computation:floppy_disk_cell_32k"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:floppy_disk_cell_64k",
+      "recipe2": "engineered_computation:floppy_disk_cell_128k"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:floppy_disk_cell_512k"
+    }
+  ]
+}

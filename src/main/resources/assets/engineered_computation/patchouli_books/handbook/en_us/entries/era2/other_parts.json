@@ -1,0 +1,23 @@
+{
+  "name": "Other Parts",
+  "icon": "engineered_computation:transistor",
+  "category": "engineered_computation:era2",
+  "sortnum": 6,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Some recipes in this guide need parts from other eras. Their recipes are listed here."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:transistor",
+      "recipe2": "engineered_computation:integrated_circuit"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:relay",
+      "recipe2": "engineered_computation:era1_casing"
+    }
+  ]
+}

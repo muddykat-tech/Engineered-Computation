@@ -1,0 +1,17 @@
+{
+  "name": "Other Parts",
+  "icon": "engineered_computation:vacuum_tube",
+  "category": "engineered_computation:era1",
+  "sortnum": 11,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Some recipes in this guide need parts from other eras. Their recipes are listed here."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:vacuum_tube"
+    }
+  ]
+}

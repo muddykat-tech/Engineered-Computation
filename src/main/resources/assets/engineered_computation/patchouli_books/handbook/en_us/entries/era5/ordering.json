@@ -1,0 +1,17 @@
+{
+  "name": "Ordering",
+  "icon": "engineered_computation:guide_edition_1",
+  "category": "engineered_computation:era5",
+  "sortnum": 11,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The Floppy Disk Terminal, and the Floppy Disk Workstation's built-in terminal, show everything the network can craft. Items with none in storage are faded: click one to order it. To order more of a stored item, Ctrl-click or middle-click it.$(br2)Set the amount and the order screen shows what it needs: what comes from storage, what"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "gets crafted along the way, and anything missing. If a recipe needs an item another pattern makes, that item is crafted first. Patterns with a tag are marked #; ordering one asks what to send for each tag.$(br2)While an order runs, every terminal on the network shows 102 Processing. The list button beside the terminal's help shows each order and can cancel it."
+    }
+  ]
+}

@@ -15,20 +15,15 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import com.muddykat.engineeredcomputation.ECConfig;
 import com.muddykat.engineeredcomputation.client.guide.page.ContentsPage;
 import com.muddykat.engineeredcomputation.client.guide.page.GuidePage;
 import com.muddykat.engineeredcomputation.client.guide.page.RecipePage;
 import com.muddykat.engineeredcomputation.client.guide.page.StructurePage;
 import com.muddykat.engineeredcomputation.client.guide.page.TextPage;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
-import com.muddykat.engineeredcomputation.era.EraDrive;
-import com.muddykat.engineeredcomputation.era.EraMachine;
-import com.muddykat.engineeredcomputation.guide.GuideRecipes;
+import com.muddykat.engineeredcomputation.guide.GuideOutline;
 import com.muddykat.engineeredcomputation.guide.GuideTexts;
 import com.muddykat.engineeredcomputation.network.StatusCode;
-import com.muddykat.engineeredcomputation.registration.ECContent;
-import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 
 final class GuideBook
 {
@@ -53,24 +48,27 @@ final class GuideBook
 
 	private Guide buildGuide()
 	{
-		basics();
-		eraChapter();
-		advancedStation();
-		otherParts();
-		if(era.ordinal()+1<ComputerEra.values().length)
-		{
-			ComputerEra next = ComputerEra.values()[era.ordinal()+1];
-			chapter(GuideTexts.NEXT);
-			text(GuideTexts.NEXT, Map.of(GuideTexts.NEXT_GUIDE, ECContent.guide(next).get().getDescription(),
-					GuideTexts.NEXT_ERA, next.displayName()));
-			GuideRecipes.nextGuide(era).ifPresent(this::recipe);
-		}
-		else
-		{
-			chapter(GuideTexts.PALM);
-			text(GuideTexts.PALM);
-		}
-		errorCodes();
+		Level level = Minecraft.getInstance().level;
+		for(GuideOutline.Step step : GuideOutline.of(era, level==null? null: level.getRecipeManager(),
+				level==null? null: level.registryAccess()))
+			switch(step)
+			{
+				case GuideOutline.Heading heading -> chapters.add(new ContentsPage.Entry(heading.page()!=null
+						? GuideText.contents(heading.page()): heading.label(), pages.size(), heading.section()));
+				case GuideOutline.Text text -> {
+					Map<String, Component> values = new HashMap<>();
+					text.values().forEach((name, value) -> values.put(name, value.now().get()));
+					text(GuideText.title(text.page()), GuideText.body(text.page(), values));
+				}
+				case GuideOutline.Recipe recipe -> recipe(recipe.id());
+				case GuideOutline.Structure structure -> {
+					Component caption = structure.slots()==null? structure.hint()
+							: structure.slots().copy().append("\n").append(structure.hint());
+					pages.add(new StructurePage(structure.name(), structure.casing(), structure.geometry(),
+							font.split(caption, GuidePage.WIDTH)));
+				}
+				case GuideOutline.Codes codes -> errorCodes();
+			}
 
 		int contentsPages = Math.max(1, (chapters.size()+ContentsPage.ENTRIES-1)/ContentsPage.ENTRIES);
 		List<GuidePage> all = new ArrayList<>();
@@ -87,173 +85,8 @@ final class GuideBook
 		return new Guide(era, List.copyOf(all), Map.copyOf(recipes));
 	}
 
-	private void basics()
-	{
-		chapter(GuideTexts.INTRO);
-		text(GuideTexts.INTRO, Map.of(GuideTexts.ERA, era.displayName()));
-
-		chapter(GuideTexts.WRENCH);
-		text(GuideTexts.WRENCH);
-		recipe(GuideRecipes.WRENCH);
-
-		chapter(GuideTexts.COMPONENTS);
-		text(GuideTexts.COMPONENTS);
-
-		if(!era.onDataNetwork())
-			return;
-
-		chapter(GuideTexts.NETWORK);
-		text(GuideTexts.NETWORK);
-		text(GuideTexts.TERMINAL);
-
-		chapter(GuideTexts.CABLES);
-		text(GuideTexts.CABLES);
-		recipe(GuideRecipes.CABLE);
-
-		chapter(GuideTexts.BRIDGE);
-		text(GuideTexts.BRIDGE);
-		recipe(GuideRecipes.BRIDGE);
-
-		chapter(GuideTexts.ENERGY_ACCEPTER);
-		text(GuideTexts.ENERGY_ACCEPTER);
-		recipe(GuideRecipes.ENERGY_ACCEPTER);
-
-		chapter(GuideTexts.CELLS);
-		text(GuideTexts.CELLS);
-		section(GuideTexts.PLACEMENT);
-		text(GuideTexts.PLACEMENT);
-	}
-
-	private void eraChapter()
-	{
-		chapter(GuideTexts.era(era));
-		text(GuideTexts.era(era), Map.of(GuideTexts.MEMORY, era.memoryDisplayName(),
-				GuideTexts.PART, ECContent.component(era).get().getDescription()));
-		recipe(GuideRecipes.component(era));
-		recipe(GuideRecipes.casing(era));
-
-		for(EraDrive drive : era.drives())
-		{
-			section(ECMultiblocks.ERA_DRIVES.get(drive).partBlock().getName());
-			String slots = drive.era().onDataNetwork()? "structure.slots": "structure.decks";
-			pages.add(new StructurePage(drive, font.split(Component.translatable(KEY+slots, drive.slots())
-					.append("\n").append(Component.translatable(KEY+"structure.hint")), GuidePage.WIDTH)));
-			if(!drive.geometry().terminalZones().isEmpty())
-				text(GuideTexts.BUILTIN_TERMINAL);
-			if(!drive.geometry().storageZones().isEmpty())
-				text(GuideTexts.STORAGE_BAY);
-			GuideTexts.drive(drive).ifPresent(this::text);
-		}
-
-		if(!GuideRecipes.tubes(era).isEmpty())
-		{
-			section(GuideTexts.TUBES);
-			text(GuideTexts.TUBES);
-			GuideRecipes.tubes(era).forEach(this::recipe);
-		}
-		GuideRecipes.pressurizer(era).ifPresent(pressurizer -> {
-			section(GuideTexts.PRESSURIZER);
-			text(GuideTexts.PRESSURIZER, Map.of(
-					GuideTexts.CARRIER_SIZE_UNPRESSURED, number(ECConfig.carrierItems(false)),
-					GuideTexts.CARRIER_TICKS, number(ECConfig.carrierTicks(false)),
-					GuideTexts.CARRIER_SIZE_PRESSURED, number(ECConfig.carrierItems(true)),
-					GuideTexts.CARRIER_PRESSURED_TICKS, number(ECConfig.carrierTicks(true)),
-					GuideTexts.CARRIERS_PER_FUEL, number(ECConfig.carriersPerFuel())));
-			recipe(pressurizer);
-		});
-		if(!GuideRecipes.autotubes(era).isEmpty())
-		{
-			section(GuideTexts.AUTOTUBE);
-			text(GuideTexts.AUTOTUBE);
-			GuideRecipes.autotubes(era).forEach(this::recipe);
-		}
-		GuideRecipes.catalogueCard(era).ifPresent(card -> {
-			section(GuideTexts.CATALOGUE_CARDS);
-			text(GuideTexts.CATALOGUE_CARDS);
-			recipe(card);
-		});
-
-		if(era.hasTerminal())
-		{
-			section(GuideTexts.eraTerminal(era));
-			text(GuideTexts.eraTerminal(era));
-		}
-		GuideRecipes.terminal(era).ifPresent(this::recipe);
-		if(!GuideRecipes.terminalDisks(era).isEmpty())
-		{
-			text(GuideTexts.TERMINAL_DISKS);
-			GuideRecipes.terminalDisks(era).forEach(this::recipe);
-		}
-
-		if(!GuideRecipes.adapters(era).isEmpty())
-		{
-			section(GuideTexts.ADAPTERS);
-			text(GuideTexts.ADAPTERS);
-			GuideRecipes.adapters(era).forEach(this::recipe);
-		}
-		GuideRecipes.programFloppy(era).ifPresent(floppy -> {
-			section(GuideTexts.PROGRAM_FLOPPY);
-			text(GuideTexts.PROGRAM_FLOPPY);
-			recipe(floppy);
-		});
-		GuideRecipes.patternFloppy(era).ifPresent(floppy -> {
-			section(GuideTexts.CRAFTING_COMPUTER);
-			text(GuideTexts.CRAFTING_COMPUTER);
-			EraMachine computer = EraMachine.CRAFTING_COMPUTER;
-			pages.add(new StructurePage(ECMultiblocks.CRAFTING_COMPUTER.partBlock().getName(),
-					ECContent.casing(computer.era()).get(), computer.geometry(),
-					font.split(Component.translatable(KEY+"structure.hint"), GuidePage.WIDTH)));
-			section(GuideTexts.DATA_PROCESSOR);
-			text(GuideTexts.DATA_PROCESSOR);
-			pages.add(new StructurePage(ECMultiblocks.DATA_PROCESSOR.partBlock().getName(),
-					ECContent.PROCESSOR_CASING.get(), EraMachine.DATA_PROCESSOR.geometry(),
-					font.split(Component.translatable(KEY+"structure.hint"), GuidePage.WIDTH)));
-			recipe(GuideRecipes.PROCESSOR_CASING);
-			section(GuideTexts.PATTERN_FLOPPY);
-			text(GuideTexts.PATTERN_FLOPPY);
-			recipe(floppy);
-			section(GuideTexts.ORDERING);
-			text(GuideTexts.ORDERING);
-		});
-
-		section(era.onDataNetwork()? Component.translatable(KEY+"section.memory", era.memoryDisplayName())
-				: Component.translatable(KEY+"section.decks"));
-		GuideRecipes.cells(era).forEach(this::recipe);
-	}
-
-	private void advancedStation()
-	{
-		List<ResourceLocation> recipes = GuideRecipes.filterStation(era);
-		if(recipes.isEmpty())
-			return;
-		chapter(GuideTexts.ADVANCED_STATION);
-		text(GuideTexts.ADVANCED_STATION);
-		recipe(recipes.get(0));
-		section(GuideTexts.FILTER_CARDS);
-		text(GuideTexts.FILTER_CARDS);
-		recipe(recipes.get(1));
-		section(GuideTexts.PROGRAM_DECK);
-		text(GuideTexts.PROGRAM_DECK);
-		recipe(recipes.get(2));
-	}
-
-	private void otherParts()
-	{
-		Level level = Minecraft.getInstance().level;
-		if(level==null)
-			return;
-		List<ResourceLocation> others = GuideRecipes.prerequisites(GuideRecipes.shown(era), level.getRecipeManager(),
-				level.registryAccess());
-		if(others.isEmpty())
-			return;
-		chapter(GuideTexts.OTHER_PARTS);
-		text(GuideTexts.OTHER_PARTS);
-		others.forEach(this::recipe);
-	}
-
 	private void errorCodes()
 	{
-		chapter(GuideTexts.CODES);
 		Map<Integer, String> meanings = GuideTexts.codes(GuideText.page(GuideTexts.CODES).body());
 		List<Component> entries = new ArrayList<>();
 		for(StatusCode code : StatusCode.values())
@@ -283,36 +116,6 @@ final class GuideBook
 			page.addAll(lines);
 		}
 		pages.add(new TextPage(first? title: null, List.copyOf(page)));
-	}
-
-	private void chapter(String page)
-	{
-		chapters.add(new ContentsPage.Entry(GuideText.contents(page), pages.size(), false));
-	}
-
-	private void section(String page)
-	{
-		chapters.add(new ContentsPage.Entry(GuideText.contents(page), pages.size(), true));
-	}
-
-	private void text(String page)
-	{
-		text(page, Map.of());
-	}
-
-	private void text(String page, Map<String, Component> values)
-	{
-		text(GuideText.title(page), GuideText.body(page, values));
-	}
-
-	private static Component number(int value)
-	{
-		return Component.literal(Integer.toString(value));
-	}
-
-	private void section(Component label)
-	{
-		chapters.add(new ContentsPage.Entry(label, pages.size(), true));
 	}
 
 	private void text(Component title, Component body)

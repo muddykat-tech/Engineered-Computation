@@ -1,0 +1,22 @@
+{
+  "name": "Disk Pack Era",
+  "icon": "engineered_computation:integrated_circuit",
+  "category": "engineered_computation:era4",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Stacked spinning platters, a whole pack of disks lowered into the drive as one. Disk packs have the highest item variety in this mod, with moderate capacity.$(br2)The Disk Pack Mainframe and the Disk Pack Processor are this era's processors. Disk Banks need one on the network.$(br2)Memory: $(ec_memory:era4)$(br)"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Part: $(ec_part:era4)"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:integrated_circuit",
+      "recipe2": "engineered_computation:era4_casing"
+    }
+  ]
+}

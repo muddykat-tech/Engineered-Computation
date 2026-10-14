@@ -14,11 +14,15 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.gametest.TestCategory;
 import com.muddykat.engineeredcomputation.storage.StorageGameTests;
+import com.muddykat.engineeredcomputation.storage.cell.persist.BulkCellFile;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellRecords;
+import com.muddykat.engineeredcomputation.storage.cell.persist.CellSaveStrategy;
+import com.muddykat.engineeredcomputation.storage.cell.persist.IndexedCellFile;
 
 import static com.muddykat.engineeredcomputation.storage.persist.GrowthScenarios.*;
 
 // results go to the log under [cell-scenario].
-@TestCategory({"storage", "stress"})
+@TestCategory("persistence")
 @GameTestHolder(EngineeredComputation.MODID)
 @PrefixGameTestTemplate(false)
 public final class CellPersistenceScenarioGameTests
@@ -74,10 +78,10 @@ public final class CellPersistenceScenarioGameTests
 						work::chunkOf)),
 				new Kind("indexed, original", (work, dir) -> new RegionFileStrategy(dir.resolve("cells.ecc"),
 						RegionFileStrategy.Options.NONE, registries)),
-				new Kind("indexed, fixed", (work, dir) -> new RegionFileStrategy(dir.resolve("cells.ecc"),
-						RegionFileStrategy.Options.BEST, registries)),
-				new Kind("bulk file", (work, dir) -> new GroupedFileStrategy("bulk file", dir, registries,
-						id -> "cells")));
+				new Kind("indexed, fixed", (work, dir) -> IndexedCellFile.open(dir.resolve("cells.ecc"),
+						IndexedCellFile.DEFAULT_SECTOR, new CellRecords(registries))),
+				new Kind("bulk file", (work, dir) -> new BulkCellFile(dir.resolve("cells.dat"),
+						new CellRecords(registries))));
 	}
 
 	private static void compare(GameTestHelper helper, NamedScenario scenario) throws IOException

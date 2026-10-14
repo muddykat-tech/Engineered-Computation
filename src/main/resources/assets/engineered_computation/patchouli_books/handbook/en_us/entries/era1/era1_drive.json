@@ -1,0 +1,16 @@
+{
+  "name": "block.engineered_computation.era1_drive",
+  "icon": "engineered_computation:era1_casing",
+  "category": "engineered_computation:era1",
+  "sortnum": 1,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:multiblock",
+      "name": "block.engineered_computation.era1_drive",
+      "multiblock_id": "engineered_computation:era1_drive",
+      "enable_visualize": true,
+      "text": "Deck slots: 4$(br2)Wrench the front of the middle casing on the bottom row to form."
+    }
+  ]
+}

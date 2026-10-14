@@ -1,0 +1,17 @@
+{
+  "name": "Video Terminal",
+  "icon": "engineered_computation:era4_terminal",
+  "category": "engineered_computation:era4",
+  "sortnum": 4,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "This terminal has a search bar and a 3x3 crafting grid. The arrows button beside the result links the grid to storage. Switch it off for a normal crafting grid."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:era4_terminal"
+    }
+  ]
+}

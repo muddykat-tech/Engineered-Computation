@@ -25,7 +25,7 @@ public final class DiskMainframeShape extends GenericShape
 						Map.entry(new BlockPos(0, 0, 2), shape(box(0, 2, 0, 16, 16, 15), box(1, 0, 0, 16, 2, 14))),
 						Map.entry(new BlockPos(0, 1, 0), box(0, 0, 0, 16, 16, 16)),
 						Map.entry(new BlockPos(0, 1, 1), shape(box(0, 0, 0, 16, 16, 9), box(0, 0, 12, 16, 2, 16), box(1, 2, 11, 16, 16, 12))),
-						Map.entry(new BlockPos(0, 1, 2), shape(box(0, 0, 0, 16, 2, 15), box(7, 4, 1, 15, 6, 10), box(7, 6, 1, 15, 8, 10), box(8, 2, 3, 14, 4, 8), box(8, 8, 3, 14, 10, 8))),
+						Map.entry(new BlockPos(0, 1, 2), box(0, 0, 0, 16, 2, 15)),
 						Map.entry(new BlockPos(0, 2, 0), box(0, 0, 0, 16, 16, 16)),
 						Map.entry(new BlockPos(0, 2, 1), shape(box(0, 0, 0, 16, 16, 9), box(1, 0, 11, 16, 4, 12))),
 						Map.entry(new BlockPos(0, 3, 0), box(0, 0, 0, 16, 12, 16)),

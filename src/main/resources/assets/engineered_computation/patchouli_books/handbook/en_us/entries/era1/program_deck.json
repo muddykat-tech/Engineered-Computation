@@ -1,0 +1,17 @@
+{
+  "name": "Program Decks",
+  "icon": "engineered_computation:program_deck",
+  "category": "engineered_computation:era1",
+  "sortnum": 10,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A Program Deck holds up to eight Filter Cards, for stations that need more than one filter.$(br2)Right-click a card onto the deck to file it, or right-click the deck with an empty hand to take the last card out. Right-click while holding the deck to view and arrange its cards."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "engineered_computation:program_deck"
+    }
+  ]
+}
