@@ -101,10 +101,18 @@ public final class CraftingOrder
 	/** Only what the order makes or fetches: an order that sends items away has its first item as target. */
 	private boolean isTarget(ItemKey key)
 	{
+		// Crafted or fetched items a send needs would go straight back to storage, leaving it waiting on them forever.
+		if(sends())
+			return false;
 		boolean matches = key.equals(target)||targetTag!=null&&key.getItem().builtInRegistryHolder().is(targetTag);
 		return matches&&(steps.stream().anyMatch(step -> step.resolved.outputTotals().containsKey(key))
 				||requests.stream().anyMatch(request -> request.key.equals(key))
 				||targetTag!=null);
+	}
+
+	private boolean sends()
+	{
+		return steps.stream().anyMatch(step -> step.resolved.sendsOnly());
 	}
 
 	public long amount()
@@ -156,16 +164,15 @@ public final class CraftingOrder
 	public OrderView view(long gameTime)
 	{
 		List<OrderView.Node> tree = new ArrayList<>();
-		Step root = maker(target, List.of());
+		Step root = sends()? null: maker(target, List.of());
 		if(root!=null)
 			addNode(tree, root, target, 0, new ArrayList<>());
 		for(Step step : steps)
-			if(step.resolved.sendsOnly()&&tree.size()<OrderView.MAX_NODES)
-				tree.add(new OrderView.Node(0, ItemKey.of(step.resolved.input(step.resolved.firstInput())), step.runs,
-						true, true, (float)(step.runsDone()/step.runs)));
+			if(step.resolved.sendsOnly())
+				addNode(tree, step, ItemKey.of(step.resolved.input(step.resolved.firstInput())), 0, new ArrayList<>());
 		for(Request request : requests)
 			if(tree.size()<OrderView.MAX_NODES)
-				tree.add(new OrderView.Node(root==null? 0: 1, request.key, request.amount, true, true,
+				tree.add(new OrderView.Node(tree.isEmpty()? 0: 1, request.key, request.amount, true, true,
 						(float)Math.min(1, request.received/(double)request.amount)));
 		return new OrderView(id, shownTarget(), amount, status, progress(), gameTime-age, tree);
 	}
@@ -174,7 +181,8 @@ public final class CraftingOrder
 	{
 		if(tree.size()>=OrderView.MAX_NODES)
 			return;
-		long made = step.runs*step.resolved.outputTotals().getOrDefault(key, 1L);
+		long made = step.runs*(step.resolved.sendsOnly()? step.resolved.inputTotals(): step.resolved.outputTotals())
+				.getOrDefault(key, 1L);
 		tree.add(new OrderView.Node(depth, key, made, true, step.processor!=null, (float)(step.runsDone()/step.runs)));
 		above.add(step);
 		step.resolved.inputTotals().forEach((input, each) -> {

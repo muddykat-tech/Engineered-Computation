@@ -275,7 +275,7 @@
   "gui.engineered_computation.pattern.abstract.detail": "An Advanced Data Processor sends the inputs to an inventory, then expects outputs back.",
   "gui.engineered_computation.pattern.abstract.short": "Abstract",
   "gui.engineered_computation.pattern.send": "Send",
-  "gui.engineered_computation.pattern.send.detail": "An Advanced Data Processor sends the inputs to an inventory, nothing comes back.",
+  "gui.engineered_computation.pattern.send.detail": "An Advanced Data Processor sends the input to a location without expecting any return items",
   "gui.engineered_computation.pattern.send.short": "Send",
   "gui.engineered_computation.pattern.fuzzy_inputs": "Fuzzy inputs",
   "gui.engineered_computation.pattern.fuzzy_inputs.on": "Fuzzy inputs: on",

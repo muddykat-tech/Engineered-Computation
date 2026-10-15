@@ -33,6 +33,7 @@ import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerMenu;
 import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerState;
 import com.muddykat.engineeredcomputation.crafting.order.CraftingOrder;
+import com.muddykat.engineeredcomputation.crafting.order.OrderView;
 import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternEditPayload;
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternFloppyItem;
@@ -189,6 +190,34 @@ public final class CraftingComputerGameTests
 			StorageGameTests.check(helper, setup.stored(Items.COBBLESTONE)==8, "8 cobblestone should be left in storage");
 			StorageGameTests.check(helper, setup.computer.getOrders().isEmpty(),
 					"the order should finish with nothing to come back");
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = NetworkStressGameTests.BIG)
+	public static void aSendPatternSendsWhatItHadToCraft(GameTestHelper helper)
+	{
+		Setup setup = setup(helper);
+		setup.store(Items.OAK_PLANKS, 1);
+		setup.store(Items.OAK_LOG, 2);
+		setup.computer.getPatternSlots().setStackInSlot(0, directFloppy(setup.level, new ItemStack(Items.OAK_LOG)));
+		Pattern sendAway = new Pattern(Pattern.Mode.SEND, List.of(new ItemStack(Items.OAK_PLANKS, 9)), List.of());
+		Rig rig = setup.processor(helper, sendAway);
+		PatternOffer offer = CraftingNetwork.offers(setup.level, setup.network()).stream()
+				.filter(each -> each.pattern().equals(sendAway)).findFirst().orElse(null);
+		StorageGameTests.check(helper, offer!=null, "the pattern should be offered to order");
+		StorageNetwork network = setup.network();
+		StorageGameTests.check(helper, CraftingNetwork.orderOffer(setup.level, network, network.getStorage(),
+				new PatternOffer.Choice(offer, Map.of()), 1).isEmpty(), "sending 9 planks, 8 to craft, was refused");
+		OrderView.Node sent = setup.computer.getOrders().get(0).view(0).tree().get(0);
+		StorageGameTests.check(helper, sent.item().equals(ItemKey.of(new ItemStack(Items.OAK_PLANKS)))&&sent.amount()==9,
+				"the order should show 9 planks to send, not "+sent.amount()+" "+sent.item());
+		helper.runAfterDelay(3*ECConfig.craftingTicks()+5, () -> {
+			StorageGameTests.check(helper, rig.count(rig.machine(), Items.OAK_PLANKS)==9,
+					"9 planks should be sent away, not "+rig.count(rig.machine(), Items.OAK_PLANKS));
+			StorageGameTests.check(helper, setup.stored(Items.OAK_PLANKS)==0,
+					"the crafted planks went back to storage instead of being sent");
+			StorageGameTests.check(helper, setup.computer.getOrders().isEmpty(), "the send order got stuck");
 			helper.succeed();
 		});
 	}
