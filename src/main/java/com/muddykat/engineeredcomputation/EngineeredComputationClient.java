@@ -49,6 +49,7 @@ import com.muddykat.engineeredcomputation.client.screen.crafting.DataProcessorSc
 import com.muddykat.engineeredcomputation.client.screen.crafting.PatternFloppyScreen;
 import com.muddykat.engineeredcomputation.client.screen.drive.EraDriveScreen;
 import com.muddykat.engineeredcomputation.client.screen.pneumatic.AutotubeScreen;
+import com.muddykat.engineeredcomputation.client.screen.remote.StorageAnalyzerScreen;
 import com.muddykat.engineeredcomputation.client.screen.pneumatic.PressurizerScreen;
 import com.muddykat.engineeredcomputation.client.screen.pneumatic.ReceivingStationScreen;
 import com.muddykat.engineeredcomputation.client.screen.pneumatic.TubeStationScreen;
@@ -202,6 +203,7 @@ public class EngineeredComputationClient {
         event.register(ECMenuTypes.DATA_PROCESSOR.get(), DataProcessorScreen::new);
         event.register(ECMenuTypes.TUBE_STATION.get(), TubeStationScreen::new);
         event.register(ECMenuTypes.AUTOTUBE.get(), AutotubeScreen::new);
+        event.register(ECMenuTypes.STORAGE_ANALYZER.get(), StorageAnalyzerScreen::new);
         event.register(ECMenuTypes.PRESSURIZER.get(), PressurizerScreen::new);
         event.register(ECMenuTypes.CARD_DECK.get(), CardDeckScreen::new);
         event.register(ECMenuTypes.RECEIVING_STATION.get(), ReceivingStationScreen::new);

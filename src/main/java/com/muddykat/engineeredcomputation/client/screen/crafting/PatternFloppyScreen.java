@@ -44,6 +44,10 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 
 
 	private static final int TAG_X = 32;
+	private static final int FUZZY_WIDTH = 78;
+	private static final int FUZZY_HEIGHT = 13;
+	private static final int FUZZY_INPUTS_X = 8;
+	private static final int FUZZY_OUTPUTS_X = 90;
 	private static final int SUGGESTIONS = 4;
 
 	private EditBox tag;
@@ -78,6 +82,26 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 	private boolean isDirect()
 	{
 		return menu.pattern().mode()==Pattern.Mode.DIRECT;
+	}
+
+	private boolean sends()
+	{
+		return menu.pattern().mode()==Pattern.Mode.SEND;
+	}
+
+	private boolean isOverFuzzy(double mouseX, double mouseY, boolean inputs)
+	{
+		return isDirect()&&isOver(mouseX, mouseY, inputs? FUZZY_INPUTS_X: FUZZY_OUTPUTS_X, PatternFloppyMenu.TAG_Y,
+				FUZZY_WIDTH, FUZZY_HEIGHT);
+	}
+
+	private void renderFuzzy(GuiGraphics graphics, int mouseX, int mouseY, boolean inputs)
+	{
+		int x = leftPos+(inputs? FUZZY_INPUTS_X: FUZZY_OUTPUTS_X), y = topPos+PatternFloppyMenu.TAG_Y;
+		boolean on = inputs? menu.pattern().fuzzyInputs(): menu.pattern().fuzzyOutputs();
+		ECGui.button(graphics, x, y, FUZZY_WIDTH, FUZZY_HEIGHT, isOverFuzzy(mouseX, mouseY, inputs));
+		graphics.drawCenteredString(font, Component.translatable("gui.engineered_computation.pattern.fuzzy_"
+				+(inputs? "inputs": "outputs")), x+FUZZY_WIDTH/2+1, y+3, on? 0x6CFF7C: 0xA0A0A0);
 	}
 
 	private void send(PatternEditPayload.Action action, int slot, int amount)
@@ -128,6 +152,15 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 							.withStyle(ChatFormatting.GRAY),
 					Component.translatable("gui.engineered_computation.pattern.switch").withStyle(ChatFormatting.DARK_GRAY)),
 					mouseX, mouseY);
+		else if(isOverFuzzy(mouseX, mouseY, true)||isOverFuzzy(mouseX, mouseY, false))
+		{
+			boolean inputs = isOverFuzzy(mouseX, mouseY, true);
+			boolean on = inputs? menu.pattern().fuzzyInputs(): menu.pattern().fuzzyOutputs();
+			String key = "gui.engineered_computation.pattern.fuzzy_"+(inputs? "inputs": "outputs");
+			graphics.renderComponentTooltip(font, List.of(
+					Component.translatable(key+(on? ".on": ".off")).withStyle(on? ChatFormatting.GREEN: ChatFormatting.GRAY),
+					Component.translatable(key+".detail").withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
+		}
 		else if(isOver(mouseX, mouseY, CLEAR_X, clearY(), CLEAR_SIZE, CLEAR_SIZE))
 			graphics.renderComponentTooltip(font, List.of(Component.translatable("gui.engineered_computation.pattern.clear")),
 					mouseX, mouseY);
@@ -187,12 +220,17 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 		for(int step = 0; step<6; step++)
 			graphics.fill(arrowX+12+step, arrowY-6+step, arrowX+13+step, arrowY+6-step, 0xFF8B8B8B);
 		if(isDirect()&&pattern.output(0).isEmpty()&&!pattern.isEmpty())
-			graphics.drawString(font, Component.translatable("gui.engineered_computation.pattern.no_recipe"),
-					x+slotX(Pattern.INPUTS)-8, y+PatternFloppyMenu.INPUTS_Y+3*18+3, 0xFF7060, false);
+			graphics.drawCenteredString(font, Component.translatable("gui.engineered_computation.pattern.no_recipe"),
+					x+slotX(Pattern.INPUTS)+9, y+slotY(Pattern.INPUTS)+21, 0xFF7060);
+		if(isDirect())
+		{
+			renderFuzzy(graphics, mouseX, mouseY, true);
+			renderFuzzy(graphics, mouseX, mouseY, false);
+		}
 		ECGui.button(graphics, x+MODE_X, y+MODE_Y, MODE_WIDTH, BUTTON_HEIGHT,
 				isOver(mouseX, mouseY, MODE_X, MODE_Y, MODE_WIDTH, BUTTON_HEIGHT));
 		graphics.drawCenteredString(font, Component.translatable("gui.engineered_computation.pattern."+mode()+".short"),
-				x+MODE_X+MODE_WIDTH/2+1, y+MODE_Y+2, isDirect()? 0x8CC8FF: 0xFFB050);
+				x+MODE_X+MODE_WIDTH/2+1, y+MODE_Y+2, isDirect()? 0x8CC8FF: sends()? 0xE07AF0: 0xFFB050);
 		ECGui.button(graphics, x+CLEAR_X, y+clearY(), CLEAR_SIZE, CLEAR_SIZE,
 				isOver(mouseX, mouseY, CLEAR_X, clearY(), CLEAR_SIZE, CLEAR_SIZE));
 		GuiIcon.CROSS.draw(graphics, x+CLEAR_X+3, y+clearY()+3);
@@ -251,12 +289,12 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 
 	private int outputsShown()
 	{
-		return isDirect()? 1: Pattern.OUTPUTS;
+		return isDirect()? 1: sends()? 0: Pattern.OUTPUTS;
 	}
 
 	public Optional<Rect2i> settableSlotArea(int slot)
 	{
-		if(slot<0||slot>=Pattern.INPUTS+outputsShown()||slot>=Pattern.INPUTS&&isDirect())
+		if(slot<0||slot>=Pattern.INPUTS+outputsShown())
 			return Optional.empty();
 		return Optional.of(new Rect2i(leftPos+slotX(slot), topPos+slotY(slot), 18, 18));
 	}
@@ -307,7 +345,7 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 			lines.addAll(getTooltipFromContainerItem(stack));
 		else
 			lines.add(Component.translatable("gui.engineered_computation.program.empty").withStyle(ChatFormatting.GRAY));
-		List<String> help = isDirect()? output? List.of("crafted"): List.of("set", "clear")
+		List<String> help = isDirect()? output? List.of("crafted", "result"): List.of("set", "clear")
 				: List.of("set", "more", "less", "tag");
 		for(String key : help)
 			lines.add(Component.translatable("gui.engineered_computation.pattern.help."+key)
@@ -329,6 +367,10 @@ public class PatternFloppyScreen extends AbstractContainerScreen<PatternFloppyMe
 			return click(PatternEditPayload.Action.TOGGLE_MODE, 0, 0);
 		if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&isOver(mouseX, mouseY, CLEAR_X, clearY(), CLEAR_SIZE, CLEAR_SIZE))
 			return click(PatternEditPayload.Action.CLEAR_ALL, 0, 0);
+		if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&isOverFuzzy(mouseX, mouseY, true))
+			return click(PatternEditPayload.Action.TOGGLE_FUZZY_INPUTS, 0, 0);
+		if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&isOverFuzzy(mouseX, mouseY, false))
+			return click(PatternEditPayload.Action.TOGGLE_FUZZY_OUTPUTS, 0, 0);
 		int slot = slotAt(mouseX, mouseY);
 		if(slot>=0)
 		{

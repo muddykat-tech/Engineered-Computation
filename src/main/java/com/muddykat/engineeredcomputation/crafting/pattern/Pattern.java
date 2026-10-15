@@ -33,8 +33,12 @@ import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
 
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 
+/**
+ * A recipe the network can run. Direct patterns can be fuzzy: their inputs take anything their crafting recipe accepts,
+ * and their outputs extend to the same recipe for related items (see FuzzyPatterns).
+ */
 public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs, Map<Integer, TagKey<Item>> inputTags,
-		Map<Integer, TagKey<Item>> outputTags)
+		Map<Integer, TagKey<Item>> outputTags, boolean fuzzyInputs, boolean fuzzyOutputs)
 {
 	public static final int INPUTS = 9;
 	public static final int OUTPUTS = 3;
@@ -60,19 +64,25 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 			Mode.CODEC.fieldOf("mode").forGetter(Pattern::mode),
 			ItemStack.OPTIONAL_CODEC.listOf().fieldOf("inputs").forGetter(Pattern::inputs),
 			ItemStack.OPTIONAL_CODEC.listOf().fieldOf("outputs").forGetter(Pattern::outputs),
-			TagSlot.CODEC.listOf().optionalFieldOf("tags", List.of()).forGetter(Pattern::tagSlots)
+			TagSlot.CODEC.listOf().optionalFieldOf("tags", List.of()).forGetter(Pattern::tagSlots),
+			Codec.BOOL.optionalFieldOf("fuzzy_inputs", false).forGetter(Pattern::fuzzyInputs),
+			Codec.BOOL.optionalFieldOf("fuzzy_outputs", false).forGetter(Pattern::fuzzyOutputs)
 	).apply(instance, Pattern::of));
 	public static final StreamCodec<RegistryFriendlyByteBuf, Pattern> STREAM_CODEC = StreamCodec.composite(
 			NeoForgeStreamCodecs.enumCodec(Mode.class), Pattern::mode,
 			ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list(INPUTS)), Pattern::inputs,
 			ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list(OUTPUTS)), Pattern::outputs,
 			TagSlot.STREAM_CODEC.apply(ByteBufCodecs.list(INPUTS+OUTPUTS)), Pattern::tagSlots,
+			ByteBufCodecs.BOOL, Pattern::fuzzyInputs,
+			ByteBufCodecs.BOOL, Pattern::fuzzyOutputs,
 			Pattern::of);
 
 	public enum Mode implements StringRepresentable
 	{
 		DIRECT("direct"),
-		ABSTRACT("abstract");
+		ABSTRACT("abstract"),
+		/** Sends its items away through an Advanced Data Processor, with nothing to come back. */
+		SEND("send");
 
 		public static final Codec<Mode> CODEC = StringRepresentable.fromEnum(Mode::values);
 
@@ -94,8 +104,18 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 	{
 		inputs = padded(inputs, INPUTS);
 		outputs = padded(outputs, OUTPUTS);
+		if(mode==Mode.SEND)
+			outputs = padded(List.of(), OUTPUTS);
 		inputTags = tagsOn(mode, inputTags, inputs);
 		outputTags = tagsOn(mode, outputTags, outputs);
+		fuzzyInputs &= mode==Mode.DIRECT;
+		fuzzyOutputs &= mode==Mode.DIRECT;
+	}
+
+	public Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs, Map<Integer, TagKey<Item>> inputTags,
+			Map<Integer, TagKey<Item>> outputTags)
+	{
+		this(mode, inputs, outputs, inputTags, outputTags, false, false);
 	}
 
 	public Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs)
@@ -103,13 +123,14 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 		this(mode, inputs, outputs, Map.of(), Map.of());
 	}
 
-	private static Pattern of(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs, List<TagSlot> tags)
+	private static Pattern of(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs, List<TagSlot> tags,
+			boolean fuzzyInputs, boolean fuzzyOutputs)
 	{
 		Map<Integer, TagKey<Item>> inputTags = new HashMap<>();
 		Map<Integer, TagKey<Item>> outputTags = new HashMap<>();
 		for(TagSlot slot : tags)
 			(slot.output()? outputTags: inputTags).put(slot.index(), slot.tag());
-		return new Pattern(mode, inputs, outputs, inputTags, outputTags);
+		return new Pattern(mode, inputs, outputs, inputTags, outputTags, fuzzyInputs, fuzzyOutputs);
 	}
 
 	private List<TagSlot> tagSlots()
@@ -122,7 +143,7 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 
 	private static Map<Integer, TagKey<Item>> tagsOn(Mode mode, Map<Integer, TagKey<Item>> tags, List<ItemStack> slots)
 	{
-		if(mode!=Mode.ABSTRACT||tags.isEmpty())
+		if(mode==Mode.DIRECT||tags.isEmpty())
 			return Map.of();
 		Map<Integer, TagKey<Item>> kept = new TreeMap<>();
 		tags.forEach((index, tag) -> {
@@ -170,6 +191,12 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 		return mode==this.mode? this: new Pattern(mode, List.of(), List.of());
 	}
 
+	public Pattern withFuzzy(boolean inputs, boolean fuzzy)
+	{
+		return new Pattern(mode, this.inputs, outputs, inputTags, outputTags, inputs? fuzzy: fuzzyInputs,
+				inputs? fuzzyOutputs: fuzzy);
+	}
+
 	public Pattern withInput(int index, ItemStack stack)
 	{
 		return withSlot(false, index, stack, keepsTag(inputs.get(index), stack)? inputTags.get(index): null);
@@ -205,8 +232,8 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 			tags.remove(index);
 		else
 			tags.put(index, tag);
-		return output? new Pattern(mode, inputs, changed, inputTags, tags):
-				new Pattern(mode, changed, outputs, tags, outputTags);
+		return output? new Pattern(mode, inputs, changed, inputTags, tags, fuzzyInputs, fuzzyOutputs):
+				new Pattern(mode, changed, outputs, tags, outputTags, fuzzyInputs, fuzzyOutputs);
 	}
 
 	public Optional<Pattern> resolve(Map<Integer, Item> choices)
@@ -219,7 +246,7 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 				return Optional.empty();
 			resolved.set(entry.getKey(), new ItemStack(chosen, inputs.get(entry.getKey()).getCount()));
 		}
-		return Optional.of(new Pattern(mode, resolved, outputs, Map.of(), outputTags));
+		return Optional.of(new Pattern(mode, resolved, outputs, Map.of(), outputTags, fuzzyInputs, fuzzyOutputs));
 	}
 
 	public boolean outputMatches(int index, ItemKey key)
@@ -251,7 +278,7 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 		ItemStack result = recipe(level)
 				.map(recipe -> recipe.value().assemble(craftingInput(), level.registryAccess()))
 				.orElse(ItemStack.EMPTY);
-		return new Pattern(mode, inputs, List.of(result));
+		return new Pattern(mode, inputs, List.of(result), Map.of(), Map.of(), fuzzyInputs, fuzzyOutputs);
 	}
 
 	public Optional<RecipeHolder<CraftingRecipe>> recipe(Level level)
@@ -269,7 +296,23 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 
 	public boolean isValid()
 	{
-		return outputs.stream().anyMatch(stack -> !stack.isEmpty())&&inputs.stream().anyMatch(stack -> !stack.isEmpty());
+		return inputs.stream().anyMatch(stack -> !stack.isEmpty())&&(mode==Mode.SEND
+				||outputs.stream().anyMatch(stack -> !stack.isEmpty()));
+	}
+
+	/** A send pattern with items to send. */
+	public boolean sendsOnly()
+	{
+		return mode==Mode.SEND&&firstInput()>=0;
+	}
+
+	/** The first filled input slot, or -1. */
+	public int firstInput()
+	{
+		for(int index = 0; index<inputs.size(); index++)
+			if(!inputs.get(index).isEmpty())
+				return index;
+		return -1;
 	}
 
 	public boolean isEmpty()
@@ -315,13 +358,14 @@ public record Pattern(Mode mode, List<ItemStack> inputs, List<ItemStack> outputs
 	{
 		return other instanceof Pattern pattern&&mode==pattern.mode&&ItemStack.listMatches(inputs, pattern.inputs)
 				&&ItemStack.listMatches(outputs, pattern.outputs)&&inputTags.equals(pattern.inputTags)
-				&&outputTags.equals(pattern.outputTags);
+				&&outputTags.equals(pattern.outputTags)&&fuzzyInputs==pattern.fuzzyInputs
+				&&fuzzyOutputs==pattern.fuzzyOutputs;
 	}
 
 	@Override
 	public int hashCode()
 	{
 		return 31*(31*(31*mode.hashCode()+ItemStack.hashStackList(inputs))+ItemStack.hashStackList(outputs))
-				+inputTags.hashCode()+outputTags.hashCode();
+				+inputTags.hashCode()+outputTags.hashCode()+(fuzzyInputs? 1: 0)+(fuzzyOutputs? 2: 0);
 	}
 }

@@ -36,7 +36,9 @@ public record PatternEditPayload(int containerId, Action action, int slot, int a
 		CLEAR,
 		SET_TAG,
 		TOGGLE_MODE,
-		CLEAR_ALL
+		CLEAR_ALL,
+		TOGGLE_FUZZY_INPUTS,
+		TOGGLE_FUZZY_OUTPUTS
 	}
 
 	@Override

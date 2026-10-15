@@ -14,7 +14,6 @@ import org.lwjgl.glfw.GLFW;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -26,7 +25,9 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import com.muddykat.engineeredcomputation.ECClientConfig;
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
+import com.muddykat.engineeredcomputation.client.gui.GuiIcon;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.storage.ByteSize;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
@@ -47,6 +48,8 @@ public abstract class TerminalScreen<M extends TerminalMenu> extends AbstractCon
 	protected static final int CRAFTABLE_FADE = 0x908B8B8B;
 	private static final int THUMB_HEIGHT = 15;
 	private static final int SEARCH_Y = 17;
+	private static final int BAR_WIDTH = GRID_WIDTH+SCROLLBAR_WIDTH+4;
+	private static final int TOOL_GAP = 1;
 	private static final int GAUGE_HEIGHT = 6;
 	private static final int TOOLTIP_WIDTH = 200;
 
@@ -81,14 +84,13 @@ public abstract class TerminalScreen<M extends TerminalMenu> extends AbstractCon
 		super.init();
 		if(!menu.getFeatures().search())
 			return;
-		search = new EditBox(font, leftPos+TerminalMenu.GRID_X+3, topPos+SEARCH_Y+2, GRID_WIDTH+SCROLLBAR_WIDTH-2, 10,
+		search = new EditBox(font, leftPos+TerminalMenu.GRID_X+3, topPos+SEARCH_Y+2, searchWidth()-6, 10,
 				Component.translatable("gui.engineered_computation.terminal.search"));
 		search.setBordered(false);
 		search.setMaxLength(64);
 		search.setTextColor(0xFFFFFF);
 		search.setHint(Component.translatable("gui.engineered_computation.terminal.search")
 				.withStyle(ChatFormatting.GRAY));
-		search.setTooltip(Tooltip.create(Component.translatable("gui.engineered_computation.terminal.search.tooltip")));
 		search.setValue(seenQuery);
 		addRenderableWidget(search);
 	}
@@ -122,7 +124,14 @@ public abstract class TerminalScreen<M extends TerminalMenu> extends AbstractCon
 		seenQuery = query();
 		view.clear();
 		collectEntries(view, seenQuery.trim().toLowerCase(Locale.ROOT));
-		view.sort(Comparator.comparing((Map.Entry<ItemKey, Long> e) -> searchName(e.getKey()))
+		Comparator<Map.Entry<ItemKey, Long>> byName = Comparator.comparing(e -> searchName(e.getKey()));
+		Comparator<Map.Entry<ItemKey, Long>> order = switch(ECClientConfig.terminalSort())
+		{
+			case NAME -> byName;
+			case COUNT -> Comparator.<Map.Entry<ItemKey, Long>>comparingLong(Map.Entry::getValue).thenComparing(byName);
+		};
+		view.sort(Comparator.comparingInt(this::placement)
+				.thenComparing(ECClientConfig.terminalDescending()? order.reversed(): order)
 				.thenComparingInt(this::sortGroup)
 				.thenComparing(e -> -e.getValue()));
 		scrollRow = Math.min(scrollRow, maxScrollRow());
@@ -138,6 +147,12 @@ public abstract class TerminalScreen<M extends TerminalMenu> extends AbstractCon
 	protected boolean shows(ItemKey key)
 	{
 		return true;
+	}
+
+	/** Sorted before anything else: lower comes first, whatever the sort order. */
+	protected int placement(Map.Entry<ItemKey, Long> entry)
+	{
+		return 0;
 	}
 
 	protected int sortGroup(Map.Entry<ItemKey, Long> entry)
@@ -241,6 +256,66 @@ public abstract class TerminalScreen<M extends TerminalMenu> extends AbstractCon
 		return cornerX()-4;
 	}
 
+	/** Terminals that autocraft get a button choosing whether craftable items are shown. */
+	protected boolean filtersCraftables()
+	{
+		return false;
+	}
+
+	/** Terminals that list what Storage Analyzers report get a button showing or hiding it. */
+	protected boolean listsRemote()
+	{
+		return false;
+	}
+
+	private int tools()
+	{
+		return 2+(filtersCraftables()? 1: 0)+(listsRemote()? 1: 0);
+	}
+
+	private int searchWidth()
+	{
+		return BAR_WIDTH-tools()*(BUTTON_SIZE+TOOL_GAP);
+	}
+
+	/** Beside the search field, or on the title row before the corner when there's no search. */
+	private int toolX(int tool)
+	{
+		int first = menu.getFeatures().search()? TerminalMenu.GRID_X+searchWidth()+TOOL_GAP
+				: processingX()-tools()*(BUTTON_SIZE+TOOL_GAP)-1;
+		return first+tool*(BUTTON_SIZE+TOOL_GAP);
+	}
+
+	private int toolY()
+	{
+		return menu.getFeatures().search()? SEARCH_Y+1: 4;
+	}
+
+	private boolean isOverTool(double mouseX, double mouseY, int tool)
+	{
+		return isOver(mouseX, mouseY, toolX(tool), toolY(), BUTTON_SIZE, BUTTON_SIZE);
+	}
+
+	private boolean isOverCraftables(double mouseX, double mouseY)
+	{
+		return filtersCraftables()&&isOverTool(mouseX, mouseY, 0);
+	}
+
+	private boolean isOverRemote(double mouseX, double mouseY)
+	{
+		return listsRemote()&&isOverTool(mouseX, mouseY, filtersCraftables()? 1: 0);
+	}
+
+	private boolean isOverSortBy(double mouseX, double mouseY)
+	{
+		return isOverTool(mouseX, mouseY, tools()-2);
+	}
+
+	private boolean isOverSortOrder(double mouseX, double mouseY)
+	{
+		return isOverTool(mouseX, mouseY, tools()-1);
+	}
+
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
 	{
@@ -303,6 +378,26 @@ public abstract class TerminalScreen<M extends TerminalMenu> extends AbstractCon
 	@Nullable
 	protected List<Component> widgetTooltip(double mouseX, double mouseY)
 	{
+		if(isOverCraftables(mouseX, mouseY))
+			return List.of(Component.translatable(switch(ECClientConfig.terminalCraftables())
+			{
+				case BOTH -> "gui.engineered_computation.terminal.craftables.both";
+				case ONLY -> "gui.engineered_computation.terminal.craftables.only";
+				case HIDDEN -> "gui.engineered_computation.terminal.craftables.hidden";
+			}));
+		if(isOverRemote(mouseX, mouseY))
+			return List.of(Component.translatable("gui.engineered_computation.terminal.remote."
+					+ECClientConfig.terminalRemote().name().toLowerCase(Locale.ROOT)));
+		if(isOverSortBy(mouseX, mouseY))
+			return List.of(Component.translatable(ECClientConfig.terminalSort()==ECClientConfig.TerminalSort.NAME
+					? "gui.engineered_computation.terminal.sort.name": "gui.engineered_computation.terminal.sort.count"));
+		if(isOverSortOrder(mouseX, mouseY))
+			return List.of(Component.translatable(ECClientConfig.terminalDescending()
+					? "gui.engineered_computation.terminal.sort.descending"
+					: "gui.engineered_computation.terminal.sort.ascending"));
+		// Only while hovering an empty field, as a focused field's tooltip covers the grid while typing
+		if(search!=null&&search.isMouseOver(mouseX, mouseY)&&search.getValue().isEmpty())
+			return List.of(Component.translatable("gui.engineered_computation.terminal.search.tooltip"));
 		if(isOverGauge(mouseX, mouseY))
 			return gaugeTooltip();
 		if(showsProcessing()&&menu.getClientStats().processing()
@@ -353,9 +448,10 @@ public abstract class TerminalScreen<M extends TerminalMenu> extends AbstractCon
 		if(search!=null)
 		{
 			int searchX = x+TerminalMenu.GRID_X;
-			graphics.fill(searchX, y+SEARCH_Y, searchX+GRID_WIDTH+SCROLLBAR_WIDTH+4, y+SEARCH_Y+13, 0xFFA0A0A0);
-			graphics.fill(searchX+1, y+SEARCH_Y+1, searchX+GRID_WIDTH+SCROLLBAR_WIDTH+3, y+SEARCH_Y+12, 0xFF000000);
+			graphics.fill(searchX, y+SEARCH_Y, searchX+searchWidth(), y+SEARCH_Y+13, 0xFFA0A0A0);
+			graphics.fill(searchX+1, y+SEARCH_Y+1, searchX+searchWidth()-1, y+SEARCH_Y+12, 0xFF000000);
 		}
+		renderTools(graphics, mouseX, mouseY);
 		renderCorner(graphics, mouseX, mouseY);
 
 		for(int row = 0; row<layout.rows(); row++)
@@ -373,6 +469,38 @@ public abstract class TerminalScreen<M extends TerminalMenu> extends AbstractCon
 			renderSlotBackground(graphics, menu.slots.get(i), i);
 		renderExtras(graphics, mouseX, mouseY);
 		renderGrid(graphics, mouseX, mouseY);
+	}
+
+	private void renderTools(GuiGraphics graphics, int mouseX, int mouseY)
+	{
+		if(filtersCraftables())
+			renderTool(graphics, 0, isOverCraftables(mouseX, mouseY), switch(ECClientConfig.terminalCraftables())
+			{
+				case BOTH -> GuiIcon.CRAFTS_BOTH;
+				case ONLY -> GuiIcon.CRAFTS_ONLY;
+				case HIDDEN -> GuiIcon.CRAFTS_HIDDEN;
+			});
+		if(listsRemote())
+			renderTool(graphics, filtersCraftables()? 1: 0, isOverRemote(mouseX, mouseY),
+					switch(ECClientConfig.terminalRemote())
+					{
+						case MIXED -> GuiIcon.REMOTE_SHOWN;
+						case TOP -> GuiIcon.REMOTE_TOP;
+						case BOTTOM -> GuiIcon.REMOTE_BOTTOM;
+						case HIDDEN -> GuiIcon.REMOTE_HIDDEN;
+					});
+		renderTool(graphics, tools()-2, isOverSortBy(mouseX, mouseY),
+				ECClientConfig.terminalSort()==ECClientConfig.TerminalSort.NAME? GuiIcon.SORT_NAME: GuiIcon.SORT_COUNT);
+		renderTool(graphics, tools()-1, isOverSortOrder(mouseX, mouseY),
+				ECClientConfig.terminalDescending()? GuiIcon.DESCENDING: GuiIcon.ASCENDING);
+	}
+
+	private void renderTool(GuiGraphics graphics, int tool, boolean hovered, GuiIcon icon)
+	{
+		int x = leftPos+toolX(tool);
+		int y = topPos+toolY();
+		ECGui.button(graphics, x, y, BUTTON_SIZE, BUTTON_SIZE, hovered);
+		icon.draw(graphics, x+3, y+3);
 	}
 
 	protected void renderCorner(GuiGraphics graphics, int mouseX, int mouseY)
@@ -546,6 +674,43 @@ public abstract class TerminalScreen<M extends TerminalMenu> extends AbstractCon
 	{
 		if(search!=null&&!search.isMouseOver(mouseX, mouseY))
 			search.setFocused(false);
+		if(search!=null&&search.isMouseOver(mouseX, mouseY)&&button==GLFW.GLFW_MOUSE_BUTTON_RIGHT)
+		{
+			search.setValue("");
+			setFocused(search);
+			return true;
+		}
+		if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&isOverCraftables(mouseX, mouseY))
+		{
+			ECClientConfig.CraftableFilter[] filters = ECClientConfig.CraftableFilter.values();
+			ECClientConfig.setTerminalCraftables(filters[(ECClientConfig.terminalCraftables().ordinal()+1)%filters.length]);
+			rebuildView();
+			clickSound();
+			return true;
+		}
+		if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&isOverRemote(mouseX, mouseY))
+		{
+			ECClientConfig.RemotePlacement[] placements = ECClientConfig.RemotePlacement.values();
+			ECClientConfig.setTerminalRemote(placements[(ECClientConfig.terminalRemote().ordinal()+1)%placements.length]);
+			rebuildView();
+			clickSound();
+			return true;
+		}
+		boolean sortBy = isOverSortBy(mouseX, mouseY);
+		if(button==GLFW.GLFW_MOUSE_BUTTON_LEFT&&(sortBy||isOverSortOrder(mouseX, mouseY)))
+		{
+			ECClientConfig.TerminalSort sort = ECClientConfig.terminalSort();
+			boolean descending = ECClientConfig.terminalDescending();
+			if(sortBy)
+				sort = sort==ECClientConfig.TerminalSort.NAME? ECClientConfig.TerminalSort.COUNT
+						: ECClientConfig.TerminalSort.NAME;
+			else
+				descending = !descending;
+			ECClientConfig.setTerminalSort(sort, descending);
+			rebuildView();
+			clickSound();
+			return true;
+		}
 		if(isOver(mouseX, mouseY, SCROLLBAR_X, layout.gridY(), SCROLLBAR_WIDTH, gridHeight))
 		{
 			draggingScrollbar = true;

@@ -33,6 +33,7 @@ import com.muddykat.engineeredcomputation.registration.ECPayloads;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.registration.ECPower;
 import com.muddykat.engineeredcomputation.registration.ECRegistrationHolder;
+import com.muddykat.engineeredcomputation.registration.ECRemote;
 import com.muddykat.engineeredcomputation.registration.ECSounds;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
 import com.muddykat.engineeredcomputation.storage.cell.CellStorage;
@@ -75,6 +76,7 @@ public class EngineeredComputation {
                         output.accept(ECAdapters.PROGRAM_FLOPPY.get());
                         output.accept(ECCrafting.PATTERN_FLOPPY.get());
                         output.accept(ECContent.PROCESSOR_CASING_ITEM.get());
+                        ECRemote.items().forEach(item -> output.accept(item.get()));
                     }
                 }
             }).build());
@@ -82,6 +84,7 @@ public class EngineeredComputation {
     public EngineeredComputation(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Engineered Computation Starting");
         modContainer.registerConfig(ModConfig.Type.SERVER, ECConfig.SPEC);
+        modContainer.registerConfig(ModConfig.Type.CLIENT, ECClientConfig.SPEC);
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
@@ -100,6 +103,7 @@ public class EngineeredComputation {
         ECCrafting.init();
         ECPneumatics.init();
         ECCatalogue.init();
+        ECRemote.init();
 
         LOGGER.info("EC Registration");
 
@@ -114,6 +118,7 @@ public class EngineeredComputation {
         ECAdapters.register(modEventBus);
         ECCrafting.register(modEventBus);
         ECPneumatics.register(modEventBus);
+        ECRemote.register(modEventBus);
         ECPayloads.register(modEventBus);
         ECSounds.register(modEventBus);
         StorageNetwork.register();

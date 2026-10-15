@@ -13,6 +13,7 @@ import com.muddykat.engineeredcomputation.crafting.pattern.PatternFillPayload;
 import com.muddykat.engineeredcomputation.pneumatic.carrier.CarrierSyncPayload;
 import com.muddykat.engineeredcomputation.pneumatic.station.StationNamePayload;
 import com.muddykat.engineeredcomputation.program.ProgramEditPayload;
+import com.muddykat.engineeredcomputation.remote.TerminalRemotePayload;
 import com.muddykat.engineeredcomputation.terminal.TerminalClickPayload;
 import com.muddykat.engineeredcomputation.terminal.TerminalContentsPayload;
 import com.muddykat.engineeredcomputation.terminal.crafting.GridFillPayload;
@@ -53,6 +54,8 @@ public final class ECPayloads
 				.playToClient(CraftingComputerPayload.TYPE, CraftingComputerPayload.STREAM_CODEC,
 						CraftingComputerPayload::handle)
 				.playToClient(TerminalCraftingPayload.TYPE, TerminalCraftingPayload.STREAM_CODEC,
-						TerminalCraftingPayload::handle));
+						TerminalCraftingPayload::handle)
+				.playToClient(TerminalRemotePayload.TYPE, TerminalRemotePayload.STREAM_CODEC,
+						TerminalRemotePayload::handle));
 	}
 }

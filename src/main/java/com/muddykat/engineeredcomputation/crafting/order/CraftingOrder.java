@@ -29,13 +29,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import com.muddykat.engineeredcomputation.crafting.CraftingPlan;
+import com.muddykat.engineeredcomputation.crafting.pattern.FuzzyPatterns;
 import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
 import com.muddykat.engineeredcomputation.crafting.processor.DataProcessorState;
 import com.muddykat.engineeredcomputation.network.StatusCode;
+import com.muddykat.engineeredcomputation.remote.StorageAnalyzerBlockEntity;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
 
@@ -47,19 +50,22 @@ public final class CraftingOrder
 	private final TagKey<Item> targetTag;
 	private final long amount;
 	private final List<Step> steps;
+	private final List<Request> requests;
 	private final Map<ItemKey, Long> buffer = new LinkedHashMap<>();
 	private StatusCode status = StatusCode.PROCESSING;
 	private boolean cancelled;
 	/** Only counts while the computer is loaded. */
 	private long age;
 
-	private CraftingOrder(int id, ItemKey target, @Nullable TagKey<Item> targetTag, long amount, List<Step> steps)
+	private CraftingOrder(int id, ItemKey target, @Nullable TagKey<Item> targetTag, long amount, List<Step> steps,
+			List<Request> requests)
 	{
 		this.id = id;
 		this.target = target;
 		this.targetTag = targetTag;
 		this.amount = amount;
 		this.steps = steps;
+		this.requests = requests;
 	}
 
 	public static CraftingOrder of(int id, CraftingPlan plan)
@@ -68,7 +74,11 @@ public final class CraftingOrder
 		for(CraftingPlan.Step step : plan.steps())
 			steps.add(new Step(step.provided().pattern(), step.provided().processor(), step.provided().choices(),
 					step.runs()));
-		CraftingOrder order = new CraftingOrder(id, plan.target(), plan.targetTag().orElse(null), plan.amount(), steps);
+		List<Request> requests = new ArrayList<>();
+		for(CraftingPlan.Request request : plan.requests())
+			requests.add(new Request(request.analyzer(), request.key(), request.amount()));
+		CraftingOrder order = new CraftingOrder(id, plan.target(), plan.targetTag().orElse(null), plan.amount(), steps,
+				requests);
 		order.buffer.putAll(plan.fromStorage());
 		return order;
 	}
@@ -88,9 +98,13 @@ public final class CraftingOrder
 		return new OrderTarget(target, Optional.ofNullable(targetTag));
 	}
 
+	/** Only what the order makes or fetches: an order that sends items away has its first item as target. */
 	private boolean isTarget(ItemKey key)
 	{
-		return key.equals(target)||targetTag!=null&&key.getItem().builtInRegistryHolder().is(targetTag);
+		boolean matches = key.equals(target)||targetTag!=null&&key.getItem().builtInRegistryHolder().is(targetTag);
+		return matches&&(steps.stream().anyMatch(step -> step.resolved.outputTotals().containsKey(key))
+				||requests.stream().anyMatch(request -> request.key.equals(key))
+				||targetTag!=null);
 	}
 
 	public long amount()
@@ -131,6 +145,11 @@ public final class CraftingOrder
 			total += step.runs;
 			done += step.runsDone();
 		}
+		for(Request request : requests)
+		{
+			total++;
+			done += Math.min(1, request.received/(double)request.amount);
+		}
 		return total==0? 1: (float)(done/total);
 	}
 
@@ -140,6 +159,14 @@ public final class CraftingOrder
 		Step root = maker(target, List.of());
 		if(root!=null)
 			addNode(tree, root, target, 0, new ArrayList<>());
+		for(Step step : steps)
+			if(step.resolved.sendsOnly()&&tree.size()<OrderView.MAX_NODES)
+				tree.add(new OrderView.Node(0, ItemKey.of(step.resolved.input(step.resolved.firstInput())), step.runs,
+						true, true, (float)(step.runsDone()/step.runs)));
+		for(Request request : requests)
+			if(tree.size()<OrderView.MAX_NODES)
+				tree.add(new OrderView.Node(root==null? 0: 1, request.key, request.amount, true, true,
+						(float)Math.min(1, request.received/(double)request.amount)));
 		return new OrderView(id, shownTarget(), amount, status, progress(), gameTime-age, tree);
 	}
 
@@ -184,6 +211,13 @@ public final class CraftingOrder
 				runAbstract(step, level, storage);
 			complete &= step.isComplete();
 		}
+		for(Request request : requests)
+		{
+			if(request.isComplete())
+				continue;
+			runRequest(request, level);
+			complete &= request.isComplete();
+		}
 		for(Map.Entry<ItemKey, Long> entry : List.copyOf(buffer.entrySet()))
 			if(isTarget(entry.getKey()))
 				deliver(entry.getKey(), entry.getValue(), storage);
@@ -198,11 +232,12 @@ public final class CraftingOrder
 
 	private boolean craft(Step step, ServerLevel level)
 	{
-		Map<ItemKey, Long> inputs = step.resolved.inputTotals();
-		if(!hasAll(inputs))
+		Pattern grid = fill(step.resolved, FuzzyPatterns.accepted(level, step.resolved));
+		if(grid==null)
 			return false;
-		Optional<RecipeHolder<CraftingRecipe>> recipe = step.resolved.recipe(level);
-		CraftingInput input = step.resolved.craftingInput();
+		Map<ItemKey, Long> inputs = grid.inputTotals();
+		Optional<RecipeHolder<CraftingRecipe>> recipe = grid.recipe(level);
+		CraftingInput input = grid.craftingInput();
 		ItemStack result = recipe.map(holder -> holder.value().assemble(input, level.registryAccess()))
 				.orElse(ItemStack.EMPTY);
 		if(!ItemStack.isSameItemSameComponents(result, step.resolved.primaryOutput())
@@ -218,6 +253,40 @@ public final class CraftingOrder
 			add(leftover);
 		step.done++;
 		return true;
+	}
+
+	/**
+	 * The grid to craft from what the order holds, or null if it's short: each slot takes its own item, or for a fuzzy
+	 * pattern, anything held that the recipe accepts in its place.
+	 */
+	@Nullable
+	private Pattern fill(Pattern pattern, Map<ItemKey, List<ItemKey>> accepted)
+	{
+		if(accepted.isEmpty())
+			return hasAll(pattern.inputTotals())? pattern: null;
+		Map<ItemKey, Long> using = new HashMap<>();
+		List<ItemStack> grid = new ArrayList<>();
+		for(ItemStack stack : pattern.inputs())
+		{
+			if(stack.isEmpty())
+			{
+				grid.add(ItemStack.EMPTY);
+				continue;
+			}
+			ItemKey wanted = ItemKey.of(stack);
+			ItemKey chosen = null;
+			for(ItemKey candidate : accepted.getOrDefault(wanted, List.of(wanted)))
+				if(buffer.getOrDefault(candidate, 0L)-using.getOrDefault(candidate, 0L)>=stack.getCount())
+				{
+					chosen = candidate;
+					break;
+				}
+			if(chosen==null)
+				return null;
+			using.merge(chosen, (long)stack.getCount(), Long::sum);
+			grid.add(chosen.toStack(stack.getCount()));
+		}
+		return new Pattern(Pattern.Mode.DIRECT, grid, pattern.outputs());
 	}
 
 	private void runAbstract(Step step, ServerLevel level, NetworkStorage storage)
@@ -243,6 +312,48 @@ public final class CraftingOrder
 			left -= runSize;
 		}
 		collect(step, processor, storage);
+	}
+
+	private void runRequest(Request request, ServerLevel level)
+	{
+		StorageAnalyzerBlockEntity analyzer = StorageAnalyzerBlockEntity.at(level, request.analyzer);
+		if(analyzer==null||!analyzer.canRequest())
+		{
+			status = StatusCode.SERVICE_UNAVAILABLE;
+			return;
+		}
+		if(request.asked<request.amount&&request.cooldown--<=0)
+		{
+			request.cooldown = Request.ASK_TICKS;
+			request.asked += analyzer.request(request.key, (int)Math.min(Integer.MAX_VALUE,
+					request.amount-request.asked));
+		}
+		long got = analyzer.collect(request.key, request.asked-request.received);
+		if(got>0)
+		{
+			add(request.key, got);
+			request.received += got;
+			request.stalled = 0;
+		}
+		// Tallies can be a second old, so a station may send fewer than it said it had; those are asked for again.
+		else if(request.asked>request.received&&++request.stalled>=Request.STALL_TICKS)
+		{
+			request.asked = request.received;
+			request.stalled = 0;
+		}
+		if(request.asked==request.received&&!request.isComplete())
+			status = StatusCode.NOT_FOUND;
+	}
+
+	/** Hands what's still coming over to the analyzers, which store it when it lands. */
+	public void release(Level level)
+	{
+		for(Request request : requests)
+		{
+			StorageAnalyzerBlockEntity analyzer = StorageAnalyzerBlockEntity.at(level, request.analyzer);
+			if(analyzer!=null)
+				analyzer.adopt(request.key, request.asked-request.received);
+		}
 	}
 
 	private static boolean fits(IItemHandler target, Map<ItemKey, Long> inputs)
@@ -351,6 +462,32 @@ public final class CraftingOrder
 			buffer.remove(key);
 	}
 
+	private static final class Request
+	{
+		static final int ASK_TICKS = 20;
+		static final int STALL_TICKS = 600;
+
+		final BlockPos analyzer;
+		final ItemKey key;
+		final long amount;
+		long asked;
+		long received;
+		int cooldown;
+		int stalled;
+
+		Request(BlockPos analyzer, ItemKey key, long amount)
+		{
+			this.analyzer = analyzer;
+			this.key = key;
+			this.amount = amount;
+		}
+
+		boolean isComplete()
+		{
+			return received>=amount;
+		}
+	}
+
 	private static final class Step
 	{
 		final Pattern pattern;
@@ -379,7 +516,7 @@ public final class CraftingOrder
 
 		boolean isComplete()
 		{
-			if(processor==null)
+			if(processor==null||resolved.sendsOnly())
 				return done>=runs;
 			for(int index = 0; index<Pattern.OUTPUTS; index++)
 				if(received[index]<runs*resolved.output(index).getCount())
@@ -389,7 +526,7 @@ public final class CraftingOrder
 
 		double runsDone()
 		{
-			if(processor==null)
+			if(processor==null||resolved.sendsOnly())
 				return done;
 			double fraction = Double.MAX_VALUE;
 			for(int index = 0; index<Pattern.OUTPUTS; index++)
@@ -425,6 +562,19 @@ public final class CraftingOrder
 			stepTags.add(stepTag);
 		}
 		tag.put("steps", stepTags);
+		ListTag requestTags = new ListTag();
+		for(Request request : requests)
+		{
+			CompoundTag requestTag = new CompoundTag();
+			requestTag.put("analyzer", NbtUtils.writeBlockPos(request.analyzer));
+			requestTag.put("item", encode(registries, ItemKey.CODEC, request.key));
+			requestTag.putLong("amount", request.amount);
+			requestTag.putLong("asked", request.asked);
+			requestTag.putLong("received", request.received);
+			requestTags.add(requestTag);
+		}
+		if(!requestTags.isEmpty())
+			tag.put("requests", requestTags);
 		tag.put("buffer", saveCounts(registries, buffer));
 		return tag;
 	}
@@ -447,10 +597,20 @@ public final class CraftingOrder
 			System.arraycopy(received, 0, step.received, 0, Math.min(received.length, step.received.length));
 			steps.add(step);
 		}
+		List<Request> requests = new ArrayList<>();
+		for(Tag entry : tag.getList("requests", Tag.TAG_COMPOUND))
+		{
+			CompoundTag requestTag = (CompoundTag)entry;
+			Request request = new Request(NbtUtils.readBlockPos(requestTag, "analyzer").orElse(BlockPos.ZERO),
+					decode(registries, ItemKey.CODEC, requestTag.get("item")), requestTag.getLong("amount"));
+			request.asked = requestTag.getLong("asked");
+			request.received = requestTag.getLong("received");
+			requests.add(request);
+		}
 		TagKey<Item> targetTag = tag.contains("target_tag")? TagKey.create(Registries.ITEM,
 				ResourceLocation.parse(tag.getString("target_tag"))): null;
 		CraftingOrder order = new CraftingOrder(tag.getInt("id"), decode(registries, ItemKey.CODEC, tag.get("target")),
-				targetTag, tag.getLong("amount"), steps);
+				targetTag, tag.getLong("amount"), steps, requests);
 		loadCounts(registries, tag.getList("buffer", Tag.TAG_COMPOUND), order.buffer);
 		order.age = tag.getLong("age");
 		return order;

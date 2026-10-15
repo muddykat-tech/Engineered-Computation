@@ -35,6 +35,7 @@ import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerStat
 import com.muddykat.engineeredcomputation.crafting.order.CraftingOrder;
 import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternEditPayload;
+import com.muddykat.engineeredcomputation.crafting.pattern.PatternFloppyItem;
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternFloppyMenu;
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternOffer;
 import com.muddykat.engineeredcomputation.crafting.processor.DataProcessorState;
@@ -67,7 +68,7 @@ public final class CraftingComputerGameTests
 {
 	private static final BlockPos DRIVE_AT = new BlockPos(3, 1, 3);
 	private static final BlockPos COMPUTER_AT = new BlockPos(13, 1, 3);
-	private static final int CABLE_Y = 12;
+	public static final int CABLE_Y = 12;
 
 	private CraftingComputerGameTests()
 	{
@@ -163,6 +164,74 @@ public final class CraftingComputerGameTests
 				StorageGameTests.check(helper, setup.stored(Items.COBBLESTONE)==7, "more cobblestone was used than ordered");
 				helper.succeed();
 			});
+		});
+	}
+
+	@GameTest(template = NetworkStressGameTests.BIG)
+	public static void aSendPatternSendsItsItemsAway(GameTestHelper helper)
+	{
+		Setup setup = setup(helper);
+		setup.store(Items.COBBLESTONE, 20);
+		Pattern sendAway = new Pattern(Pattern.Mode.SEND, List.of(new ItemStack(Items.COBBLESTONE, 4)), List.of());
+		StorageGameTests.check(helper, sendAway.isValid()&&sendAway.sendsOnly(), "a send pattern with items should be usable");
+		StorageGameTests.check(helper, !new Pattern(Pattern.Mode.ABSTRACT, List.of(new ItemStack(Items.COBBLESTONE, 4)),
+				List.of()).isValid(), "an abstract pattern still needs results");
+		Rig rig = setup.processor(helper, sendAway);
+		PatternOffer offer = CraftingNetwork.offers(setup.level, setup.network()).stream()
+				.filter(each -> each.pattern().equals(sendAway)).findFirst().orElse(null);
+		StorageGameTests.check(helper, offer!=null, "the pattern should be offered to order");
+		StorageNetwork network = setup.network();
+		StorageGameTests.check(helper, CraftingNetwork.orderOffer(setup.level, network, network.getStorage(),
+				new PatternOffer.Choice(offer, Map.of()), 3).isEmpty(), "sending 3 runs away was refused");
+		helper.runAfterDelay(5, () -> {
+			StorageGameTests.check(helper, rig.count(rig.machine(), Items.COBBLESTONE)==12,
+					"12 cobblestone should be sent away, not "+rig.count(rig.machine(), Items.COBBLESTONE));
+			StorageGameTests.check(helper, setup.stored(Items.COBBLESTONE)==8, "8 cobblestone should be left in storage");
+			StorageGameTests.check(helper, setup.computer.getOrders().isEmpty(),
+					"the order should finish with nothing to come back");
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = NetworkStressGameTests.BIG)
+	public static void fuzzyInputsMixWhatTheRecipeAccepts(GameTestHelper helper)
+	{
+		Setup setup = setup(helper);
+		setup.store(Items.OAK_PLANKS, 5);
+		setup.store(Items.BIRCH_PLANKS, 5);
+		ItemStack planks = new ItemStack(Items.OAK_PLANKS);
+		ItemStack chest = directFloppy(setup.level, planks, planks, planks, planks, ItemStack.EMPTY, planks, planks, planks,
+				planks);
+		chest.set(ECDataComponents.PATTERN.get(), PatternFloppyItem.pattern(chest).withFuzzy(true, true));
+		setup.computer.getPatternSlots().setStackInSlot(0, chest);
+		StorageGameTests.check(helper, setup.order(Items.CHEST, 1).isEmpty(),
+				"a fuzzy chest pattern should take 5 oak and 3 birch planks");
+		helper.runAfterDelay(ECConfig.craftingTicks()+5, () -> {
+			StorageGameTests.check(helper, setup.stored(Items.CHEST)==1, "the chest wasn't crafted");
+			StorageGameTests.check(helper, setup.stored(Items.OAK_PLANKS)+setup.stored(Items.BIRCH_PLANKS)==2,
+					"8 planks of either kind should be used, "+setup.stored(Items.OAK_PLANKS)+" oak and "
+							+setup.stored(Items.BIRCH_PLANKS)+" birch are left");
+			StorageGameTests.check(helper, setup.computer.getOrders().isEmpty(), "the order should finish");
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = NetworkStressGameTests.BIG)
+	public static void fuzzyOutputsCraftRelatedItems(GameTestHelper helper)
+	{
+		Setup setup = setup(helper);
+		setup.store(Items.BIRCH_LOG, 1);
+		ItemStack planks = directFloppy(setup.level, new ItemStack(Items.OAK_LOG));
+		planks.set(ECDataComponents.PATTERN.get(), PatternFloppyItem.pattern(planks).withFuzzy(false, true));
+		setup.computer.getPatternSlots().setStackInSlot(0, planks);
+		StorageGameTests.check(helper, CraftingNetwork.craftables(setup.level, setup.network()).contains(key(Items.BIRCH_PLANKS)),
+				"an oak plank pattern with fuzzy outputs should list birch planks");
+		StorageGameTests.check(helper, setup.order(Items.BIRCH_PLANKS, 4).isEmpty(),
+				"birch planks should be made from the birch log");
+		helper.runAfterDelay(ECConfig.craftingTicks()+5, () -> {
+			StorageGameTests.check(helper, setup.stored(Items.BIRCH_PLANKS)==4, "4 birch planks should be crafted");
+			StorageGameTests.check(helper, setup.stored(Items.BIRCH_LOG)==0, "the birch log should be used");
+			helper.succeed();
 		});
 	}
 
@@ -437,30 +506,30 @@ public final class CraftingComputerGameTests
 		return new BlockHitResult(hit, Direction.SOUTH, block, false);
 	}
 
-	private record Setup(ServerLevel level, EraDriveState drive, CraftingComputerState computer, BlockPos drivePort,
+	public record Setup(ServerLevel level, EraDriveState drive, CraftingComputerState computer, BlockPos drivePort,
 			BlockPos cableTop)
 	{
-		StorageNetwork network()
+		public StorageNetwork network()
 		{
 			return StorageNetwork.scan(level, drivePort);
 		}
 
-		NetworkStorage storage()
+		public NetworkStorage storage()
 		{
 			return network().getStorage();
 		}
 
-		void store(Item item, int count)
+		public void store(Item item, int count)
 		{
 			storage().insert(key(item), count, false);
 		}
 
-		long stored(Item item)
+		public long stored(Item item)
 		{
 			return storage().getAmount(key(item));
 		}
 
-		Optional<StatusCode> order(Item item, long amount)
+		public Optional<StatusCode> order(Item item, long amount)
 		{
 			StorageNetwork network = network();
 			return CraftingNetwork.order(level, network, network.getStorage(), key(item), amount);
@@ -537,7 +606,7 @@ public final class CraftingComputerGameTests
 				List.of(new ItemStack(Items.STONE)));
 	}
 
-	private static Setup setup(GameTestHelper helper)
+	public static Setup setup(GameTestHelper helper)
 	{
 		ServerLevel level = helper.getLevel();
 		EraDriveState drive = StorageGameTests.formDriveAt(helper, EraDrive.DRUM_COMPUTER, Direction.NORTH, DRIVE_AT);
@@ -570,14 +639,14 @@ public final class CraftingComputerGameTests
 		throw new IllegalStateException();
 	}
 
-	private static BlockPos outsidePort(GameTestHelper helper, EraDriveGeometry geometry, BlockPos at, Direction facing)
+	public static BlockPos outsidePort(GameTestHelper helper, EraDriveGeometry geometry, BlockPos at, Direction facing)
 	{
 		NetworkPort port = geometry.ports().get(0);
 		return StorageGameTests.world(helper.absolutePos(at), port.pos(), facing)
 				.relative(MultiblockOrientation.rotationFor(facing).rotate(port.side()));
 	}
 
-	private static BlockPos cable(ServerLevel level, BlockPos from, BlockPos to, int top)
+	public static BlockPos cable(ServerLevel level, BlockPos from, BlockPos to, int top)
 	{
 		BlockPos pos = from;
 		place(level, pos);
@@ -611,7 +680,7 @@ public final class CraftingComputerGameTests
 		return floppy;
 	}
 
-	private static ItemStack sticksFloppy(ServerLevel level)
+	public static ItemStack sticksFloppy(ServerLevel level)
 	{
 		return directFloppy(level, new ItemStack(Items.OAK_PLANKS), ItemStack.EMPTY, ItemStack.EMPTY,
 				new ItemStack(Items.OAK_PLANKS));

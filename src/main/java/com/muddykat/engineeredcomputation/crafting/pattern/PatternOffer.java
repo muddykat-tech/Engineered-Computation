@@ -22,8 +22,16 @@ public record PatternOffer(BlockPos processor, int slot, Pattern pattern)
 			Pattern.STREAM_CODEC, PatternOffer::pattern,
 			PatternOffer::new);
 
+	/** What the offer is listed as: its result, or for a pattern that only sends items away, its first item. */
+	public ItemStack face()
+	{
+		return pattern.sendsOnly()? pattern.input(pattern.firstInput()): pattern.primaryOutput();
+	}
+
 	public ItemStack shown(long gameTime)
 	{
+		if(pattern.sendsOnly())
+			return face();
 		ItemStack primary = pattern.primaryOutput();
 		Optional<TagKey<Item>> tag = pattern.outputTag(pattern.primaryIndex());
 		if(tag.isEmpty())
@@ -34,6 +42,8 @@ public record PatternOffer(BlockPos processor, int slot, Pattern pattern)
 
 	public Optional<TagKey<Item>> outputTag()
 	{
+		if(pattern.primaryIndex()<0)
+			return Optional.empty();
 		return pattern.outputTag(pattern.primaryIndex());
 	}
 

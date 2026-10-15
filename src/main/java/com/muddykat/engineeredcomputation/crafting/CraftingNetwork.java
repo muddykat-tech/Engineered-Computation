@@ -16,12 +16,14 @@ import net.minecraft.world.level.Level;
 import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerState;
 import com.muddykat.engineeredcomputation.crafting.order.CraftingOrder;
 import com.muddykat.engineeredcomputation.crafting.order.OrderSummary;
+import com.muddykat.engineeredcomputation.crafting.pattern.FuzzyPatterns;
 import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternOffer;
 import com.muddykat.engineeredcomputation.crafting.pattern.ProvidedPattern;
 import com.muddykat.engineeredcomputation.crafting.processor.DataProcessorState;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
+import com.muddykat.engineeredcomputation.remote.RemoteSources;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
 
@@ -36,7 +38,11 @@ public final class CraftingNetwork
 		List<ProvidedPattern> patterns = new ArrayList<>();
 		for(CraftingComputerState computer : network.getCraftingComputers())
 			for(Pattern pattern : computer.getPatterns())
-				patterns.add(ProvidedPattern.direct(pattern));
+			{
+				patterns.add(ProvidedPattern.direct(pattern).accepting(FuzzyPatterns.accepted(level, pattern)));
+				for(Pattern derived : FuzzyPatterns.derived(level, pattern))
+					patterns.add(ProvidedPattern.direct(derived).accepting(FuzzyPatterns.accepted(level, derived)));
+			}
 		for(DataProcessorState processor : network.getDataProcessors())
 			patterns.addAll(processor.provided());
 		return patterns;
@@ -59,7 +65,7 @@ public final class CraftingNetwork
 		if(network.getCraftingComputers().isEmpty())
 			return offers;
 		for(ProvidedPattern provided : patterns(level, network))
-			if(provided.pattern().hasTags()&&provided.processor()!=null)
+			if((provided.pattern().hasTags()||provided.pattern().sendsOnly())&&provided.processor()!=null)
 				offers.add(new PatternOffer(provided.processor(), provided.slot(), provided.pattern()));
 		return offers;
 	}
@@ -67,7 +73,8 @@ public final class CraftingNetwork
 	public static CraftingPlan plan(Level level, StorageNetwork network, NetworkStorage storage, ItemKey target,
 			long amount)
 	{
-		return CraftingPlanner.plan(target, amount, stock(storage), patterns(level, network));
+		return CraftingPlanner.plan(target, amount, stock(storage), patterns(level, network),
+				RemoteSources.of(level, network));
 	}
 
 	public static Optional<CraftingPlan> planOffer(Level level, StorageNetwork network, NetworkStorage storage,
@@ -80,7 +87,8 @@ public final class CraftingNetwork
 			return Optional.empty();
 		ProvidedPattern provided = ProvidedPattern.abstractAt(offer.pattern(), offer.processor(), offer.slot())
 				.choosing(choice.picks());
-		return Optional.of(CraftingPlanner.planOffer(provided, amount, stock(storage), patterns(level, network)));
+		return Optional.of(CraftingPlanner.planOffer(provided, amount, stock(storage), patterns(level, network),
+				RemoteSources.of(level, network)));
 	}
 
 	private static Map<ItemKey, Long> stock(NetworkStorage storage)
@@ -94,6 +102,18 @@ public final class CraftingNetwork
 			long amount)
 	{
 		return place(network, storage, () -> plan(level, network, storage, target, amount));
+	}
+
+	/** Plans getting items from what the network's Storage Analyzers report. */
+	public static CraftingPlan planRequest(Level level, StorageNetwork network, ItemKey target, long amount)
+	{
+		return CraftingPlanner.planRequest(target, amount, RemoteSources.of(level, network));
+	}
+
+	public static Optional<StatusCode> request(Level level, StorageNetwork network, NetworkStorage storage,
+			ItemKey target, long amount)
+	{
+		return place(network, storage, () -> planRequest(level, network, target, amount));
 	}
 
 	public static Optional<StatusCode> orderOffer(Level level, StorageNetwork network, NetworkStorage storage,

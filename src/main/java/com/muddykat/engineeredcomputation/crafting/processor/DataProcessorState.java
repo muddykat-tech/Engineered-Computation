@@ -94,7 +94,7 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 			public boolean isItemValid(int slot, ItemStack stack)
 			{
 				return stack.getItem() instanceof PatternFloppyItem
-						&&PatternFloppyItem.pattern(stack).mode()==Pattern.Mode.ABSTRACT;
+						&&PatternFloppyItem.pattern(stack).mode()!=Pattern.Mode.DIRECT;
 			}
 
 			@Override
@@ -127,7 +127,8 @@ public class DataProcessorState implements MultiblockState, NetworkMember
 	{
 		Map<Integer, Pattern> held = new LinkedHashMap<>();
 		for(int slot = 0; slot<patterns.getSlots(); slot++)
-			if(PatternFloppyItem.holds(patterns.getStackInSlot(slot), Pattern.Mode.ABSTRACT))
+			if(PatternFloppyItem.holds(patterns.getStackInSlot(slot), Pattern.Mode.ABSTRACT)
+					||PatternFloppyItem.holds(patterns.getStackInSlot(slot), Pattern.Mode.SEND))
 				held.put(slot, PatternFloppyItem.pattern(patterns.getStackInSlot(slot)));
 		return held;
 	}

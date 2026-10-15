@@ -19,11 +19,24 @@ public enum GuiIcon
 	LOCKED_HIDDEN(6, 6),
 	LOCKED(4, 5),
 	ALLOW(6, 6),
-	BLOCK(6, 6);
+	BLOCK(6, 6),
+	SORT_NAME(6, 6),
+	SORT_COUNT(6, 6),
+	ASCENDING(6, 6),
+	DESCENDING(6, 6),
+	CRAFTS_BOTH(6, 6),
+	CRAFTS_ONLY(6, 6),
+	CRAFTS_HIDDEN(6, 6),
+	REMOTE_SHOWN(6, 6),
+	REMOTE_HIDDEN(6, 6),
+	REMOTE(5, 5),
+	REMOTE_TOP(6, 6),
+	REMOTE_BOTTOM(6, 6);
 
 	private static final ResourceLocation SHEET =
 			ResourceLocation.fromNamespaceAndPath(EngineeredComputation.MODID, "textures/gui/common_gui.png");
-	private static final int SHEET_SIZE = 64;
+	private static final int SHEET_WIDTH = 64;
+	private static final int SHEET_HEIGHT = 128;
 	private static final int CELL = 16;
 
 	private final int width;
@@ -37,6 +50,6 @@ public enum GuiIcon
 
 	public void draw(GuiGraphics graphics, int x, int y)
 	{
-		graphics.blit(SHEET, x, y, ordinal()%4*CELL, ordinal()/4*CELL, width, height, SHEET_SIZE, SHEET_SIZE);
+		graphics.blit(SHEET, x, y, ordinal()%4*CELL, ordinal()/4*CELL, width, height, SHEET_WIDTH, SHEET_HEIGHT);
 	}
 }

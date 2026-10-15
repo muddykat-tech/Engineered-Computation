@@ -37,6 +37,7 @@ public final class GuideRecipes
 	public static final ResourceLocation BRIDGE = id("storage_bridge");
 	public static final ResourceLocation ENERGY_ACCEPTER = id("energy_accepter");
 	public static final ResourceLocation PROCESSOR_CASING = id("processor_casing");
+	public static final ResourceLocation STORAGE_ANALYZER = id("storage_analyzer");
 
 	private GuideRecipes()
 	{

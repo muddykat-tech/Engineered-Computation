@@ -1,0 +1,11 @@
+Storage Analyzers
+
+A Storage Analyzer allows networks to see items in physical storage, things like chests, barrels and other inventories.
+
+If you place one against an Era 1 Receiving Station, an analyzer is able to see the full network as known by the Tabulator Machine.
+
+The Terminal will show these items as a faded item with a blue lens icon, The lens button beside the terminal's search bar allows customization of how they're displayed.
+
+If you click an analyzed item in the terminal, you can request it to be imported into the network, if it's connected to a Pneumatic Network, it passes the request to the Receiving Station, and the analyzer will then wait for the requested items and import them as they arrive.
+
+Right-click an analyzer to configure how crafting plans use it.

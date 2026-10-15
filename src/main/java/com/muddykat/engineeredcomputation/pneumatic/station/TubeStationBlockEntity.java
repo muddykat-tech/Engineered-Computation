@@ -195,6 +195,12 @@ public class TubeStationBlockEntity extends BlockEntity
 		return source==null? 0: items.getCount()-ItemHandlerHelper.insertItemStacked(source, items.copy(), true).getCount();
 	}
 
+	/** Where the inventory it stands against is. */
+	public BlockPos inventoryPos()
+	{
+		return worldPosition.relative(getBlockState().getValue(TubeStationBlock.FACING));
+	}
+
 	@Nullable
 	public IItemHandler getSource()
 	{

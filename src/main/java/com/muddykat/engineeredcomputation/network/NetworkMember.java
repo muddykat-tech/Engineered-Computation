@@ -8,6 +8,7 @@ import net.minecraft.world.level.Level;
 import com.muddykat.engineeredcomputation.crafting.computer.CraftingComputerState;
 import com.muddykat.engineeredcomputation.crafting.processor.DataProcessorState;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
+import com.muddykat.engineeredcomputation.remote.StorageAnalyzerBlockEntity;
 import com.muddykat.engineeredcomputation.storage.StorageHost;
 
 public interface NetworkMember
@@ -37,6 +38,12 @@ public interface NetworkMember
 
 	@Nullable
 	default DataProcessorState getDataProcessor()
+	{
+		return null;
+	}
+
+	@Nullable
+	default StorageAnalyzerBlockEntity getAnalyzer()
 	{
 		return null;
 	}

@@ -11,6 +11,7 @@ import com.muddykat.engineeredcomputation.adapter.AdapterKind;
 import com.muddykat.engineeredcomputation.adapter.AdapterSpeed;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.era.EraDrive;
+import com.muddykat.engineeredcomputation.registration.ECRemote;
 import com.muddykat.engineeredcomputation.storage.cell.persist.CellSaveMode;
 import com.muddykat.engineeredcomputation.storage.cell.persist.IndexedCellFile;
 
@@ -128,6 +129,7 @@ public final class ECConfig
 		defineCost(costs, "storageBridge", 8);
 		defineCost(costs, "craftingComputer", 32);
 		defineCost(costs, "dataProcessor", 24);
+		defineCost(costs, ECRemote.ANALYZER_COST, 16);
 		BUILDER.pop();
 		return Map.copyOf(costs);
 	}

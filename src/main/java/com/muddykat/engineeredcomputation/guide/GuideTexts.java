@@ -47,6 +47,7 @@ public final class GuideTexts
 	public static final String DATA_PROCESSOR = "data_processor";
 	public static final String PATTERN_FLOPPY = "pattern_floppy";
 	public static final String ORDERING = "ordering";
+	public static final String STORAGE_ANALYZER = "storage_analyzer";
 	public static final String OTHER_PARTS = "other_parts";
 	public static final String NEXT = "next";
 	public static final String PALM = "palm";
@@ -106,7 +107,7 @@ public final class GuideTexts
 		}
 		for(String page : List.of(BUILTIN_TERMINAL, STORAGE_BAY, DISK_PROCESSOR, FLOPPY_PROCESSOR, COMPACT_FLOPPY_BAY,
 				TUBES, AUTOTUBE, CATALOGUE_CARDS, ADVANCED_STATION, FILTER_CARDS, PROGRAM_DECK, TERMINAL_DISKS, ADAPTERS,
-				PROGRAM_FLOPPY, CRAFTING_COMPUTER, DATA_PROCESSOR, PATTERN_FLOPPY, ORDERING, OTHER_PARTS))
+				PROGRAM_FLOPPY, CRAFTING_COMPUTER, DATA_PROCESSOR, PATTERN_FLOPPY, ORDERING, STORAGE_ANALYZER, OTHER_PARTS))
 			pages.put(page, Set.of());
 		pages.put(PRESSURIZER, Set.of(CARRIER_SIZE_UNPRESSURED, CARRIER_TICKS, CARRIER_SIZE_PRESSURED,
 				CARRIER_PRESSURED_TICKS, CARRIERS_PER_FUEL));

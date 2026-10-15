@@ -20,6 +20,7 @@ import com.muddykat.engineeredcomputation.pneumatic.station.ReceivingStationMenu
 import com.muddykat.engineeredcomputation.pneumatic.station.TubeStationMenu;
 import com.muddykat.engineeredcomputation.power.EnergyAccepterMenu;
 import com.muddykat.engineeredcomputation.program.ProgramFloppyMenu;
+import com.muddykat.engineeredcomputation.remote.StorageAnalyzerMenu;
 import com.muddykat.engineeredcomputation.terminal.TypewriterMenu;
 import com.muddykat.engineeredcomputation.terminal.UniscopeMenu;
 import com.muddykat.engineeredcomputation.terminal.crafting.VideoTerminalMenu;
@@ -69,6 +70,8 @@ public final class ECMenuTypes
 			REGISTER.register("autotube", () -> IMenuTypeExtension.create(AutotubeMenu::new));
 	public static final DeferredHolder<MenuType<?>, MenuType<ReceivingStationMenu>> RECEIVING_STATION =
 			REGISTER.register("receiving_station", () -> IMenuTypeExtension.create(ReceivingStationMenu::new));
+	public static final DeferredHolder<MenuType<?>, MenuType<StorageAnalyzerMenu>> STORAGE_ANALYZER =
+			REGISTER.register("storage_analyzer", () -> IMenuTypeExtension.create(StorageAnalyzerMenu::new));
 
 	public static final DeferredHolder<MenuType<?>, MenuType<CardDeckMenu>> CARD_DECK =
 			REGISTER.register("card_deck", () -> IMenuTypeExtension.create(CardDeckMenu::new));

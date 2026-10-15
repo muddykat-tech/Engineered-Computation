@@ -32,13 +32,14 @@ public record OrderPlanPayload(int containerId, ItemKey target, long amount, Lis
 			ByteBufCodecs.BOOL, OrderPlanPayload::placed,
 			OrderPlanPayload::new);
 
-	public record Line(ItemKey item, long fromStorage, long crafted, long missing)
+	public record Line(ItemKey item, long fromStorage, long crafted, long missing, long requested)
 	{
 		public static final StreamCodec<RegistryFriendlyByteBuf, Line> STREAM_CODEC = StreamCodec.composite(
 				ItemKey.STREAM_CODEC, Line::item,
 				ByteBufCodecs.VAR_LONG, Line::fromStorage,
 				ByteBufCodecs.VAR_LONG, Line::crafted,
 				ByteBufCodecs.VAR_LONG, Line::missing,
+				ByteBufCodecs.VAR_LONG, Line::requested,
 				Line::new);
 	}
 

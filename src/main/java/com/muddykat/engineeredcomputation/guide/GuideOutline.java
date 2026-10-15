@@ -207,6 +207,9 @@ public final class GuideOutline
 			recipe(floppy);
 			section(GuideTexts.ORDERING);
 			text(GuideTexts.ORDERING);
+			section(GuideTexts.STORAGE_ANALYZER);
+			text(GuideTexts.STORAGE_ANALYZER);
+			recipe(GuideRecipes.STORAGE_ANALYZER);
 		});
 
 		steps.add(new Heading("memory", null, era.onDataNetwork()

@@ -42,6 +42,7 @@
     "engineered_computation:era4_data_importer",
     "engineered_computation:era4_data_exporter",
     "engineered_computation:era5_data_importer",
-    "engineered_computation:era5_data_exporter"
+    "engineered_computation:era5_data_exporter",
+    "engineered_computation:storage_analyzer"
   ]
 }

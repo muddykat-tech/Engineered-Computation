@@ -119,7 +119,9 @@ import com.muddykat.engineeredcomputation.registration.ECDataComponents;
 import com.muddykat.engineeredcomputation.registration.ECMultiblocks;
 import com.muddykat.engineeredcomputation.registration.ECPneumatics;
 import com.muddykat.engineeredcomputation.registration.ECPower;
+import com.muddykat.engineeredcomputation.registration.ECRemote;
 import com.muddykat.engineeredcomputation.registration.ECTerminals;
+import com.muddykat.engineeredcomputation.remote.RemoteLinkBlock;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.storage.cell.CellContents;
 import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
@@ -136,7 +138,7 @@ public final class VisualCheck
 {
 	private static final boolean ENABLED = Boolean.getBoolean("ec.visualcheck");
 	private static final List<String> CATEGORIES = List.of("cables", "pneumatics", "drives", "angles", "world", "guide",
-			"handbook", "terminal", "adapters", "crafting", "power", "config");
+			"handbook", "terminal", "adapters", "crafting", "power", "config", "remote");
 	/** Handbook entries and the page each shot opens at: plain text, long text, multiblocks, recipes and the codes. */
 	private static final List<Map.Entry<String, Integer>> HANDBOOK_SHOTS = List.of(Map.entry("basics/wrench", 0),
 			Map.entry("basics/network", 0), Map.entry("basics/cells", 0), Map.entry("basics/codes", 0),
@@ -270,6 +272,7 @@ public final class VisualCheck
 		section(mc, "crafting", true, VisualCheck::queueCrafting);
 		section(mc, "power", true, VisualCheck::queuePower);
 		section(mc, "config", true, VisualCheck::queueConfig);
+		section(mc, "remote", true, VisualCheck::queueRemote);
 		STEPS.add(new Step(10, mc::stop));
 	}
 
@@ -1160,6 +1163,34 @@ public final class VisualCheck
 		}));
 		screenshot(mc, "ec_crafting_computer_cancelled", 2);
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		// Last, so the earlier shots' grids don't shift: a send pattern sends its items away with nothing back.
+		onServer(mc, (level, player) -> {
+			ItemStack sendAway = new ItemStack(ECCrafting.PATTERN_FLOPPY.get());
+			sendAway.set(ECDataComponents.PATTERN.get(), new Pattern(Pattern.Mode.SEND,
+					List.of(new ItemStack(Items.COBBLESTONE, 16)), List.of()));
+			DataProcessorState.at(level, dataProcessorPos()).getPatternSlots().setStackInSlot(2, sendAway.copy());
+			player.setItemInHand(InteractionHand.MAIN_HAND, sendAway);
+			sendAway.use(level, player, InteractionHand.MAIN_HAND);
+		}, 20);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_pattern_floppy_sends_only", 2);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> {
+			player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+			use(level, player, craftingTerminalPos());
+		}, 25);
+		STEPS.add(new Step(5, () -> {
+			hoverGui(mc, 60, 22);
+			clickGui(mc, 60, 22);
+			for(char c : "cobble".toCharArray())
+				mc.screen.charTyped(c, 0);
+		}));
+		STEPS.add(new Step(20, () -> hoverGui(mc, TerminalMenu.GRID_X+18+9, ordering.gridY()+9)));
+		screenshot(mc, "ec_terminal_send_offer", 2);
+		STEPS.add(new Step(5, () -> clickGui(mc, TerminalMenu.GRID_X+18+9, ordering.gridY()+9)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_order_popup_send", 15);
+		STEPS.add(new Step(5, () -> mc.setScreen(null)));
 	}
 
 	private static void queueStandaloneDrives(Minecraft mc)
@@ -1313,6 +1344,112 @@ public final class VisualCheck
 		screenshot(mc, "ec_program_floppy_screen", 2);
 		STEPS.add(new Step(5, () -> mc.setScreen(null)));
 		onServer(mc, (level, player) -> player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY), 5);
+	}
+
+	private static BlockPos remotePos()
+	{
+		return base.offset(-30, 1, -10);
+	}
+
+	/**
+	 * A Tabulator Machine with one catalogued chest behind a Receiving Station, which a Storage Analyzer faces, a
+	 * second analyzer on a plain chest, and a Floppy Disk Terminal on their cable.
+	 */
+	private static void queueRemote(Minecraft mc)
+	{
+		onServer(mc, (level, player) -> {
+			BlockPos origin = remotePos();
+			for(BlockPos pos : BlockPos.betweenClosed(origin.offset(-3, -1, -6), origin.offset(9, 5, 4)))
+				level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+			EraDriveGeometry geometry = EraDrive.PUNCHCARD_VAULT.geometry();
+			for(BlockPos pos : geometry.shapes().keySet())
+				level.setBlockAndUpdate(origin.offset(pos), ECContent.casing(ComputerEra.PUNCHCARD).get().defaultBlockState());
+			if(!ECMultiblocks.ERA_DRIVES.get(EraDrive.PUNCHCARD_VAULT).tryForm(level, origin.offset(geometry.trigger()),
+					Direction.SOUTH))
+				EngineeredComputation.LOGGER.error("Visual check: the remote scene's Tabulator didn't form");
+			BlockPos receiver = origin.offset(1, 0, -1);
+			level.setBlockAndUpdate(receiver, ECPneumatics.RECEIVING_STATION.get().defaultBlockState());
+			level.setBlockAndUpdate(receiver.above(), ECPneumatics.TUBE.get().defaultBlockState());
+			BlockPos station = receiver.above(2);
+			level.setBlockAndUpdate(station.above(), Blocks.CHEST.defaultBlockState());
+			level.setBlockAndUpdate(station, ECPneumatics.TUBE_STATION.get().defaultBlockState()
+					.setValue(TubeStationBlock.FACING, Direction.UP));
+			ChestBlockEntity catalogued = (ChestBlockEntity)level.getBlockEntity(station.above());
+			catalogued.setItem(0, new ItemStack(Items.DIAMOND, 40));
+			catalogued.setItem(1, new ItemStack(Items.IRON_INGOT, 16));
+			CatalogueCard card = new CatalogueCard(GlobalPos.of(level.dimension(), station), Component.literal("Vault"),
+					CellContents.EMPTY, CatalogueCard.NEVER)
+					.withTally(((TubeStationBlockEntity)level.getBlockEntity(station)).tally(), level.getGameTime());
+			ItemStack deck = new ItemStack(ECCatalogue.decks().get(0).get());
+			CardDeckItem.setDeck(deck, CardDeck.EMPTY.with(card));
+			((EraDriveState)((MultiblockPartBlockEntity)level.getBlockEntity(origin.offset(geometry.master())))
+					.getState()).getCellSlots().setStackInSlot(0, deck);
+
+			level.setBlockAndUpdate(receiver.east(), ECRemote.ANALYZER.get().defaultBlockState()
+					.setValue(RemoteLinkBlock.FACING, Direction.WEST));
+			for(BlockPos cable : List.of(origin.offset(3, 0, -1), origin.offset(3, 0, -2)))
+				placeCable(level, cable);
+			for(int x = 3; x<=5; x++)
+				placeCable(level, origin.offset(x, 0, -3));
+			BlockPos plainChest = origin.offset(5, 0, -1);
+			level.setBlockAndUpdate(plainChest, Blocks.CHEST.defaultBlockState());
+			ChestBlockEntity plain = (ChestBlockEntity)level.getBlockEntity(plainChest);
+			plain.setItem(0, new ItemStack(Items.DIAMOND, 12));
+			plain.setItem(1, new ItemStack(Items.REDSTONE, 64));
+			level.setBlockAndUpdate(plainChest.north(), ECRemote.ANALYZER.get().defaultBlockState()
+					.setValue(RemoteLinkBlock.FACING, Direction.SOUTH));
+
+			BlockPos terminal = remoteTerminalPos();
+			level.setBlockAndUpdate(terminal, ECTerminals.block(ComputerEra.FLOPPY).get().defaultBlockState()
+					.setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+			ItemStack disk = new ItemStack(ECDataCells.terminalDisks().get(3).get());
+			CellInventory cell = CellInventory.of(disk, () -> {
+			});
+			cell.insert(ItemKey.of(new ItemStack(Items.COBBLESTONE)), 64, false);
+			cell.insert(ItemKey.of(new ItemStack(Items.IRON_INGOT)), 5, false);
+			((TerminalDiskBlockEntity)level.getBlockEntity(terminal)).getDisks().insertItem(0, disk, false);
+			player.teleportTo(level, origin.getX()+2.5, origin.getY()+2.4, origin.getZ()-7.5, 0, 22);
+		}, 60);
+		screenshot(mc, "ec_remote_machines", 2);
+		onServer(mc, (level, player) -> {
+			BlockPos origin = remotePos();
+			player.teleportTo(level, origin.getX()+1.5, origin.getY()+0.9, origin.getZ()-3.2, 0, 22);
+		}, 15);
+		screenshot(mc, "ec_remote_machines_close", 2);
+
+		onServer(mc, (level, player) -> use(level, player, remoteTerminalPos()), 30);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_remote_terminal", 2);
+		// The lens is the second of the Floppy terminal's four tool buttons; four clicks go round to where it started.
+		int lens = TerminalMenu.GRID_X+150;
+		STEPS.add(new Step(5, () -> clickGui(mc, lens, 23)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, lens, 23)));
+		screenshot(mc, "ec_remote_terminal_top", 2);
+		STEPS.add(new Step(5, () -> clickGui(mc, lens, 23)));
+		screenshot(mc, "ec_remote_terminal_bottom", 2);
+		STEPS.add(new Step(5, () -> clickGui(mc, lens, 23)));
+		STEPS.add(new Step(5, () -> clickGui(mc, lens, 23)));
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		STEPS.add(new Step(5, () -> {
+			hoverGui(mc, 60, 22);
+			clickGui(mc, 60, 22);
+			for(char c : "diamond".toCharArray())
+				mc.screen.charTyped(c, 0);
+		}));
+		STEPS.add(new Step(5, () -> hoverGui(mc, TerminalMenu.GRID_X+9, 42)));
+		screenshot(mc, "ec_remote_tooltip", 2);
+		STEPS.add(new Step(5, () -> clickGui(mc, TerminalMenu.GRID_X+9, 42)));
+		screenshot(mc, "ec_remote_request_popup", 10);
+		STEPS.add(new Step(10, () -> mc.setScreen(null)));
+		onServer(mc, (level, player) -> use(level, player, remotePos().offset(2, 0, -1)), 20);
+		STEPS.add(new Step(5, () -> hoverGui(mc, -40, -40)));
+		screenshot(mc, "ec_remote_analyzer_screen", 2);
+		STEPS.add(new Step(10, () -> mc.setScreen(null)));
+	}
+
+	private static BlockPos remoteTerminalPos()
+	{
+		return remotePos().offset(6, 0, -3);
 	}
 
 	private static BlockPos adapterRow()

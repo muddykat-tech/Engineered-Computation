@@ -1,9 +1,11 @@
 package com.muddykat.engineeredcomputation.client.screen.terminal;
 
 import java.util.AbstractMap;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -15,17 +17,22 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
+import com.muddykat.engineeredcomputation.ECClientConfig;
 import com.muddykat.engineeredcomputation.client.gui.ECGui;
 import com.muddykat.engineeredcomputation.client.gui.GuiIcon;
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternOffer;
 import com.muddykat.engineeredcomputation.network.StatusCode;
+import com.muddykat.engineeredcomputation.remote.RemoteStock;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.terminal.TerminalMenu;
 import com.muddykat.engineeredcomputation.terminal.floppy.FloppyTerminalMenu;
 
 public class FloppyTerminalScreen extends VideoTerminalScreen<FloppyTerminalMenu>
 {
+	private static final int REMOTE_COUNT = 0x9FCBFF;
+
 	private final Map<Map.Entry<ItemKey, Long>, PatternOffer> offerEntries = new IdentityHashMap<>();
+	private final Set<Map.Entry<ItemKey, Long>> remoteEntries = Collections.newSetFromMap(new IdentityHashMap<>());
 	@Nullable
 	private OrderPopup orderPopup;
 	@Nullable
@@ -49,16 +56,48 @@ public class FloppyTerminalScreen extends VideoTerminalScreen<FloppyTerminalMenu
 	}
 
 	@Override
+	protected boolean filtersCraftables()
+	{
+		return true;
+	}
+
+	@Override
+	protected boolean listsRemote()
+	{
+		return true;
+	}
+
+	@Override
 	protected void collectEntries(List<Map.Entry<ItemKey, Long>> view, String query)
 	{
 		super.collectEntries(view, query);
+		offerEntries.clear();
+		remoteEntries.clear();
+		ECClientConfig.CraftableFilter filter = ECClientConfig.terminalCraftables();
+		if(filter==ECClientConfig.CraftableFilter.ONLY)
+			view.removeIf(entry -> !menu.getClientCraftables().contains(entry.getKey()));
+		if(filter!=ECClientConfig.CraftableFilter.HIDDEN)
+			collectCraftables(view, query);
+		if(filter==ECClientConfig.CraftableFilter.ONLY
+				||ECClientConfig.terminalRemote()==ECClientConfig.RemotePlacement.HIDDEN)
+			return;
+		for(RemoteStock.Stock stock : menu.getClientRemote().values())
+			if(matches(stock.key(), query))
+			{
+				Map.Entry<ItemKey, Long> entry = new AbstractMap.SimpleImmutableEntry<>(stock.key(), stock.total());
+				view.add(entry);
+				remoteEntries.add(entry);
+			}
+	}
+
+	private void collectCraftables(List<Map.Entry<ItemKey, Long>> view, String query)
+	{
 		for(ItemKey craftable : menu.getClientCraftables())
 			if(!menu.getClientContents().containsKey(craftable)&&matches(craftable, query))
 				view.add(Map.entry(craftable, 0L));
-		offerEntries.clear();
 		for(PatternOffer offer : menu.getClientOffers())
 		{
-			ItemKey shown = ItemKey.of(offer.pattern().primaryOutput());
+			ItemKey shown = ItemKey.of(offer.face());
 			if(matches(shown, query)||offer.outputTag().map(tag -> tag.location().toString().contains(
 					query.startsWith("#")? query.substring(1): query)).orElse(false))
 			{
@@ -67,6 +106,31 @@ public class FloppyTerminalScreen extends VideoTerminalScreen<FloppyTerminalMenu
 				offerEntries.put(entry, offer);
 			}
 		}
+	}
+
+	@Override
+	protected int placement(Map.Entry<ItemKey, Long> entry)
+	{
+		if(!remoteEntries.contains(entry))
+			return 0;
+		return switch(ECClientConfig.terminalRemote())
+		{
+			case TOP -> -1;
+			case BOTTOM -> 1;
+			default -> 0;
+		};
+	}
+
+	@Override
+	protected int sortGroup(Map.Entry<ItemKey, Long> entry)
+	{
+		return remoteEntries.contains(entry)? 1: 0;
+	}
+
+	@Override
+	protected boolean canTake(Map.Entry<ItemKey, Long> entry)
+	{
+		return !remoteEntries.contains(entry);
 	}
 
 	@Override
@@ -114,6 +178,21 @@ public class FloppyTerminalScreen extends VideoTerminalScreen<FloppyTerminalMenu
 	@Override
 	protected void addEntryLines(List<Component> lines, Map.Entry<ItemKey, Long> entry)
 	{
+		if(remoteEntries.contains(entry))
+		{
+			RemoteStock.Stock stock = menu.getClientRemote().get(entry.getKey());
+			if(stock!=null&&stock.stored()>0)
+				lines.add(Component.translatable("gui.engineered_computation.terminal.remote.stored",
+						number(stock.stored())).withStyle(ChatFormatting.GRAY));
+			if(stock!=null&&stock.pneumatic()>0)
+				lines.add(Component.translatable("gui.engineered_computation.terminal.remote.pneumatic",
+						number(stock.pneumatic())).withStyle(ChatFormatting.GRAY));
+			lines.add(Component.translatable("gui.engineered_computation.terminal.remote.detail")
+					.withStyle(ChatFormatting.DARK_GRAY));
+			lines.add(Component.translatable("gui.engineered_computation.terminal.request")
+					.withStyle(ChatFormatting.AQUA));
+			return;
+		}
 		PatternOffer offer = offerEntries.get(entry);
 		if(offer!=null)
 		{
@@ -122,6 +201,9 @@ public class FloppyTerminalScreen extends VideoTerminalScreen<FloppyTerminalMenu
 			if(!offer.pattern().inputTags().isEmpty())
 				lines.add(Component.translatable("gui.engineered_computation.terminal.offer.pick")
 						.withStyle(ChatFormatting.GRAY));
+			if(offer.pattern().sendsOnly())
+				lines.add(Component.translatable("gui.engineered_computation.terminal.offer.sends_only")
+						.withStyle(ChatFormatting.GOLD));
 			lines.add(Component.translatable("gui.engineered_computation.terminal.order").withStyle(ChatFormatting.AQUA));
 			return;
 		}
@@ -160,12 +242,24 @@ public class FloppyTerminalScreen extends VideoTerminalScreen<FloppyTerminalMenu
 	@Override
 	protected void renderEntry(GuiGraphics graphics, Map.Entry<ItemKey, Long> entry, int x, int y)
 	{
+		if(remoteEntries.contains(entry))
+		{
+			graphics.fill(RenderType.guiOverlay(), x, y, x+16, y+16, CRAFTABLE_FADE);
+			renderCount(graphics, entry.getValue(), x, y, REMOTE_COUNT);
+			graphics.pose().pushPose();
+			graphics.pose().translate(0, 0, 250);
+			GuiIcon.REMOTE.draw(graphics, x, y);
+			graphics.pose().popPose();
+			return;
+		}
 		if(entry.getValue()==0)
 		{
 			graphics.fill(RenderType.guiOverlay(), x, y, x+16, y+16, CRAFTABLE_FADE);
-			renderSmall(graphics, Component.translatable("gui.engineered_computation.terminal.craft").getString(), x+16,
-					y+16, StatusCode.PROCESSING.colour());
-			if(offerEntries.containsKey(entry))
+			PatternOffer offer = offerEntries.get(entry);
+			renderSmall(graphics, Component.translatable(offer!=null&&offer.pattern().sendsOnly()
+					? "gui.engineered_computation.terminal.send": "gui.engineered_computation.terminal.craft").getString(),
+					x+16, y+16, StatusCode.PROCESSING.colour());
+			if(offer!=null&&offer.pattern().hasTags())
 				ECGui.tagBadge(graphics, font, x, y);
 			return;
 		}
@@ -189,6 +283,17 @@ public class FloppyTerminalScreen extends VideoTerminalScreen<FloppyTerminalMenu
 		if(jobs!=null&&jobs.mouseClicked(mouseX, mouseY))
 			return true;
 		Map.Entry<ItemKey, Long> craftable = entryAt(mouseX, mouseY);
+		if(craftable!=null&&remoteEntries.contains(craftable))
+		{
+			if(menu.getCarried().isEmpty()&&button==GLFW.GLFW_MOUSE_BUTTON_LEFT)
+			{
+				unfocusSearch();
+				orderPopup = OrderPopup.request(menu, font, craftable.getKey(), leftPos+(imageWidth-OrderPopup.WIDTH)/2,
+						topPos+layout.gridY()-8);
+				return true;
+			}
+			return super.mouseClicked(mouseX, mouseY, button);
+		}
 		PatternOffer offer = craftable==null? null: offerEntries.get(craftable);
 		if(offer!=null&&menu.getCarried().isEmpty()&&(button==GLFW.GLFW_MOUSE_BUTTON_LEFT
 				||button==GLFW.GLFW_MOUSE_BUTTON_MIDDLE))

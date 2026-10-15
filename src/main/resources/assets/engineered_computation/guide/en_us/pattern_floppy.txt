@@ -4,6 +4,10 @@ A Pattern Floppy holds one recipe. Right-click while holding it to set the recip
 
 Direct: a crafting table recipe. Lay it out on the 3x3 grid and the result will fill in. Goes in a Crafting Computer.
 
+A direct pattern can be fuzzy. With fuzzy inputs, each slot takes anything the recipe accepts there, using whichever the network has most of, so one chest pattern takes any planks. With fuzzy outputs, the pattern also crafts related items with the same recipe, so an oak planks pattern also makes birch planks from birch logs.
+
 Abstract: anything another machine makes, like smelting. Set the inputs and outputs with amounts (click for more, right-click for fewer). Goes in an Advanced Data Processor.
+
+Send: only inputs. The Advanced Data Processor sends them to the inventory it faces and nothing comes back, for sending items away from the network. A send pattern is ordered on its own from the terminal.
 
 An abstract slot can hold a tag instead of an item: click an empty slot, type the tag and press Enter. An output tag accepts any of its items, for example c:ingots/iron for any iron ingot. For an input tag, each order asks which item to send, so a tag like c:raw_materials can smelt any ore. A pattern with a tag is ordered on its own from the terminal, never as part of another order. An input tag with more than eight items is marked "!".

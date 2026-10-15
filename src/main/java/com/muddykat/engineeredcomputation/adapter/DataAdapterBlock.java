@@ -96,7 +96,13 @@ public class DataAdapterBlock extends DirectionalBlock implements EntityBlock
 	@Override
 	protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
 	{
-		return SHAPES.get(state.getValue(FACING));
+		return shape(state.getValue(FACING));
+	}
+
+	/** Shared with the other machines built on the adapters' body. */
+	public static VoxelShape shape(Direction facing)
+	{
+		return SHAPES.get(facing);
 	}
 
 	private static VoxelShape box(Direction facing, double x0, double y0, double z0, double x1, double y1, double z1)

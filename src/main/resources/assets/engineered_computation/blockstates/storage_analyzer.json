@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "facing=north,lit=false": {"model": "engineered_computation:block/storage_analyzer"},
+    "facing=south,lit=false": {"model": "engineered_computation:block/storage_analyzer", "y": 180},
+    "facing=west,lit=false": {"model": "engineered_computation:block/storage_analyzer", "y": 270},
+    "facing=east,lit=false": {"model": "engineered_computation:block/storage_analyzer", "y": 90},
+    "facing=up,lit=false": {"model": "engineered_computation:block/storage_analyzer", "x": 270},
+    "facing=down,lit=false": {"model": "engineered_computation:block/storage_analyzer", "x": 90},
+    "facing=north,lit=true": {"model": "engineered_computation:block/storage_analyzer_active"},
+    "facing=south,lit=true": {"model": "engineered_computation:block/storage_analyzer_active", "y": 180},
+    "facing=west,lit=true": {"model": "engineered_computation:block/storage_analyzer_active", "y": 270},
+    "facing=east,lit=true": {"model": "engineered_computation:block/storage_analyzer_active", "y": 90},
+    "facing=up,lit=true": {"model": "engineered_computation:block/storage_analyzer_active", "x": 270},
+    "facing=down,lit=true": {"model": "engineered_computation:block/storage_analyzer_active", "x": 90}
+  }
+}

@@ -13,9 +13,10 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.PipeBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -30,6 +31,7 @@ import com.muddykat.engineeredcomputation.network.NetworkMember;
 import com.muddykat.engineeredcomputation.network.StorageNetwork;
 import com.muddykat.engineeredcomputation.registration.ECCables;
 import com.muddykat.engineeredcomputation.registration.ECCapabilities;
+import com.muddykat.engineeredcomputation.remote.RemoteLinkBlock;
 
 public class NetworkCableBlock extends Block implements EntityBlock, ConnectorPorts.Connector
 {
@@ -148,8 +150,9 @@ public class NetworkCableBlock extends Block implements EntityBlock, ConnectorPo
 	private static boolean connectsTo(Level level, BlockPos neighbor, Direction towards)
 	{
 		BlockState state = level.getBlockState(neighbor);
-		if(state.getBlock() instanceof DataAdapterBlock)
-			return state.getValue(DataAdapterBlock.FACING)==towards;
+		// These only join through a cable already at their back, which a cable being placed isn't yet.
+		if(state.getBlock() instanceof DataAdapterBlock||state.getBlock() instanceof RemoteLinkBlock)
+			return state.getValue(DirectionalBlock.FACING)==towards;
 		return level.getCapability(ECCapabilities.NETWORK_MEMBER, neighbor, towards.getOpposite())!=null;
 	}
 

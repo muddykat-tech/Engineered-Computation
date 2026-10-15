@@ -178,6 +178,7 @@ public class CraftingComputerState implements MultiblockState, NetworkMember
 	{
 		if(level==null||masterPos==null)
 			return;
+		order.release(level);
 		for(ItemStack left : order.empty(storage()))
 			Containers.dropItemStack(level, masterPos.getX()+0.5, masterPos.getY()+1, masterPos.getZ()+0.5, left);
 	}

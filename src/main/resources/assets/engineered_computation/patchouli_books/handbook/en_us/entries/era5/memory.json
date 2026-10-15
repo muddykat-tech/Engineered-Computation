@@ -2,7 +2,7 @@
   "name": "Floppy Disk Memory",
   "icon": "engineered_computation:floppy_disk_cell_16k",
   "category": "engineered_computation:era5",
-  "sortnum": 12,
+  "sortnum": 13,
   "read_by_default": true,
   "pages": [
     {

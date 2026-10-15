@@ -19,6 +19,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.muddykat.engineeredcomputation.EngineeredComputation;
 import com.muddykat.engineeredcomputation.crafting.pattern.Pattern;
+import com.muddykat.engineeredcomputation.crafting.pattern.PatternEditPayload;
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternFloppyMenu;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.gametest.TestCategory;
@@ -135,6 +136,32 @@ public final class RecipeFillGameTests
 				"a crafting pattern should hold one of each input, got "+pattern.inputs());
 		StorageGameTests.check(helper, pattern.output(0).is(Items.STICK)&&pattern.output(0).getCount()==4,
 				"the output wasn't worked out from the recipe (4 sticks): "+pattern.output(0));
+		helper.succeed();
+	}
+
+	@GameTest(template = StorageGameTests.TEMPLATE)
+	public static void anItemInADirectResultFillsInItsRecipe(GameTestHelper helper)
+	{
+		PatternFloppyMenu menu = patternMenu(helper);
+		menu.setCarried(new ItemStack(Items.CHEST));
+		menu.edit(PatternEditPayload.Action.SET, Pattern.INPUTS, 0);
+		Pattern chest = menu.pattern();
+		StorageGameTests.check(helper, chest.output(0).is(Items.CHEST)&&chest.input(4).isEmpty()
+						&&chest.inputTotals().values().stream().mapToLong(Long::longValue).sum()==8,
+				"a chest in the result should lay out its recipe, got "+chest.inputs()+" -> "+chest.output(0));
+
+		menu.setCarried(new ItemStack(Items.STICK));
+		menu.edit(PatternEditPayload.Action.SET, Pattern.INPUTS, 0);
+		Pattern first = menu.pattern();
+		menu.edit(PatternEditPayload.Action.SET, Pattern.INPUTS, 0);
+		Pattern second = menu.pattern();
+		StorageGameTests.check(helper, first.output(0).is(Items.STICK)&&second.output(0).is(Items.STICK)
+						&&!first.equals(second), "setting sticks again should step to another stick recipe, got "
+						+first.inputs()+" then "+second.inputs());
+
+		menu.setCarried(new ItemStack(Items.DIAMOND_ORE));
+		menu.edit(PatternEditPayload.Action.SET, Pattern.INPUTS, 0);
+		StorageGameTests.check(helper, menu.pattern().equals(second), "an item with no recipe should change nothing");
 		helper.succeed();
 	}
 

@@ -2,7 +2,7 @@
   "name": "Other Parts",
   "icon": "engineered_computation:relay",
   "category": "engineered_computation:era5",
-  "sortnum": 13,
+  "sortnum": 14,
   "read_by_default": true,
   "pages": [
     {

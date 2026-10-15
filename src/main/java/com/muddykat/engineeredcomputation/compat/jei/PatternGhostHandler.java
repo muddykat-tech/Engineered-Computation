@@ -41,8 +41,12 @@ final class PatternGhostHandler implements IGhostIngredientHandler<PatternFloppy
 				{
 					Pattern pattern = screen.getMenu().pattern();
 					ItemStack one = stack.copyWithCount(1);
-					pattern = index<Pattern.INPUTS? pattern.withInput(index, one):
-							pattern.withOutput(index-Pattern.INPUTS, one);
+					// A direct pattern given only a result needs to request that item's recipe.
+					if(index>=Pattern.INPUTS&&pattern.mode()==Pattern.Mode.DIRECT)
+						pattern = new Pattern(Pattern.Mode.DIRECT, List.of(), List.of(one));
+					else
+						pattern = index<Pattern.INPUTS? pattern.withInput(index, one):
+								pattern.withOutput(index-Pattern.INPUTS, one);
 					PacketDistributor.sendToServer(new PatternFillPayload(screen.getMenu().containerId, pattern));
 				}
 			}));

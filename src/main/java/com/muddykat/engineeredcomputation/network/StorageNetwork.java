@@ -28,6 +28,7 @@ import com.muddykat.engineeredcomputation.crafting.processor.DataProcessorState;
 import com.muddykat.engineeredcomputation.era.ComputerEra;
 import com.muddykat.engineeredcomputation.power.EnergyAccepterBlockEntity;
 import com.muddykat.engineeredcomputation.registration.ECCapabilities;
+import com.muddykat.engineeredcomputation.remote.StorageAnalyzerBlockEntity;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
 import com.muddykat.engineeredcomputation.storage.StorageHost;
 import com.muddykat.engineeredcomputation.storage.cell.CellInventory;
@@ -45,6 +46,7 @@ public final class StorageNetwork
 	private final Set<BlockPos> blocks;
 	private final List<CraftingComputerState> craftingComputers;
 	private final List<DataProcessorState> dataProcessors;
+	private final List<StorageAnalyzerBlockEntity> analyzers;
 	private final List<Charge> charges;
 
 	private final List<BlockPos> accepters;
@@ -55,7 +57,8 @@ public final class StorageNetwork
 
 	private StorageNetwork(List<StorageHost> hosts, Set<ComputerEra> eras, Set<ComputerEra> conflictingEras,
 			boolean tooLarge, Set<BlockPos> blocks, List<CraftingComputerState> craftingComputers,
-			List<DataProcessorState> dataProcessors, List<Charge> charges, List<BlockPos> accepters)
+			List<DataProcessorState> dataProcessors, List<StorageAnalyzerBlockEntity> analyzers, List<Charge> charges,
+			List<BlockPos> accepters)
 	{
 		this.hosts = hosts;
 		this.processor = hosts.stream().filter(StorageHost::isProcessor).map(StorageHost::getEra)
@@ -66,6 +69,7 @@ public final class StorageNetwork
 		this.blocks = blocks;
 		this.craftingComputers = craftingComputers;
 		this.dataProcessors = dataProcessors;
+		this.analyzers = analyzers;
 		this.charges = charges;
 		this.accepters = accepters;
 	}
@@ -113,6 +117,7 @@ public final class StorageNetwork
 		List<StorageHost> ordered = new ArrayList<>();
 		Set<CraftingComputerState> computers = Collections.newSetFromMap(new IdentityHashMap<>());
 		Set<DataProcessorState> processors = Collections.newSetFromMap(new IdentityHashMap<>());
+		List<StorageAnalyzerBlockEntity> analyzers = new ArrayList<>();
 		Set<NetworkMember> charged = Collections.newSetFromMap(new IdentityHashMap<>());
 		List<Charge> charges = new ArrayList<>();
 		List<BlockPos> accepters = new ArrayList<>();
@@ -148,6 +153,8 @@ public final class StorageNetwork
 				computers.add(member.getCraftingComputer());
 			if(member!=null&&member.getDataProcessor()!=null)
 				processors.add(member.getDataProcessor());
+			if(member!=null&&member.getAnalyzer()!=null)
+				analyzers.add(member.getAnalyzer());
 			if(member!=null&&(member.chargedPerBlock()||charged.add(member)))
 				charges.add(new Charge(member, pos));
 			if(member!=null&&member.isEnergyAccepter())
@@ -170,7 +177,7 @@ public final class StorageNetwork
 		Set<ComputerEra> conflicting = eras.size()<=1? Set.of(): conflicting(eraAt, bridges, links);
 		return new StorageNetwork(List.copyOf(ordered), Collections.unmodifiableSet(eras), conflicting, tooLarge,
 				Collections.unmodifiableSet(visited), List.copyOf(computers), List.copyOf(processors),
-				List.copyOf(charges), accepters.stream().sorted().toList());
+				List.copyOf(analyzers), List.copyOf(charges), accepters.stream().sorted().toList());
 	}
 
 	private static Set<ComputerEra> conflicting(Map<BlockPos, ComputerEra> eraAt, Set<BlockPos> bridges,
@@ -212,6 +219,11 @@ public final class StorageNetwork
 	public List<DataProcessorState> getDataProcessors()
 	{
 		return dataProcessors;
+	}
+
+	public List<StorageAnalyzerBlockEntity> getAnalyzers()
+	{
+		return analyzers;
 	}
 
 	public List<StorageHost> getHosts()

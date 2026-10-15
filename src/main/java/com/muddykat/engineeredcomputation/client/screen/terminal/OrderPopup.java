@@ -59,6 +59,7 @@ final class OrderPopup
 	private final ItemKey target;
 	@Nullable
 	private final PatternOffer offer;
+	private final boolean requesting;
 	private final List<Integer> tagSlots = new ArrayList<>();
 	private final Map<Integer, List<Item>> tagItems = new HashMap<>();
 	private final Map<Integer, Item> picks = new HashMap<>();
@@ -75,20 +76,28 @@ final class OrderPopup
 
 	OrderPopup(FloppyTerminalMenu menu, Font font, ItemKey target, int x, int y)
 	{
-		this(menu, font, target, null, x, y);
+		this(menu, font, target, null, false, x, y);
 	}
 
 	OrderPopup(FloppyTerminalMenu menu, Font font, PatternOffer offer, int x, int y)
 	{
-		this(menu, font, ItemKey.of(offer.pattern().primaryOutput()), offer, x, y);
+		this(menu, font, ItemKey.of(offer.face()), offer, false, x, y);
 	}
 
-	private OrderPopup(FloppyTerminalMenu menu, Font font, ItemKey target, @Nullable PatternOffer offer, int x, int y)
+	/** Requests the items from what the network's Storage Analyzers report. */
+	static OrderPopup request(FloppyTerminalMenu menu, Font font, ItemKey target, int x, int y)
+	{
+		return new OrderPopup(menu, font, target, null, true, x, y);
+	}
+
+	private OrderPopup(FloppyTerminalMenu menu, Font font, ItemKey target, @Nullable PatternOffer offer,
+			boolean requesting, int x, int y)
 	{
 		this.menu = menu;
 		this.font = font;
 		this.target = target;
 		this.offer = offer;
+		this.requesting = requesting;
 		if(offer!=null)
 			offer.pattern().inputTags().forEach((slot, tag) -> {
 				tagSlots.add(slot);
@@ -154,7 +163,7 @@ final class OrderPopup
 	private OrderRequestPayload request(boolean place)
 	{
 		return new OrderRequestPayload(menu.containerId, target, amount(), place, offer==null? Optional.empty():
-				Optional.of(new PatternOffer.Choice(offer, Map.copyOf(picks))));
+				Optional.of(new PatternOffer.Choice(offer, Map.copyOf(picks))), requesting);
 	}
 
 	private OrderPlanPayload plan()
@@ -297,8 +306,10 @@ final class OrderPopup
 			ECGui.tagBadge(graphics, font, x+7, y+5);
 		Component name = offer!=null&&offer.outputTag().isPresent()? Component.literal("#"+offer.outputTag().get()
 				.location()): shown.getHoverName();
-		graphics.drawString(font, ECGui.fit(font, Component.translatable("gui.engineered_computation.order.title",
-				name), WIDTH-36), x+28, y+9, ECGui.LABEL, false);
+		graphics.drawString(font, ECGui.fit(font, Component.translatable(requesting
+				? "gui.engineered_computation.order.request_title": offer!=null&&offer.pattern().sendsOnly()
+				? "gui.engineered_computation.order.send_title": "gui.engineered_computation.order.title", name),
+				WIDTH-36), x+28, y+9, ECGui.LABEL, false);
 		for(int row = 0; row<tagSlots.size(); row++)
 		{
 			int slot = tagSlots.get(row);
@@ -350,15 +361,17 @@ final class OrderPopup
 		if(plan!=null)
 		{
 			StatusCode status = plan.status();
-			Component text = status.title().copy().append(" - ").append(Component.translatable(
-					"gui.engineered_computation.order.status."+status.code()));
+			Component text = status.title().copy().append(" - ").append(Component.translatable((requesting
+					? "gui.engineered_computation.order.request_status.": "gui.engineered_computation.order.status.")
+					+status.code()));
 			graphics.drawString(font, ECGui.fit(font, text, WIDTH-14), x+7, statusY, status.colour(), true);
 		}
 		boolean ready = plan!=null&&plan.status()==StatusCode.OK;
 		int buttonsY = y+height()-BUTTON_HEIGHT-6;
 		ECGui.button(graphics, x+WIDTH/2-BUTTON_WIDTH-3, buttonsY, BUTTON_WIDTH, BUTTON_HEIGHT,
 				ready&&isOverOrder(mouseX, mouseY));
-		graphics.drawCenteredString(font, Component.translatable("gui.engineered_computation.order.place"),
+		graphics.drawCenteredString(font, Component.translatable(requesting? "gui.engineered_computation.order.request"
+						: "gui.engineered_computation.order.place"),
 				x+WIDTH/2-BUTTON_WIDTH/2-3, buttonsY+3, ready? 0xFFFFFF: 0x808080);
 		ECGui.button(graphics, x+WIDTH/2+3, buttonsY, BUTTON_WIDTH, BUTTON_HEIGHT, isOverCancel(mouseX, mouseY));
 		graphics.drawCenteredString(font, Component.translatable("gui.cancel"), x+WIDTH/2+BUTTON_WIDTH/2+3, buttonsY+3,
@@ -393,6 +406,9 @@ final class OrderPopup
 		if(line.crafted()>0)
 			parts.add(Component.translatable("gui.engineered_computation.order.crafts", count(line.crafted()))
 					.withStyle(ChatFormatting.GOLD));
+		if(line.requested()>0)
+			parts.add(Component.translatable("gui.engineered_computation.order.requests", count(line.requested()))
+					.withStyle(ChatFormatting.AQUA));
 		if(line.fromStorage()>0)
 			parts.add(Component.translatable("gui.engineered_computation.order.uses", count(line.fromStorage()))
 					.withStyle(ChatFormatting.DARK_GREEN));

@@ -60,31 +60,31 @@ public final class CatalogueGameTests
 	{
 	}
 
-	private record Setup(EraDriveState catalogue, BlockPos receiver, BlockPos tube, BlockPos station, BlockPos chest,
+	public record Setup(EraDriveState catalogue, BlockPos receiver, BlockPos tube, BlockPos station, BlockPos chest,
 			BlockPos teletype)
 	{
-		ChestBlockEntity chestEntity(ServerLevel level)
+		public ChestBlockEntity chestEntity(ServerLevel level)
 		{
 			return (ChestBlockEntity)level.getBlockEntity(chest);
 		}
 
-		ReceivingStationBlockEntity receiverEntity(ServerLevel level)
+		public ReceivingStationBlockEntity receiverEntity(ServerLevel level)
 		{
 			return (ReceivingStationBlockEntity)level.getBlockEntity(receiver);
 		}
 
-		TubeStationBlockEntity stationEntity(ServerLevel level)
+		public TubeStationBlockEntity stationEntity(ServerLevel level)
 		{
 			return (TubeStationBlockEntity)level.getBlockEntity(station);
 		}
 
-		CatalogueCard card(ServerLevel level)
+		public CatalogueCard card(ServerLevel level)
 		{
 			return new CatalogueCard(GlobalPos.of(level.dimension(), station), Component.literal("Chest"),
 					CellContents.EMPTY, CatalogueCard.NEVER);
 		}
 
-		void file(CatalogueCard... cards)
+		public void file(CatalogueCard... cards)
 		{
 			ItemStack deck = new ItemStack(ECCatalogue.decks().get(0).get());
 			CardDeck filed = CardDeck.EMPTY;
@@ -94,13 +94,13 @@ public final class CatalogueGameTests
 			catalogue.getCellSlots().setStackInSlot(0, deck);
 		}
 
-		CatalogueCard filedCard()
+		public CatalogueCard filedCard()
 		{
 			return CardDeckItem.deck(catalogue.getCellSlots().getStackInSlot(0)).cards().get(0);
 		}
 	}
 
-	private static Setup setup(GameTestHelper helper, int diamonds)
+	public static Setup setup(GameTestHelper helper, int diamonds)
 	{
 		ServerLevel level = helper.getLevel();
 		EraDriveState catalogue = StorageGameTests.formDrive(helper, ComputerEra.PUNCHCARD, Direction.NORTH);

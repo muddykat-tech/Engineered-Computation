@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "engineered_computation:era5_data_importer"
+    },
+    {
+      "item": "engineered_computation:microprocessor"
+    },
+    {
+      "item": "minecraft:observer"
+    }
+  ],
+  "result": {
+    "id": "engineered_computation:storage_analyzer",
+    "count": 1
+  }
+}

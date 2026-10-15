@@ -80,6 +80,12 @@ public class PatternFloppyItem extends Item
 				.withStyle(ChatFormatting.AQUA));
 		addSlots(lines, "makes", pattern, true);
 		addSlots(lines, "from", pattern, false);
+		if(pattern.fuzzyInputs())
+			lines.add(Component.translatable("tooltip.engineered_computation.pattern_floppy.fuzzy_inputs")
+					.withStyle(ChatFormatting.DARK_AQUA));
+		if(pattern.fuzzyOutputs())
+			lines.add(Component.translatable("tooltip.engineered_computation.pattern_floppy.fuzzy_outputs")
+					.withStyle(ChatFormatting.DARK_AQUA));
 		if(!pattern.isValid())
 			lines.add(Component.translatable("tooltip.engineered_computation.pattern_floppy.invalid")
 					.withStyle(ChatFormatting.RED));

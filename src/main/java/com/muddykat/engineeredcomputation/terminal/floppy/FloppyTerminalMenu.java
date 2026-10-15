@@ -2,8 +2,10 @@ package com.muddykat.engineeredcomputation.terminal.floppy;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,6 +27,8 @@ import com.muddykat.engineeredcomputation.crafting.order.TerminalCraftingPayload
 import com.muddykat.engineeredcomputation.crafting.pattern.PatternOffer;
 import com.muddykat.engineeredcomputation.network.StatusCode;
 import com.muddykat.engineeredcomputation.registration.ECMenuTypes;
+import com.muddykat.engineeredcomputation.remote.RemoteStock;
+import com.muddykat.engineeredcomputation.remote.TerminalRemotePayload;
 import com.muddykat.engineeredcomputation.storage.ItemKey;
 import com.muddykat.engineeredcomputation.storage.NetworkStorage;
 import com.muddykat.engineeredcomputation.terminal.TerminalFeatures;
@@ -38,11 +42,13 @@ public class FloppyTerminalMenu extends VideoTerminalMenu
 	private List<ItemKey> sentCraftables = List.of();
 	private List<PatternOffer> sentOffers = List.of();
 	private List<OrderSummary> sentOrders = List.of();
+	private List<RemoteStock.Stock> sentRemote = List.of();
 	private int craftingCountdown;
 
 	private Set<ItemKey> clientCraftables = Set.of();
 	private List<PatternOffer> clientOffers = List.of();
 	private List<OrderSummary> clientOrders = List.of();
+	private Map<ItemKey, RemoteStock.Stock> clientRemote = Map.of();
 	@Nullable
 	private OrderPlanPayload clientPlan;
 
@@ -78,27 +84,40 @@ public class FloppyTerminalMenu extends VideoTerminalMenu
 		List<ItemKey> craftables = List.copyOf(CraftingNetwork.craftables(player.level(), network));
 		List<PatternOffer> offers = CraftingNetwork.offers(player.level(), network);
 		List<OrderSummary> orders = CraftingNetwork.orders(network);
-		if(craftables.equals(sentCraftables)&&offers.equals(sentOffers)&&orders.equals(sentOrders))
-			return;
-		sentCraftables = craftables;
-		sentOffers = offers;
-		sentOrders = orders;
-		PacketDistributor.sendToPlayer(serverPlayer, new TerminalCraftingPayload(containerId,
-				craftables.subList(0, Math.min(craftables.size(), TerminalCraftingPayload.MAX)),
-				offers.subList(0, Math.min(offers.size(), TerminalCraftingPayload.MAX)),
-				orders.subList(0, Math.min(orders.size(), TerminalCraftingPayload.MAX))));
+		if(!craftables.equals(sentCraftables)||!offers.equals(sentOffers)||!orders.equals(sentOrders))
+		{
+			sentCraftables = craftables;
+			sentOffers = offers;
+			sentOrders = orders;
+			PacketDistributor.sendToPlayer(serverPlayer, new TerminalCraftingPayload(containerId,
+					craftables.subList(0, Math.min(craftables.size(), TerminalCraftingPayload.MAX)),
+					offers.subList(0, Math.min(offers.size(), TerminalCraftingPayload.MAX)),
+					orders.subList(0, Math.min(orders.size(), TerminalCraftingPayload.MAX))));
+		}
+		List<RemoteStock.Stock> remote = RemoteStock.of(player.level(), network);
+		if(!remote.equals(sentRemote))
+		{
+			sentRemote = remote;
+			PacketDistributor.sendToPlayer(serverPlayer, new TerminalRemotePayload(containerId,
+					remote.subList(0, Math.min(remote.size(), TerminalRemotePayload.MAX))));
+		}
 	}
 
-	public void handleOrderRequest(ItemKey target, long amount, boolean place, Optional<PatternOffer.Choice> offer)
+	public void handleOrderRequest(ItemKey target, long amount, boolean place, Optional<PatternOffer.Choice> offer,
+			boolean request)
 	{
 		if(!(player instanceof ServerPlayer serverPlayer))
 			return;
 		target = ItemKey.resolve(ItemKey.resolve(target, sentKeys(), player.registryAccess()), sentCraftables,
 				player.registryAccess());
+		if(request)
+			target = ItemKey.resolve(target, sentRemote.stream().map(RemoteStock.Stock::key).toList(),
+					player.registryAccess());
 		NetworkStorage storage = storage();
 		Level level = player.level();
-		CraftingPlan plan = offer.isPresent()? CraftingNetwork.planOffer(level, network, storage, offer.get(), amount)
-				.orElse(null): CraftingNetwork.plan(level, network, storage, target, amount);
+		CraftingPlan plan = request? CraftingNetwork.planRequest(level, network, target, amount)
+				: offer.isPresent()? CraftingNetwork.planOffer(level, network, storage, offer.get(), amount).orElse(null)
+				: CraftingNetwork.plan(level, network, storage, target, amount);
 		if(plan==null)
 		{
 			PacketDistributor.sendToPlayer(serverPlayer, new OrderPlanPayload(containerId, target, amount, List.of(),
@@ -112,8 +131,9 @@ public class FloppyTerminalMenu extends VideoTerminalMenu
 			status = StatusCode.INSUFFICIENT_STORAGE;
 		else
 			status = plan.isPossible()? StatusCode.OK: StatusCode.NOT_FOUND;
-		boolean placed = place&&status==StatusCode.OK&&(offer.isPresent()
-				? CraftingNetwork.orderOffer(level, network, storage, offer.get(), amount)
+		boolean placed = place&&status==StatusCode.OK&&(request
+				? CraftingNetwork.request(level, network, storage, target, amount)
+				: offer.isPresent()? CraftingNetwork.orderOffer(level, network, storage, offer.get(), amount)
 				: CraftingNetwork.order(level, network, storage, target, amount)).isEmpty();
 		if(placed)
 			craftingCountdown = 0;
@@ -128,13 +148,16 @@ public class FloppyTerminalMenu extends VideoTerminalMenu
 		items.addAll(plan.missing().keySet());
 		items.addAll(plan.toCraft().keySet());
 		items.addAll(plan.fromStorage().keySet());
+		Map<ItemKey, Long> requested = plan.requested();
+		items.addAll(requested.keySet());
 		List<OrderPlanPayload.Line> lines = new ArrayList<>();
 		for(ItemKey item : items)
 		{
 			if(lines.size()>=OrderPlanPayload.MAX_LINES)
 				break;
 			lines.add(new OrderPlanPayload.Line(item, plan.fromStorage().getOrDefault(item, 0L),
-					plan.toCraft().getOrDefault(item, 0L), plan.missing().getOrDefault(item, 0L)));
+					plan.toCraft().getOrDefault(item, 0L), plan.missing().getOrDefault(item, 0L),
+					requested.getOrDefault(item, 0L)));
 		}
 		return lines;
 	}
@@ -152,6 +175,20 @@ public class FloppyTerminalMenu extends VideoTerminalMenu
 		clientOffers = payload.offers();
 		clientOrders = payload.orders();
 		clientChanged();
+	}
+
+	public void applyRemote(TerminalRemotePayload payload)
+	{
+		Map<ItemKey, RemoteStock.Stock> remote = new LinkedHashMap<>();
+		payload.stock().forEach(stock -> remote.put(stock.key(), stock));
+		clientRemote = remote;
+		clientChanged();
+	}
+
+	/** What the network's Storage Analyzers report, by item. */
+	public Map<ItemKey, RemoteStock.Stock> getClientRemote()
+	{
+		return Collections.unmodifiableMap(clientRemote);
 	}
 
 	public void applyPlan(OrderPlanPayload payload)
