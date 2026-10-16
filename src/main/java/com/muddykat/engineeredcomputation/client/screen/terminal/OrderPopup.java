@@ -166,10 +166,20 @@ final class OrderPopup
 				Optional.of(new PatternOffer.Choice(offer, Map.copyOf(picks))), requesting);
 	}
 
+	private ItemKey expectedTarget()
+	{
+		if(offer==null||!offer.pattern().sendsOnly())
+			return target;
+		return offer.pattern().resolve(picks)
+				.map(pattern -> ItemKey.of(pattern.input(pattern.firstInput())))
+				.orElse(target);
+	}
+
 	private OrderPlanPayload plan()
 	{
 		OrderPlanPayload plan = menu.getClientPlan();
-		return plan!=null&&picked()&&askedPicks.equals(picks)&&plan.target().equals(target)&&plan.amount()==amount()
+		return plan!=null&&picked()&&askedPicks.equals(picks)&&plan.target().equals(expectedTarget())
+				&&plan.amount()==amount()
 				? plan: null;
 	}
 
@@ -342,7 +352,7 @@ final class OrderPopup
 		button(graphics, mouseX, mouseY, x+LESS_X, y+23, 14, Component.literal("-"));
 		button(graphics, mouseX, mouseY, x+MORE_X, y+23, 14, Component.literal("+"));
 
-		int listY = listY();
+		int listY = 3+listY();
 		int visible = visibleLines();
 		ECGui.sunken(graphics, x+6, listY-1, WIDTH-12, visible*LINE_HEIGHT+2);
 		OrderPlanPayload plan = plan();

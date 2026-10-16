@@ -51,15 +51,10 @@ public final class PatchouliCompat
 		return id(structure);
 	}
 
-	/** The handbook entry each era's guide opens at. */
-	public static ResourceLocation eraEntry(ComputerEra era)
+	/** The handbook category each era's guide opens at. */
+	public static ResourceLocation eraCategory(ComputerEra era)
 	{
-		return id(era.getSerializedName()+"/"+GuideTexts.era(era));
-	}
-
-	public static void openHandbook(ComputerEra era)
-	{
-		PatchouliAPI.get().openBookEntry(HANDBOOK, eraEntry(era), 0);
+		return id(era.getSerializedName());
 	}
 
 	public static void openLanding()

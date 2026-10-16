@@ -30,10 +30,10 @@ public record PatternOffer(BlockPos processor, int slot, Pattern pattern)
 
 	public ItemStack shown(long gameTime)
 	{
-		if(pattern.sendsOnly())
-			return face();
-		ItemStack primary = pattern.primaryOutput();
-		Optional<TagKey<Item>> tag = pattern.outputTag(pattern.primaryIndex());
+		boolean sends = pattern.sendsOnly();
+		int index = sends? pattern.firstInput(): pattern.primaryIndex();
+		ItemStack primary = sends? pattern.input(index): pattern.primaryOutput();
+		Optional<TagKey<Item>> tag = sends? pattern.inputTag(index): pattern.outputTag(index);
 		if(tag.isEmpty())
 			return primary;
 		List<Item> items = Pattern.itemsOf(tag.get());
